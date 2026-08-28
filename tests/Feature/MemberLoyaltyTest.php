@@ -599,7 +599,8 @@ class MemberLoyaltyTest extends TestCase
             ->callAction('orderCash', [
                 'user_id' => $customer->id,
                 'product_id' => $product->id,
-                'target_no' => '12345678',
+                'target_no_game' => '12345678',
+                'wa_notification' => '08222222222',
             ])
             ->assertHasNoActionErrors();
 
@@ -611,6 +612,64 @@ class MemberLoyaltyTest extends TestCase
             'payment_method' => 'CASH',
             'payment_status' => 'paid',
             'topup_status' => 'success',
+            'customer_phone' => '08222222222',
+        ]);
+    }
+
+    /**
+     * Test admin can create a cash order manually for Mobile Legends
+     */
+    public function test_admin_can_create_cash_order_manually_ml(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin User',
+            'username' => 'admin123_ml',
+            'email' => 'admin_ml@wistek.com',
+            'phone' => '08111111112',
+            'password' => Hash::make('secret123'),
+            'role' => 'admin',
+        ]);
+
+        $customer = User::create([
+            'name' => 'Customer User',
+            'username' => 'customer123_ml',
+            'email' => 'customer_ml@wistek.com',
+            'phone' => '08222222223',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+        ]);
+
+        $category = Category::create(['name' => 'Mobile Legends', 'slug' => 'mobile-legends', 'type' => 'game']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => '86 Diamonds',
+            'sku' => 'ml86',
+            'price_cost' => 15000,
+            'price_sell' => 20000,
+            'status' => true,
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ListTransactions::class)
+            ->callAction('orderCash', [
+                'user_id' => $customer->id,
+                'product_id' => $product->id,
+                'user_id_ml' => '12345678',
+                'zone_id_ml' => '1234',
+                'wa_notification' => '08222222223',
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $customer->id,
+            'sku' => 'ml86',
+            'target_no' => '12345678 (1234)',
+            'price' => 20000,
+            'payment_method' => 'CASH',
+            'payment_status' => 'paid',
+            'topup_status' => 'success',
+            'customer_phone' => '08222222223',
         ]);
     }
 }
