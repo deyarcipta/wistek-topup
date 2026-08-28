@@ -1,58 +1,151 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Wistek Topup ⚡
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <strong>Platform Top-up Game Online Tercepat, Terpercaya, dan Terlengkap di Indonesia</strong>
 </p>
 
-## About Laravel
+<p align="center">
+  <img src="https://img.shields.io/badge/Laravel-11.x-red?style=for-the-badge&logo=laravel" alt="Laravel 11.x">
+  <img src="https://img.shields.io/badge/PHP-8.3-blue?style=for-the-badge&logo=php" alt="PHP 8.3">
+  <img src="https://img.shields.io/badge/Database-MySQL-blue?style=for-the-badge&logo=mysql" alt="MySQL">
+  <img src="https://img.shields.io/badge/Admin%20Panel-Filament%20v4-orange?style=for-the-badge&logo=laravel" alt="Filament v4">
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 📌 Tentang Wistek Topup
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Wistek Topup** adalah platform penyedia layanan top-up game online otomatis 24 jam nonstop yang dirancang dengan arsitektur modern berbasis **Laravel 11** dan **PHP 8.3**. Aplikasi ini mengintegrasikan layanan pemrosesan produk game otomatis dari **Digiflazz**, gerbang pembayaran otomatis dari **Duitku**, serta sistem notifikasi OTP WhatsApp instan. 
 
-## Learning Laravel
+Platform ini juga dilengkapi dengan **Sistem Keanggotaan (Member)** yang memiliki program loyalitas poin, kode referral, profil terverifikasi, dan tampilan antarmuka (UI/UX) premium yang sepenuhnya responsif di semua jenis perangkat (Desktop, Tablet, dan Mobile).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Fitur Utama
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 🎮 1. Transaksi & Produk Game Otomatis (Digiflazz)
+*   Integrasi API Digiflazz untuk pemrosesan order top-up instan secara otomatis (Mobile Legends, Free Fire, PUBG Mobile, Valorant, dll).
+*   Manajemen kategori produk, sub-kategori, nominal pembelian, dan harga secara fleksibel.
 
-## Agentic Development
+### 💳 2. Gerbang Pembayaran Otomatis (Duitku)
+*   Sistem pembayaran instan otomatis menggunakan IPN (Instant Payment Notification) callback dari Duitku.
+*   Dukungan pembayaran terlengkap:
+    *   **QRIS** (QRIS+)
+    *   **E-Wallet** (DANA, OVO, ShopeePay, LinkAja)
+    *   **Virtual Account** (BCA, Mandiri, BNI, BRI, Permata, dll)
+    *   **Convenience Store** (Indomaret)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 👥 3. Sistem Keanggotaan & Loyalitas Poin (Member Loyalty)
+*   **Registrasi & OTP WhatsApp**: Pendaftaran akun instan yang aman dengan verifikasi kode OTP otomatis ke nomor WhatsApp member.
+*   **Poin Loyalti**: Dapatkan poin setiap kali melakukan transaksi sukses (Rasio perolehan poin dapat disesuaikan via Admin Panel).
+*   **Kedaluwarsa Poin Otomatis**: Poin loyalti memiliki masa kedaluwarsa yang diproses harian secara terjadwal melalui perintah cron `points:expire`.
+*   **Program Referral**: Dapatkan bonus poin instan (contoh: 1.000 poin) ketika berhasil mengundang teman yang melakukan transaksi sukses pertamanya.
+*   **Manajemen Profil & Foto Profil (Avatar)**: Unggah foto profil member dengan validasi file (Maks 2MB, JPG/JPEG/PNG) dan preview instan.
 
+### 🛠️ 4. Panel Admin Premium (Filament v4)
+*   Dashboard admin modern berbasis **Filament v4**.
+*   Manajemen pengguna, produk, kategori game, sub-kategori, kode voucher diskon, banner promo, dan konfigurasi umum sistem.
+*   Widget visual ringkasan statistik transaksi harian, bulanan, dan total pendapatan.
+
+### 📱 5. Desain UI/UX Premium & Responsif
+*   Tema gelap (*dark mode*) yang mewah dengan desain modern, dinamis, dan terpusat.
+*   Navbar mobile interaktif dengan sistem **Hamburger Menu tersembunyi** (gaya *Ourastore*) untuk estetika terbaik pada perangkat ponsel.
+*   Tata letak formulir dan tabel data yang secara cerdas melipat (*stack*) secara vertikal pada perangkat seluler.
+
+---
+
+## 🛠️ Stack Teknologi
+
+*   **Backend Framework:** Laravel 11.x
+*   **Language:** PHP 8.3
+*   **Database:** MySQL / MariaDB
+*   **Admin Panel:** Filament PHP v4
+*   **Frontend Tools:** Blade Templating, Vanilla CSS, Alpine.js, Tailwind CSS (Vite Bundler)
+*   **Payment Gateway:** Duitku
+*   **Provider API:** Digiflazz
+*   **WhatsApp Gateway:** Fonnte / Custom API Gateway
+
+---
+
+## 💾 Langkah Instalasi Lokal
+
+### 1. Klon Repositori
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/deyarcipta/wistek-topup.git
+cd wistek-topup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Instal Dependencies (Composer & NPM)
+```bash
+composer install
+npm install
+npm run build
+```
 
-## Contributing
+### 3. Konfigurasi Environment File
+Salin file `.env.example` ke `.env` dan lengkapi konfigurasi database serta API keys Anda:
+```bash
+cp .env.example .env
+```
+Isi konfigurasi penting berikut di `.env`:
+```env
+APP_TIMEZONE=Asia/Jakarta
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=topup_wistek
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Code of Conduct
+DUITKU_MERCHANT_CODE=your_merchant_code
+DUITKU_API_KEY=your_api_key
+DUITKU_SANDBOX_MODE=true
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+DIGIFLAZZ_USERNAME=your_username
+DIGIFLAZZ_API_KEY=your_api_key
+DIGIFLAZZ_SANDBOX_MODE=true
 
-## Security Vulnerabilities
+WHATSAPP_API_URL=https://api.fonnte.com/send
+WHATSAPP_TOKEN=your_whatsapp_token
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 4. Buat Symlink Storage
+```bash
+php artisan storage:link
+```
 
-## License
+### 5. Jalankan Migrasi & Seeder Database
+```bash
+php artisan migrate --seed
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 6. Jalankan Dev Server & Scheduler
+Jalankan server aplikasi:
+```bash
+php artisan serve
+```
+Untuk menguji scheduler poin kedaluwarsa secara berkala pada komputer lokal:
+```bash
+php artisan schedule:work
+```
+
+---
+
+## 🧪 Pengujian Sistem
+Aplikasi ini dilengkapi dengan pengujian otomatis (*Feature Tests*) untuk memastikan keandalan sistem loyalitas poin, validasi OTP, registrasi member, dan fungsi upload foto profil. 
+
+Jalankan pengujian menggunakan PHPUnit:
+```bash
+php artisan test
+```
+
+---
+
+## 📝 Lisensi
+Platform ini didistribusikan di bawah lisensi **MIT**. Silakan gunakan dan sesuaikan sesuai kebutuhan proyek Anda.
+
+---
+<p align="center">
+  Made with ❤️ by <strong>WISTEK</strong>
+</p>
