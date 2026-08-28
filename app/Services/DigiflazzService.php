@@ -175,6 +175,8 @@ class DigiflazzService
             'sign' => $sign,
         ];
 
+        logger()->info('Digiflazz Outgoing Order Request: username='.$this->username.', sku='.$sku.', customer_no='.$targetNo.', ref_id='.$refId);
+
         try {
             $response = Http::post($this->baseUrl.'transaction', $payload);
 
