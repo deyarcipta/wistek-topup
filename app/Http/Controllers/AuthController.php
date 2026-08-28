@@ -153,7 +153,7 @@ class AuthController extends Controller
             'email' => $pending['email'],
             'phone' => $pending['phone'],
             'password' => $pending['password'],
-            'role' => 'customer',
+            'role' => 'member',
             'referred_by_id' => $pending['referred_by_id'],
             'registration_ip' => $pending['registration_ip'],
             'points_balance' => 0,
@@ -206,7 +206,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            if (Auth::user()->isAdmin()) {
+            if (Auth::user()->isAdmin() || Auth::user()->isCashier()) {
                 return redirect('/admin');
             }
 
@@ -238,8 +238,8 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            if ($user->isAdmin()) {
-                return redirect('/admin')->with('success', 'Selamat datang kembali, Admin!');
+            if ($user->isAdmin() || $user->isCashier()) {
+                return redirect('/admin')->with('success', 'Selamat datang kembali!');
             }
 
             return redirect()->intended('/dashboard')->with('success', 'Selamat datang kembali!');

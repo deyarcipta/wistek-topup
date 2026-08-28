@@ -28,6 +28,11 @@ class SubCategoryResource extends Resource
 
     protected static ?int $navigationSort = 5;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return SubCategoryForm::configure($schema);

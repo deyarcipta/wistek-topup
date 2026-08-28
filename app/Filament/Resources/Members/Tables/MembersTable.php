@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Users\Tables;
+namespace App\Filament\Resources\Members\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -8,7 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
-class UsersTable
+class MembersTable
 {
     public static function configure(Table $table): Table
     {
@@ -29,15 +29,6 @@ class UsersTable
                 TextColumn::make('phone')
                     ->label('WhatsApp')
                     ->searchable(),
-                TextColumn::make('role')
-                    ->label('Role')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'admin' => 'danger',
-                        'customer' => 'success',
-                        default => 'gray',
-                    })
-                    ->sortable(),
                 TextColumn::make('points_balance')
                     ->label('Saldo Poin')
                     ->numeric()

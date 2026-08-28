@@ -22,6 +22,33 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@wistek.com'],
             [
                 'name' => 'Admin Wistek',
+                'username' => 'admin',
+                'phone' => '08111111111',
+                'role' => 'admin',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        // Seed Cashier User
+        User::updateOrCreate(
+            ['email' => 'kasir@wistek.com'],
+            [
+                'name' => 'Kasir Wistek',
+                'username' => 'kasir',
+                'phone' => '08222222222',
+                'role' => 'cashier',
+                'password' => bcrypt('password'),
+            ]
+        );
+
+        // Seed Member User
+        User::updateOrCreate(
+            ['email' => 'member@wistek.com'],
+            [
+                'name' => 'Deyar Cipta Rizky',
+                'username' => 'deyarcipta',
+                'phone' => '08123456789',
+                'role' => 'member',
                 'password' => bcrypt('password'),
             ]
         );

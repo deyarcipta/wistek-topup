@@ -51,6 +51,16 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'admin';
     }
 
+    public function isCashier(): bool
+    {
+        return $this->role === 'cashier';
+    }
+
+    public function isMember(): bool
+    {
+        return $this->role === 'member';
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
@@ -104,6 +114,6 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->isAdmin();
+        return $this->isAdmin() || $this->isCashier();
     }
 }

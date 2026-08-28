@@ -48,7 +48,7 @@ class MemberLoyaltyTest extends TestCase
         $this->assertDatabaseHas('users', [
             'username' => 'johndoe',
             'email' => 'john@example.com',
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $user = User::where('username', 'johndoe')->first();
@@ -67,7 +67,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'referrer@example.com',
             'phone' => '81234567891',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
             'registration_ip' => '192.168.1.1',
         ]);
 
@@ -107,7 +107,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'referrer@example.com',
             'phone' => '81234567891',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
             'registration_ip' => '192.168.1.10',
         ]);
 
@@ -138,7 +138,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'buyer@example.com',
             'phone' => '81234567890',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
             'points_balance' => 0,
         ]);
 
@@ -182,7 +182,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'buyer@example.com',
             'phone' => '81234567890',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
             'points_balance' => 1000,
         ]);
 
@@ -232,7 +232,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'memberbuyer1@example.com',
             'phone' => '7123123123',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
             'points_balance' => 0,
         ]);
 
@@ -343,7 +343,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $response = $this->actingAs($user)->get('/dashboard/profile');
@@ -362,7 +362,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $response = $this->actingAs($user)->post('/dashboard/profile', [
@@ -391,7 +391,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $response = $this->actingAs($user)->post('/dashboard/profile', [
@@ -418,7 +418,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $response = $this->post('/forgot-password', [
@@ -441,7 +441,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $this->post('/forgot-password', [
@@ -471,7 +471,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $this->post('/forgot-password', [
@@ -500,7 +500,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'member@example.com',
             'phone' => '08123456789',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $file = UploadedFile::fake()->image('avatar.jpg');
@@ -522,7 +522,7 @@ class MemberLoyaltyTest extends TestCase
     /**
      * Test admin cannot access customer dashboard and gets redirected
      */
-    public function test_admin_cannot_access_customer_dashboard(): void
+    public function test_admin_cannot_access_member_dashboard(): void
     {
         $admin = User::create([
             'name' => 'Admin User',
@@ -540,7 +540,7 @@ class MemberLoyaltyTest extends TestCase
     /**
      * Test customer cannot access admin dashboard
      */
-    public function test_customer_cannot_access_admin_dashboard(): void
+    public function test_member_cannot_access_admin_dashboard(): void
     {
         $customer = User::create([
             'name' => 'Customer User',
@@ -548,7 +548,7 @@ class MemberLoyaltyTest extends TestCase
             'email' => 'customer@wistek.com',
             'phone' => '08222222222',
             'password' => Hash::make('secret123'),
-            'role' => 'customer',
+            'role' => 'member',
         ]);
 
         $this->assertFalse($customer->canAccessPanel(Filament::getPanel('admin')));

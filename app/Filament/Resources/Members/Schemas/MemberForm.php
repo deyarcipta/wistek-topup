@@ -1,12 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Users\Schemas;
+namespace App\Filament\Resources\Members\Schemas;
 
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
-class UserForm
+class MemberForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -27,13 +26,11 @@ class UserForm
                 TextInput::make('phone')
                     ->label('WhatsApp')
                     ->nullable(),
-                Select::make('role')
-                    ->label('Role')
-                    ->options([
-                        'admin' => 'Admin',
-                        'customer' => 'Customer',
-                    ])
-                    ->required(),
+                TextInput::make('password')
+                    ->label('Kata Sandi')
+                    ->password()
+                    ->dehydrated(fn (?string $state) => filled($state))
+                    ->required(fn (string $operation): bool => $operation === 'create'),
                 TextInput::make('points_balance')
                     ->label('Saldo Poin')
                     ->numeric()
@@ -41,7 +38,9 @@ class UserForm
                     ->required(),
                 TextInput::make('referral_code')
                     ->label('Kode Referral')
-                    ->nullable(),
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->placeholder('Otomatis dibuat saat pendaftaran'),
             ]);
     }
 }

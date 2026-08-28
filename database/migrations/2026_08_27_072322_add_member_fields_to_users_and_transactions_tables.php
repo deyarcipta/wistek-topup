@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             $table->string('username')->nullable()->unique()->after('email');
             $table->string('phone')->nullable()->after('username');
-            $table->string('role')->default('customer')->after('phone');
+            $table->string('role')->default('member')->after('phone');
             $table->string('referral_code')->nullable()->unique()->after('role');
             $table->unsignedBigInteger('referred_by_id')->nullable()->after('referral_code');
             $table->string('registration_ip')->nullable()->after('referred_by_id');
