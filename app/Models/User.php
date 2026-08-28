@@ -4,6 +4,8 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +17,7 @@ use Illuminate\Support\Str;
 
 #[Fillable(['name', 'email', 'password', 'username', 'phone', 'role', 'referral_code', 'referred_by_id', 'registration_ip', 'points_balance', 'profile_photo_path'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -98,5 +100,10 @@ class User extends Authenticatable
             'type' => 'spend',
             'description' => $description,
         ]);
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isAdmin();
     }
 }

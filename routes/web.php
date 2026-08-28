@@ -46,8 +46,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 });
 
-// Member Dashboard (Auth Required)
-Route::middleware('auth')->group(function () {
+// Member Dashboard (Auth and Customer Role Required)
+Route::middleware(['auth', 'customer'])->group(function () {
     Route::get('/dashboard', [MemberController::class, 'index']);
     Route::get('/dashboard/transactions', [MemberController::class, 'transactions']);
     Route::get('/dashboard/points', [MemberController::class, 'pointLogs']);

@@ -9,6 +9,7 @@ use App\Models\SubCategory;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DuitkuService;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -516,5 +517,40 @@ class MemberLoyaltyTest extends TestCase
         $user->refresh();
         $this->assertNotNull($user->profile_photo_path);
         Storage::disk('public')->assertExists($user->profile_photo_path);
+    }
+
+    /**
+     * Test admin cannot access customer dashboard and gets redirected
+     */
+    public function test_admin_cannot_access_customer_dashboard(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin User',
+            'username' => 'admin123',
+            'email' => 'admin@wistek.com',
+            'phone' => '08111111111',
+            'password' => Hash::make('secret123'),
+            'role' => 'admin',
+        ]);
+
+        $response = $this->actingAs($admin)->get('/dashboard');
+        $response->assertRedirect('/admin');
+    }
+
+    /**
+     * Test customer cannot access admin dashboard
+     */
+    public function test_customer_cannot_access_admin_dashboard(): void
+    {
+        $customer = User::create([
+            'name' => 'Customer User',
+            'username' => 'customer123',
+            'email' => 'customer@wistek.com',
+            'phone' => '08222222222',
+            'password' => Hash::make('secret123'),
+            'role' => 'customer',
+        ]);
+
+        $this->assertFalse($customer->canAccessPanel(Filament::getPanel('admin')));
     }
 }

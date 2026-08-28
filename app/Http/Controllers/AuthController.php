@@ -206,6 +206,10 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
+            if (Auth::user()->isAdmin()) {
+                return redirect('/admin');
+            }
+
             return redirect('/dashboard');
         }
 
@@ -232,6 +236,11 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
+            $user = Auth::user();
+            if ($user->isAdmin()) {
+                return redirect('/admin')->with('success', 'Selamat datang kembali, Admin!');
+            }
 
             return redirect()->intended('/dashboard')->with('success', 'Selamat datang kembali!');
         }
