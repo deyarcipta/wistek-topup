@@ -229,13 +229,24 @@
                 <a href="{{ url('/') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
                 <a href="{{ url('/history') }}" class="nav-link"><i class="fa-solid fa-receipt"></i> Cek Transaksi</a>
                 @auth
-                    <a href="{{ url('/dashboard') }}" class="nav-link" style="color: #e28743; display: inline-flex; align-items: center; gap: 0.35rem;">
-                        @if(Auth::user()->profile_photo_path)
-                            <img src="{{ asset('storage/' . Auth::user()->profile_photo_path) }}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid #e28743;">
+                    @php
+                        $user = Auth::user();
+                        $targetUrl = $user->isMember() ? url('/dashboard') : url('/admin');
+                    @endphp
+                    <a href="{{ $targetUrl }}" class="nav-link" style="color: #e28743; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        @if($user->profile_photo_path)
+                            <img src="{{ asset('storage/' . $user->profile_photo_path) }}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid #e28743;">
                         @else
                             <i class="fa-solid fa-user"></i>
                         @endif
-                        {{ Auth::user()->name }} ({{ number_format(Auth::user()->points_balance) }} Pts)
+                        {{ $user->name }}
+                        @if($user->isMember())
+                            ({{ number_format($user->points_balance) }} Pts)
+                        @elseif($user->isAdmin())
+                            (Admin)
+                        @elseif($user->isCashier())
+                            (Petugas)
+                        @endif
                     </a>
                 @else
                     <a href="{{ url('/login') }}" class="nav-link"><i class="fa-solid fa-right-to-bracket"></i> Masuk</a>
