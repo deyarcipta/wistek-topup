@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Topup Wistek - Sistem Topup Otomatis')</title>
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -220,8 +221,9 @@
     <!-- Header / Navbar -->
     <header>
         <div class="container navbar">
-            <a href="{{ url('/') }}" class="logo">
-                <i class="fa-solid fa-bolt"></i> Wistek<span>Topup</span>
+            <a href="{{ url('/') }}" class="logo" style="display: flex; align-items: center; gap: 0.5rem;">
+                <img src="{{ asset('logo.png') }}" alt="Logo" style="height: 32px; object-fit: contain;">
+                Wistek<span>Topup</span>
             </a>
             <nav class="nav-links" id="navLinks" style="display: flex; align-items: center; gap: 1.25rem;">
                 <a href="{{ url('/') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
@@ -282,8 +284,9 @@
             
             <!-- Column 1: Brand Info -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
-                <a href="{{ url('/') }}" class="logo" style="font-size: 1.75rem; width: fit-content;">
-                    <i class="fa-solid fa-bolt"></i> Wistek<span style="color: var(--text-secondary); font-weight: 400;">Topup</span>
+                <a href="{{ url('/') }}" class="logo" style="font-size: 1.75rem; width: fit-content; display: flex; align-items: center; gap: 0.5rem;">
+                    <img src="{{ asset('logo.png') }}" alt="Logo" style="height: 38px; object-fit: contain;">
+                    Wistek<span style="color: var(--text-secondary); font-weight: 400;">Topup</span>
                 </a>
                 <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; max-width: 480px; margin: 0;">
                     Wistek Topup adalah platform penyedia layanan top-up game online terpercaya, tercepat, dan terlengkap di Indonesia. Kami menghadirkan proses transaksi instan otomatis 24 jam nonstop dengan dukungan pembayaran lengkap dan biaya admin termurah.
