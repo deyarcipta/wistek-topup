@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\Transactions\Pages\ListTransactions;
 use App\Models\Category;
 use App\Models\PointLog;
 use App\Models\Product;
@@ -15,6 +16,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class MemberLoyaltyTest extends TestCase
@@ -556,5 +558,59 @@ class MemberLoyaltyTest extends TestCase
         $response = $this->actingAs($customer)->get('/admin');
         $response->assertRedirect('/dashboard');
         $response->assertSessionHas('error', 'Anda tidak memiliki akses ke halaman admin.');
+    }
+
+    /**
+     * Test admin can create a cash order manually
+     */
+    public function test_admin_can_create_cash_order_manually(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin User',
+            'username' => 'admin123',
+            'email' => 'admin@wistek.com',
+            'phone' => '08111111111',
+            'password' => Hash::make('secret123'),
+            'role' => 'admin',
+        ]);
+
+        $customer = User::create([
+            'name' => 'Customer User',
+            'username' => 'customer123',
+            'email' => 'customer@wistek.com',
+            'phone' => '08222222222',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+        ]);
+
+        $category = Category::create(['name' => 'Game', 'slug' => 'game', 'type' => 'game']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => 'Free Fire 50 Diamonds',
+            'sku' => 'ff50',
+            'price_cost' => 5000,
+            'price_sell' => 7000,
+            'status' => true,
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ListTransactions::class)
+            ->callAction('orderCash', [
+                'user_id' => $customer->id,
+                'product_id' => $product->id,
+                'target_no' => '12345678',
+            ])
+            ->assertHasNoActionErrors();
+
+        $this->assertDatabaseHas('transactions', [
+            'user_id' => $customer->id,
+            'sku' => 'ff50',
+            'target_no' => '12345678',
+            'price' => 7000,
+            'payment_method' => 'CASH',
+            'payment_status' => 'paid',
+            'topup_status' => 'success',
+        ]);
     }
 }
