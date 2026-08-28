@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PointLog;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DigiflazzService;
@@ -243,7 +244,8 @@ class CallbackController extends Controller
             }
 
             // Check if Digiflazz credentials are not set (default values)
-            $isUnconfigured = env('DIGIFLAZZ_API_KEY') === 'YOUR_DIGIFLAZZ_API_KEY' || empty(env('DIGIFLAZZ_API_KEY'));
+            $apiKey = Setting::get('digiflazz_api_key', env('DIGIFLAZZ_API_KEY'));
+            $isUnconfigured = $apiKey === 'YOUR_DIGIFLAZZ_API_KEY' || empty($apiKey);
 
             if ($isUnconfigured) {
                 // Mock success for local testing
