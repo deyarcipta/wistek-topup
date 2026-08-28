@@ -142,6 +142,13 @@ class CallbackController extends Controller
      */
     public function digiflazzCallback(Request $request, DigiflazzService $digiflazz)
     {
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Digiflazz Webhook Endpoint is Active.',
+            ]);
+        }
+
         $signature = $request->header('X-Digiflazz-Delivery-Signature');
         $rawJson = $request->getContent();
 

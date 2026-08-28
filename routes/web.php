@@ -26,7 +26,7 @@ Route::get('/api/transaction-status/{invoice}', [TopupController::class, 'apiSta
 
 // Webhooks (Exempt from CSRF in bootstrap/app.php)
 Route::post('/callback/duitku', [CallbackController::class, 'duitkuCallback']);
-Route::post('/callback/digiflazz', [CallbackController::class, 'digiflazzCallback']);
+Route::match(['get', 'post'], '/callback/digiflazz', [CallbackController::class, 'digiflazzCallback']);
 
 // Local Simulation Route for Testing
 Route::get('/simulate-paid/{invoice}', [CallbackController::class, 'simulatePaid']);
