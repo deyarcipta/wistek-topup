@@ -50,10 +50,7 @@ class CallbackController extends Controller
 
                 // 4. Trigger Automatic Top-Up via Digiflazz
                 try {
-                    $targetNo = $transaction->target_no;
-                    if (str_contains($targetNo, '(')) {
-                        $targetNo = str_replace([' ', '(', ')'], '', $targetNo);
-                    }
+                    $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
 
                     $dfResponse = $digiflazz->orderTopup(
                         $transaction->invoice,
@@ -238,10 +235,7 @@ class CallbackController extends Controller
 
         // Trigger Digiflazz order
         try {
-            $targetNo = $transaction->target_no;
-            if (str_contains($targetNo, '(')) {
-                $targetNo = str_replace([' ', '(', ')'], '', $targetNo);
-            }
+            $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
 
             // Check if Digiflazz credentials are not set (default values)
             $apiKey = Setting::get('digiflazz_api_key', env('DIGIFLAZZ_API_KEY'));

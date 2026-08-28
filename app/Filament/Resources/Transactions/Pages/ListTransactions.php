@@ -13,6 +13,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Str;
 
 class ListTransactions extends ListRecords
 {
@@ -66,8 +67,11 @@ class ListTransactions extends ListRecords
                                 return false;
                             }
                             $product = Product::with('category')->find($productId);
+                            $categoryName = $product?->category?->name ?? '';
+                            $categorySlug = $product?->category?->slug ?? '';
 
-                            return $product?->category?->slug === 'mobile-legends';
+                            return Str::contains(strtolower($categoryName), 'mobile legends')
+                                || Str::contains(strtolower($categorySlug), 'mobile-legends');
                         }),
                     TextInput::make('zone_id_ml')
                         ->label('Zone ID (Mobile Legends)')
@@ -79,8 +83,11 @@ class ListTransactions extends ListRecords
                                 return false;
                             }
                             $product = Product::with('category')->find($productId);
+                            $categoryName = $product?->category?->name ?? '';
+                            $categorySlug = $product?->category?->slug ?? '';
 
-                            return $product?->category?->slug === 'mobile-legends';
+                            return Str::contains(strtolower($categoryName), 'mobile legends')
+                                || Str::contains(strtolower($categorySlug), 'mobile-legends');
                         }),
                     TextInput::make('target_no_game')
                         ->label('ID Akun / Target')
@@ -92,8 +99,12 @@ class ListTransactions extends ListRecords
                                 return false;
                             }
                             $product = Product::with('category')->find($productId);
+                            $categoryName = $product?->category?->name ?? '';
+                            $categorySlug = $product?->category?->slug ?? '';
+                            $isML = Str::contains(strtolower($categoryName), 'mobile legends')
+                                || Str::contains(strtolower($categorySlug), 'mobile-legends');
 
-                            return $product && $product->category?->slug !== 'mobile-legends' && $product->category?->type === 'game';
+                            return $product && ! $isML && $product->category?->type === 'game';
                         }),
                     TextInput::make('target_no_phone')
                         ->label('Nomor Handphone / Tujuan')
@@ -121,8 +132,12 @@ class ListTransactions extends ListRecords
                             if (! $product) {
                                 return false;
                             }
+                            $categoryName = $product?->category?->name ?? '';
+                            $categorySlug = $product?->category?->slug ?? '';
+                            $isML = Str::contains(strtolower($categoryName), 'mobile legends')
+                                || Str::contains(strtolower($categorySlug), 'mobile-legends');
 
-                            return $product->category?->slug !== 'mobile-legends'
+                            return ! $isML
                                 && $product->category?->type !== 'game'
                                 && ! in_array($product->category?->type, ['pulsa', 'emoney']);
                         }),
@@ -138,10 +153,13 @@ class ListTransactions extends ListRecords
 
                     // Determine the correct target no based on product category
                     $targetNo = '';
-                    $categorySlug = $product->category?->slug;
+                    $categoryName = $product->category?->name ?? '';
+                    $categorySlug = $product->category?->slug ?? '';
                     $categoryType = $product->category?->type;
+                    $isML = Str::contains(strtolower($categoryName), 'mobile legends')
+                        || Str::contains(strtolower($categorySlug), 'mobile-legends');
 
-                    if ($categorySlug === 'mobile-legends') {
+                    if ($isML) {
                         $targetNo = $data['user_id_ml'].' ('.$data['zone_id_ml'].')';
                     } elseif ($categoryType === 'game') {
                         $targetNo = $data['target_no_game'];
