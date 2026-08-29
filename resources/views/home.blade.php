@@ -130,7 +130,15 @@
                         <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail" style="border: 2px solid rgba(226, 135, 67, 0.2);">
                         <div class="category-info">
                             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">{{ $category->name }}</h3>
-                            <span style="background: rgba(226, 135, 67, 0.1); color: #e28743; border: 1px solid rgba(226, 135, 67, 0.2);">{{ $category->type }}</span>
+                            <span style="background: rgba(226, 135, 67, 0.1); color: #e28743; border: 1px solid rgba(226, 135, 67, 0.2);">{{ match($category->type) {
+                                'game' => 'Game',
+                                'pulsa' => 'Pulsa & Data',
+                                'emoney' => 'E-Money',
+                                'pln' => 'PLN Listrik',
+                                'tagihan' => 'Tagihan',
+                                'voucher' => 'Voucher',
+                                default => ucfirst($category->type),
+                            } }}</span>
                         </div>
                     </a>
                 @endforeach
@@ -147,8 +155,10 @@
             <div class="filter-tabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button onclick="filterCategory('all')" class="filter-btn active" data-type="all">Semua</button>
                 <button onclick="filterCategory('game')" class="filter-btn" data-type="game"><i class="fa-solid fa-gamepad"></i> Game</button>
-                <button onclick="filterCategory('pulsa')" class="filter-btn" data-type="pulsa"><i class="fa-solid fa-mobile-screen-button"></i> Pulsa</button>
+                <button onclick="filterCategory('pulsa')" class="filter-btn" data-type="pulsa"><i class="fa-solid fa-mobile-screen-button"></i> Pulsa & Data</button>
                 <button onclick="filterCategory('emoney')" class="filter-btn" data-type="emoney"><i class="fa-solid fa-wallet"></i> E-Money</button>
+                <button onclick="filterCategory('pln')" class="filter-btn" data-type="pln"><i class="fa-solid fa-bolt"></i> PLN</button>
+                <button onclick="filterCategory('tagihan')" class="filter-btn" data-type="tagihan"><i class="fa-solid fa-file-invoice-dollar"></i> Tagihan</button>
                 <button onclick="filterCategory('voucher')" class="filter-btn" data-type="voucher"><i class="fa-solid fa-ticket"></i> Voucher</button>
             </div>
         </div>
@@ -159,7 +169,15 @@
                     <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail">
                     <div class="category-info">
                         <h3>{{ $category->name }}</h3>
-                        <span>{{ $category->type }}</span>
+                        <span>{{ match($category->type) {
+                            'game' => 'Game',
+                            'pulsa' => 'Pulsa & Data',
+                            'emoney' => 'E-Money',
+                            'pln' => 'PLN Listrik',
+                            'tagihan' => 'Tagihan',
+                            'voucher' => 'Voucher',
+                            default => ucfirst($category->type),
+                        } }}</span>
                     </div>
                 </a>
             @empty

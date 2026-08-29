@@ -224,12 +224,19 @@
                         </div>
                         <div id="mlbb_nickname_result" style="margin-top: 0.5rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
                         </div>
-                    @else
                         <div>
                             <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">
-                                {{ in_array($category->type, ['pulsa', 'emoney']) ? 'Nomor Handphone / Tujuan' : 'ID Akun / Target' }}
+                                @if($category->type === 'pln')
+                                    Nomor Meter / ID Pelanggan PLN
+                                @elseif($category->type === 'tagihan')
+                                    Nomor Pelanggan / ID Tagihan
+                                @elseif(in_array($category->type, ['pulsa', 'emoney']))
+                                    Nomor Handphone / Tujuan
+                                @else
+                                    ID Akun / Target
+                                @endif
                             </label>
-                            <input type="text" name="target_id" class="form-control" placeholder="Contoh: {{ in_array($category->type, ['pulsa', 'emoney']) ? '081234567890' : '523087265' }}" required>
+                            <input type="text" name="target_id" class="form-control" placeholder="Contoh: @if($category->type === 'pln')14123456789@elseif($category->type === 'tagihan')0123456789@elseif(in_array($category->type, ['pulsa', 'emoney']))081234567890@else523087265@endif" required>
                         </div>
                     @endif
                     <p class="form-help">Kesalahan input data oleh pembeli bukan tanggung jawab kami.</p>

@@ -254,20 +254,17 @@ class DigiflazzService
                             $category = Category::where('name', 'like', "%{$brand}%")->first();
                         }
 
-                        if (! $category) {
-                            $type = match (strtolower($categoryName)) {
-                                'pulsa' => 'pulsa',
-                                'e-money', 'emoney' => 'emoney',
-                                'voucher' => 'voucher',
-                                default => 'game',
-                            };
+                        $type = self::determineCategoryType($categoryName, $brand);
 
+                        if (! $category) {
                             $category = Category::create([
                                 'name' => ucwords(strtolower($brand)),
                                 'slug' => $brandSlug ?: Str::slug($productName),
                                 'type' => $type,
                                 'status' => true,
                             ]);
+                        } elseif ($category->type === 'game' && $type !== 'game') {
+                            $category->update(['type' => $type]);
                         }
                     }
 
@@ -397,5 +394,69 @@ class DigiflazzService
         $calculated = hash_hmac('sha1', $rawBody, $this->webhookSecret);
 
         return hash_equals($calculated, $receivedSignature);
+    }
+
+    /**
+     * Determine category type intelligently from Digiflazz category & brand names
+     */
+    public static function determineCategoryType(string $categoryName, string $brandName = ''): string
+    {
+        $cat = strtolower(trim($categoryName));
+        $brand = strtolower(trim($brandName));
+
+        // 1. PLN / Token Listrik
+        if (str_contains($cat, 'pln') || str_contains($cat, 'listrik') || str_contains($brand, 'pln') || str_contains($brand, 'listrik')) {
+            return 'pln';
+        }
+
+        // 2. Pertamina Gas, PDAM, BPJS, TV Kabel, PPOB, Tagihan
+        if (
+            str_contains($cat, 'gas') || str_contains($brand, 'gas') ||
+            str_contains($cat, 'pdam') || str_contains($brand, 'pdam') ||
+            str_contains($cat, 'bpjs') || str_contains($brand, 'bpjs') ||
+            str_contains($cat, 'tv') || str_contains($brand, 'tv') ||
+            str_contains($brand, 'k-vision') || str_contains($brand, 'indihome') ||
+            str_contains($cat, 'pascabayar') || str_contains($cat, 'tagihan')
+        ) {
+            return 'tagihan';
+        }
+
+        // 3. E-Money / E-Wallet
+        $emoneyBrands = ['dana', 'gopay', 'go-pay', 'go pay', 'ovo', 'shopeepay', 'shopee pay', 'shopee-pay', 'linkaja', 'link aja', 'maxim', 'doku', 'isaku', 'i-saku', 'sakuku'];
+        if (
+            str_contains($cat, 'emoney') || str_contains($cat, 'e-money') || str_contains($cat, 'ewallet') || str_contains($cat, 'e-wallet') ||
+            str_contains($cat, 'wallet') ||
+            in_array($brand, $emoneyBrands)
+        ) {
+            return 'emoney';
+        }
+        foreach ($emoneyBrands as $eb) {
+            if (str_contains($brand, $eb)) {
+                return 'emoney';
+            }
+        }
+
+        // 4. Pulsa & Paket Data
+        $telcoBrands = ['telkomsel', 'xl', 'axis', 'indosat', 'tri', 'three', 'smartfren', 'smart', 'by.u', 'byu'];
+        if (
+            str_contains($cat, 'pulsa') || str_contains($cat, 'data') || str_contains($cat, 'paket') || str_contains($cat, 'internet') ||
+            str_contains($cat, 'sms') || str_contains($cat, 'masa aktif') ||
+            in_array($brand, $telcoBrands)
+        ) {
+            return 'pulsa';
+        }
+        foreach ($telcoBrands as $tb) {
+            if (str_contains($brand, $tb)) {
+                return 'pulsa';
+            }
+        }
+
+        // 5. Voucher
+        if (str_contains($cat, 'voucher') || str_contains($brand, 'voucher')) {
+            return 'voucher';
+        }
+
+        // 6. Game (default)
+        return 'game';
     }
 }

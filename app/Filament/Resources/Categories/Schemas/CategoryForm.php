@@ -34,8 +34,10 @@ class CategoryForm
                     ->required()
                     ->options([
                         'game' => 'Game',
-                        'pulsa' => 'Pulsa',
+                        'pulsa' => 'Pulsa & Data',
                         'emoney' => 'E-Money',
+                        'pln' => 'PLN / Listrik',
+                        'tagihan' => 'Tagihan & PPOB',
                         'voucher' => 'Voucher',
                     ]),
                 Toggle::make('status')

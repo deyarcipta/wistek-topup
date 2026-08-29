@@ -35,10 +35,20 @@ class CategoriesTable
                         'game' => 'success',
                         'pulsa' => 'warning',
                         'emoney' => 'info',
+                        'pln' => 'primary',
+                        'tagihan' => 'gray',
                         'voucher' => 'danger',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'game' => 'Game',
+                        'pulsa' => 'Pulsa & Data',
+                        'emoney' => 'E-Money',
+                        'pln' => 'PLN / Listrik',
+                        'tagihan' => 'Tagihan & PPOB',
+                        'voucher' => 'Voucher',
+                        default => ucfirst($state),
+                    })
                     ->searchable()
                     ->sortable(),
                 ToggleColumn::make('status')
@@ -60,8 +70,10 @@ class CategoriesTable
                     ->label('Tipe')
                     ->options([
                         'game' => 'Game',
-                        'pulsa' => 'Pulsa',
+                        'pulsa' => 'Pulsa & Data',
                         'emoney' => 'E-Money',
+                        'pln' => 'PLN / Listrik',
+                        'tagihan' => 'Tagihan & PPOB',
                         'voucher' => 'Voucher',
                     ]),
                 SelectFilter::make('status')
