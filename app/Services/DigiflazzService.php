@@ -180,6 +180,8 @@ class DigiflazzService
         try {
             $response = Http::post($this->baseUrl.'transaction', $payload);
 
+            logger()->info('Digiflazz Raw Response: Status='.$response->status().', Body='.$response->body());
+
             if ($response->successful()) {
                 $data = $response->json();
                 if (isset($data['data'])) {
