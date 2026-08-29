@@ -201,7 +201,20 @@ class ListTransactions extends ListRecords
                 ])
                 ->action(function (array $data) {
                     $product = Product::findOrFail($data['product_id']);
-                    $user = $data['user_id'] ? User::find($data['user_id']) : null;
+                    $user = ! empty($data['user_id']) ? User::find($data['user_id']) : null;
+
+                    // Auto-detect member if not chosen explicitly from dropdown but phone matches
+                    if (! $user && ! empty($data['wa_notification'])) {
+                        $cleanPhone = preg_replace('/[^0-9]/', '', $data['wa_notification']);
+                        $basePhone = ltrim($cleanPhone, '0');
+                        if (str_starts_with($basePhone, '62')) {
+                            $basePhone = substr($basePhone, 2);
+                        }
+                        $variants = ['0'.$basePhone, '62'.$basePhone, $basePhone];
+                        $user = User::whereIn('phone', $variants)->first();
+                    }
+
+                    $pointsEarned = $user ? (int) ($product->price_sell * 0.01) : 0;
 
                     // Determine the correct target no based on product category
                     $targetNo = '';
@@ -231,6 +244,7 @@ class ListTransactions extends ListRecords
                         'sku' => $product->sku,
                         'target_no' => $targetNo,
                         'price' => $product->price_sell,
+                        'points_earned' => $pointsEarned,
                         'payment_method' => 'CASH',
                         'payment_status' => 'unpaid',
                         'topup_status' => 'pending',

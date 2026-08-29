@@ -2,10 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PointLog;
 use App\Models\Setting;
 use App\Models\Transaction;
-use App\Models\User;
 use App\Services\DigiflazzService;
 use App\Services\DuitkuService;
 use App\Services\WhatsappService;
@@ -347,56 +345,10 @@ class CallbackController extends Controller
     }
 
     /**
-     * Credit points to the customer and their referrer upon successful transaction
+     * Credit points to the customer and their referrer upon successful transaction (paid + success)
      */
     private function creditPointsForSuccessfulTransaction(Transaction $transaction): void
     {
-        if ($transaction->user_id) {
-            $user = User::find($transaction->user_id);
-            if ($user && $transaction->points_earned > 0) {
-                // Check if this transaction already got credited in point logs to prevent double rewards
-                $alreadyCredited = PointLog::where('user_id', $user->id)
-                    ->where('transaction_id', $transaction->id)
-                    ->where('type', 'earn')
-                    ->exists();
-
-                if (! $alreadyCredited) {
-                    // Credit point to the buyer, valid for 6 months
-                    $expiredAt = now()->addMonths(6);
-                    $user->incrementPoints(
-                        $transaction->points_earned,
-                        'earn',
-                        "Poin dari transaksi {$transaction->invoice}",
-                        $transaction->id,
-                        $expiredAt
-                    );
-
-                    // If user was referred by another user, check if this is their first successful transaction
-                    if ($user->referred_by_id) {
-                        $referrer = User::find($user->referred_by_id);
-                        if ($referrer) {
-                            $alreadyRewarded = PointLog::where('user_id', $referrer->id)
-                                ->where('type', 'referral_bonus')
-                                ->whereHas('transaction', function ($query) use ($user) {
-                                    $query->where('user_id', $user->id);
-                                })
-                                ->exists();
-
-                            if (! $alreadyRewarded) {
-                                // Add 1,000 referral points to referrer, valid for 6 months
-                                $referrerExpiredAt = now()->addMonths(6);
-                                $referrer->incrementPoints(
-                                    1000,
-                                    'referral_bonus',
-                                    "Bonus referral dari member baru: @{$user->username}",
-                                    $transaction->id,
-                                    $referrerExpiredAt
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        $transaction->creditPointsIfEligible();
     }
 }

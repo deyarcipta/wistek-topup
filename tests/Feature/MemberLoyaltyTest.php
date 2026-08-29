@@ -214,8 +214,147 @@ class MemberLoyaltyTest extends TestCase
     }
 
     /**
-     * Test points expire command
+     * Test points are not awarded if payment is paid but topup is still pending/failed
      */
+    public function test_points_not_awarded_if_payment_paid_but_topup_not_success(): void
+    {
+        $user = User::create([
+            'name' => 'Pending Buyer',
+            'username' => 'pendingbuyer',
+            'email' => 'pendingbuyer@example.com',
+            'phone' => '081234567891',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+            'points_balance' => 0,
+        ]);
+
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'invoice' => 'INV-PENDING-001',
+            'category_name' => 'Games',
+            'product_name' => 'Diamonds',
+            'sku' => 'DM-10',
+            'target_no' => '123456',
+            'price' => 50000,
+            'points_earned' => 500,
+            'payment_method' => 'QRIS',
+            'payment_status' => 'paid',
+            'topup_status' => 'processing', // not yet success
+        ]);
+
+        $user->refresh();
+        $this->assertEquals(0, $user->points_balance);
+        $this->assertDatabaseMissing('point_logs', [
+            'transaction_id' => $transaction->id,
+        ]);
+
+        // When topup status becomes success, points are awarded
+        $transaction->update(['topup_status' => 'success']);
+
+        $user->refresh();
+        $this->assertEquals(500, $user->points_balance);
+        $this->assertDatabaseHas('point_logs', [
+            'transaction_id' => $transaction->id,
+            'amount' => 500,
+            'type' => 'earn',
+        ]);
+    }
+
+    /**
+     * Test points are not awarded if topup is success but payment is unpaid
+     */
+    public function test_points_not_awarded_if_topup_success_but_payment_unpaid(): void
+    {
+        $user = User::create([
+            'name' => 'Unpaid Buyer',
+            'username' => 'unpaidbuyer',
+            'email' => 'unpaidbuyer@example.com',
+            'phone' => '081234567892',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+            'points_balance' => 0,
+        ]);
+
+        $transaction = Transaction::create([
+            'user_id' => $user->id,
+            'invoice' => 'INV-UNPAID-001',
+            'category_name' => 'Games',
+            'product_name' => 'Diamonds',
+            'sku' => 'DM-10',
+            'target_no' => '123456',
+            'price' => 50000,
+            'points_earned' => 500,
+            'payment_method' => 'QRIS',
+            'payment_status' => 'unpaid', // unpaid
+            'topup_status' => 'success',
+        ]);
+
+        $user->refresh();
+        $this->assertEquals(0, $user->points_balance);
+
+        // When payment status becomes paid, points are awarded
+        $transaction->update(['payment_status' => 'paid']);
+
+        $user->refresh();
+        $this->assertEquals(500, $user->points_balance);
+    }
+
+    /**
+     * Test cash order gives points to member when paid and topup is success
+     */
+    public function test_cash_order_gives_points_to_member_when_paid_and_success(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin User',
+            'username' => 'adminuser',
+            'email' => 'admin@example.com',
+            'phone' => '08111111111',
+            'password' => Hash::make('secret123'),
+            'role' => 'admin',
+        ]);
+
+        $member = User::create([
+            'name' => 'Cash Buyer Member',
+            'username' => 'cashbuyer',
+            'email' => 'cashbuyer@example.com',
+            'phone' => '081234567893',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+            'points_balance' => 0,
+        ]);
+
+        $category = Category::create(['name' => 'Mobile Legends', 'slug' => 'mobile-legends', 'type' => 'game']);
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => '100 Diamonds',
+            'sku' => 'ml100',
+            'price_cost' => 20000,
+            'price_sell' => 25000,
+            'status' => true,
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ListTransactions::class)
+            ->callAction('orderCash', [
+                'user_id' => $member->id,
+                'product_id' => $product->id,
+                'user_id_ml' => '12345678',
+                'zone_id_ml' => '1234',
+                'wa_notification' => '081234567893',
+            ])
+            ->assertHasNoActionErrors();
+
+        $member->refresh();
+        // 1% of 25,000 is 250 points
+        $this->assertEquals(250, $member->points_balance);
+        $this->assertDatabaseHas('point_logs', [
+            'user_id' => $member->id,
+            'amount' => 250,
+            'type' => 'earn',
+        ]);
+    }
+
     public function test_points_expire_command(): void
     {
         $user = User::create([
