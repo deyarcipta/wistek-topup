@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\PointLog;
 use App\Models\Setting;
 use App\Services\DigiflazzService;
 use App\Services\DuitkuService;
@@ -25,11 +26,11 @@ class ManageSettings extends Page implements HasForms
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationLabel = 'Pengaturan API';
+    protected static ?string $navigationLabel = 'Pengaturan Sistem';
 
     protected static ?int $navigationSort = 9;
 
-    protected static ?string $title = 'Pengaturan API Duitku & Digiflazz';
+    protected static ?string $title = 'Pengaturan Sistem, API & Promo';
 
     protected string $view = 'filament.pages.manage-settings';
 
@@ -84,6 +85,12 @@ class ManageSettings extends Page implements HasForms
         $duitku = new DuitkuService;
         $duitkuStatus = $duitku->getStatusDetails();
 
+        $claimedCount = PointLog::where('type', 'welcome_bonus')->count();
+        $quota = (int) Setting::get('promo_grand_opening_quota', '100');
+        $progressText = $quota > 0
+            ? "{$claimedCount} dari {$quota} kuota member telah menerima bonus"
+            : "{$claimedCount} member telah menerima bonus (Tanpa batas kuota)";
+
         return [
             'duitku_merchant_code' => Setting::get('duitku_merchant_code'),
             'duitku_api_key' => Setting::get('duitku_api_key'),
@@ -105,6 +112,10 @@ class ManageSettings extends Page implements HasForms
             'whatsapp_api_url' => Setting::get('whatsapp_api_url', 'http://localhost:2785/api'),
             'whatsapp_api_token' => Setting::get('whatsapp_api_token'),
             'whatsapp_session_id' => Setting::get('whatsapp_session_id', 'default'),
+            'promo_grand_opening_active' => Setting::get('promo_grand_opening_active', '0'),
+            'promo_grand_opening_points' => Setting::get('promo_grand_opening_points', '2000'),
+            'promo_grand_opening_quota' => Setting::get('promo_grand_opening_quota', '100'),
+            'promo_grand_opening_progress' => $progressText,
         ];
     }
 
@@ -200,6 +211,35 @@ class ManageSettings extends Page implements HasForms
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(3),
+
+                Section::make('Promo Grand Opening & Welcome Bonus Poin')
+                    ->description('Berikan bonus poin gratis secara otomatis kepada member baru yang mendaftar dan memverifikasi WhatsApp saat periode Grand Opening.')
+                    ->schema([
+                        Select::make('promo_grand_opening_active')
+                            ->label('Status Promo')
+                            ->options([
+                                '0' => 'Nonaktif (OFF)',
+                                '1' => 'Aktif (ON)',
+                            ])
+                            ->required(),
+                        TextInput::make('promo_grand_opening_points')
+                            ->label('Nominal Poin Bonus')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(2000)
+                            ->helperText('Jumlah poin gratis yang diberikan ke setiap member baru.'),
+                        TextInput::make('promo_grand_opening_quota')
+                            ->label('Batas Kuota Pendaftar')
+                            ->numeric()
+                            ->minValue(0)
+                            ->default(100)
+                            ->helperText('Contoh: 100 untuk 100 member pertama. Isi 0 jika tanpa batas kuota.'),
+                        TextInput::make('promo_grand_opening_progress')
+                            ->label('Progres Klaim Poin')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->helperText('Jumlah member yang telah mengklaim bonus ini.'),
+                    ])->columns(2),
             ])
             ->statePath('data');
     }
@@ -212,15 +252,16 @@ class ManageSettings extends Page implements HasForms
             'duitku_merchant_code', 'duitku_api_key', 'duitku_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
+            'promo_grand_opening_active', 'promo_grand_opening_points', 'promo_grand_opening_quota',
         ] as $key) {
-            Setting::set($key, $data[$key] ?? null);
+            Setting::set($key, (string) ($data[$key] ?? ''));
         }
 
         $this->form->fill($this->getFormState());
 
         Notification::make()
             ->title('Pengaturan Berhasil Disimpan')
-            ->body('Konfigurasi API Duitku, Digiflazz, dan WhatsApp telah diperbarui.')
+            ->body('Pengaturan API dan Promo Grand Opening telah diperbarui.')
             ->success()
             ->send();
     }

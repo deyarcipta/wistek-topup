@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PointLog;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
@@ -154,11 +156,47 @@ class AuthController extends Controller
             'points_balance' => 0,
         ]);
 
+        // Check Grand Opening Welcome Bonus
+        $promoActive = Setting::get('promo_grand_opening_active', '0') === '1';
+        $promoPoints = (int) Setting::get('promo_grand_opening_points', 2000);
+        $promoQuota = (int) Setting::get('promo_grand_opening_quota', 100);
+
+        $claimedCount = PointLog::where('type', 'welcome_bonus')->count();
+        $isQuotaAvailable = ($promoQuota <= 0) || ($claimedCount < $promoQuota);
+
+        $welcomePointsAwarded = 0;
+        if ($promoActive && $promoPoints > 0 && $isQuotaAvailable) {
+            $welcomePointsAwarded = $promoPoints;
+            $user->incrementPoints(
+                $welcomePointsAwarded,
+                'welcome_bonus',
+                'Bonus Selamat Datang - Grand Opening Wistek Topup',
+                null,
+                now()->addMonths(6)
+            );
+
+            // Send WhatsApp notification for welcome bonus
+            try {
+                $whatsapp = new WhatsappService;
+                $formattedPoints = number_format($welcomePointsAwarded, 0, ',', '.');
+                $whatsapp->sendMessage(
+                    $user->phone,
+                    "Selamat datang di Wistek Topup, *{$user->name}*! 🎉\n\nPendaftaran akun member Anda berhasil. Selamat, Anda mendapatkan *Bonus Grand Opening sebesar {$formattedPoints} Poin*!\n\nPoin ini dapat langsung Anda gunakan sebagai potongan harga belanja saat top-up produk di Wistek Topup.\n\nSelamat berbelanja!"
+                );
+            } catch (\Throwable $e) {
+                logger()->error('Failed to send grand opening WhatsApp welcome notification: '.$e->getMessage());
+            }
+        }
+
         Auth::login($user);
 
         session()->forget('pending_registration');
 
-        return redirect('/dashboard')->with('success', 'Akun member Anda berhasil terverifikasi dan didaftarkan!');
+        $successMsg = $welcomePointsAwarded > 0
+            ? 'Akun member Anda berhasil terverifikasi! Selamat, Anda mendapatkan Bonus Grand Opening sebesar '.number_format($welcomePointsAwarded, 0, ',', '.').' Poin!'
+            : 'Akun member Anda berhasil terverifikasi dan didaftarkan!';
+
+        return redirect('/dashboard')->with('success', $successMsg);
     }
 
     /**
