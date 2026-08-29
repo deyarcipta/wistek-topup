@@ -56,6 +56,7 @@ class TopupController extends Controller
         $products = Product::with('subCategory')
             ->where('category_id', $category->id)
             ->where('status', true)
+            ->where('digiflazz_status', true)
             ->orderBy('price_sell', 'asc')
             ->get();
 
@@ -80,8 +81,8 @@ class TopupController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
-        // Check if product is active; if not, reject the checkout
-        if ($product->status !== 1) {
+        // Check if product is active in store and available in Digiflazz
+        if (! $product->status || ! $product->digiflazz_status) {
             return back()->withErrors(['error' => 'Produk ini sedang tidak aktif / tidak tersedia di Digiflazz.']);
         }
         $category = Category::findOrFail($request->category_id);

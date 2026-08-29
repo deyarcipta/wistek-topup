@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\Category;
+use App\Models\Product;
 use App\Models\Setting;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class DigiflazzService
 {
@@ -131,8 +135,13 @@ class DigiflazzService
     /**
      * Get price list of prepaid products
      */
-    public function getProducts()
+    public function getProducts(bool $forceRefresh = false)
     {
+        $cacheKey = 'digiflazz_pricelist_'.$this->username;
+        if (! $forceRefresh && Cache::has($cacheKey)) {
+            return Cache::get($cacheKey);
+        }
+
         // sign = md5(username + apiKey + 'pricelist')
         $sign = md5($this->username.$this->apiKey.'pricelist');
 
@@ -147,16 +156,169 @@ class DigiflazzService
 
             if ($response->successful()) {
                 $data = $response->json();
+                $rawProducts = $data['data'] ?? [];
 
-                return $data['data'] ?? [];
+                // Check if Digiflazz returned a rate limit or error object instead of a list
+                if (isset($rawProducts['rc'])) {
+                    $msg = $rawProducts['message'] ?? ('Digiflazz error rc: '.$rawProducts['rc']);
+                    throw new Exception($msg);
+                }
+
+                // If not empty, verify it is a list of product items
+                if (! empty($rawProducts) && ! is_array($rawProducts)) {
+                    throw new Exception('Format respon produk Digiflazz tidak valid.');
+                }
+
+                if (! empty($rawProducts) && isset($rawProducts[0]) && is_array($rawProducts[0])) {
+                    // Cache valid product list for 2 minutes to prevent rate limit RC 83
+                    Cache::put($cacheKey, $rawProducts, now()->addMinutes(2));
+                }
+
+                return $rawProducts;
             }
 
             throw new Exception('Digiflazz Pricelist Error: '.$response->body());
         } catch (Exception $e) {
             logger()->error('Digiflazz getProducts failed: '.$e->getMessage());
 
-            return [];
+            throw $e;
         }
+    }
+
+    /**
+     * Synchronize products from Digiflazz into local database
+     *
+     * @return array{total: int, created: int, updated: int, deactivated: int}
+     */
+    public function syncProducts(bool $forceRefresh = false): array
+    {
+        $dfProducts = $this->getProducts($forceRefresh);
+
+        if (empty($dfProducts)) {
+            return [
+                'total' => 0,
+                'created' => 0,
+                'updated' => 0,
+                'deactivated' => 0,
+            ];
+        }
+
+        $createdCount = 0;
+        $updatedCount = 0;
+        $deactivatedCount = 0;
+        $matchedProductIds = [];
+
+        foreach ($dfProducts as $item) {
+            $sku = trim((string) ($item['buyer_sku_code'] ?? ''));
+            if ($sku === '') {
+                continue;
+            }
+
+            $priceCost = (float) ($item['price'] ?? 0);
+            $buyerActive = in_array(strtolower((string) ($item['buyer_product_status'] ?? '')), ['1', 'true', 'active'], true);
+            $sellerActive = in_array(strtolower((string) ($item['seller_product_status'] ?? '')), ['1', 'true', 'active'], true);
+            $isDigiflazzActive = $buyerActive && $sellerActive;
+
+            $product = Product::where('sku', $sku)->first();
+
+            if ($product) {
+                $matchedProductIds[] = $product->id;
+
+                $costChanged = (float) $product->price_cost !== $priceCost;
+                $dfStatusChanged = (bool) $product->digiflazz_status !== $isDigiflazzActive;
+
+                if ($costChanged || $dfStatusChanged) {
+                    $product->update([
+                        'price_cost' => $priceCost,
+                        'digiflazz_status' => $isDigiflazzActive,
+                    ]);
+
+                    if ($dfStatusChanged && ! $isDigiflazzActive) {
+                        $deactivatedCount++;
+                    }
+                    $updatedCount++;
+                }
+            } else {
+                // If product does not exist in local database, auto-import it if buyer status is active in Digiflazz
+                if ($buyerActive) {
+                    $brand = trim((string) ($item['brand'] ?? ''));
+                    $categoryName = trim((string) ($item['category'] ?? ''));
+                    $productName = trim((string) ($item['product_name'] ?? $sku));
+
+                    $category = null;
+                    if ($brand !== '') {
+                        $brandSlug = Str::slug($brand);
+                        $category = Category::where('slug', $brandSlug)->first();
+
+                        if (! $category) {
+                            $category = Category::where('name', 'like', "%{$brand}%")->first();
+                        }
+
+                        if (! $category) {
+                            $type = match (strtolower($categoryName)) {
+                                'pulsa' => 'pulsa',
+                                'e-money', 'emoney' => 'emoney',
+                                'voucher' => 'voucher',
+                                default => 'game',
+                            };
+
+                            $category = Category::create([
+                                'name' => ucwords(strtolower($brand)),
+                                'slug' => $brandSlug ?: Str::slug($productName),
+                                'type' => $type,
+                                'status' => true,
+                            ]);
+                        }
+                    }
+
+                    if (! $category) {
+                        $category = Category::first();
+                    }
+
+                    // Sensible default selling price: cost + markup
+                    $margin = match (true) {
+                        $priceCost <= 5000 => 500,
+                        $priceCost <= 20000 => 1000,
+                        $priceCost <= 50000 => 2000,
+                        $priceCost <= 100000 => 3500,
+                        default => ceil(($priceCost * 0.05) / 100) * 100,
+                    };
+                    $priceSell = $priceCost + $margin;
+
+                    if ($category) {
+                        $newProduct = Product::create([
+                            'category_id' => $category->id,
+                            'name' => $productName,
+                            'sku' => $sku,
+                            'price_cost' => $priceCost,
+                            'price_sell' => $priceSell,
+                            'status' => true, // Tampilkan di web secara default
+                            'digiflazz_status' => $isDigiflazzActive,
+                        ]);
+
+                        $matchedProductIds[] = $newProduct->id;
+                        $createdCount++;
+                    }
+                }
+            }
+        }
+
+        // Mark any existing products that were not returned by Digiflazz as inactive in Digiflazz
+        $unmatchedProducts = Product::where('digiflazz_status', true)
+            ->whereNotIn('id', $matchedProductIds)
+            ->get();
+
+        foreach ($unmatchedProducts as $unmatchedProduct) {
+            $unmatchedProduct->update(['digiflazz_status' => false]);
+            $deactivatedCount++;
+        }
+
+        return [
+            'total' => count($dfProducts),
+            'created' => $createdCount,
+            'updated' => $updatedCount,
+            'deactivated' => $deactivatedCount,
+        ];
     }
 
     /**
@@ -192,9 +354,17 @@ class DigiflazzService
                 }
             }
 
+            // Handle error responses, including product inactive (rc 43)
+            $errorData = $response->json();
+            $message = $errorData['data']['message'] ?? ($errorData['message'] ?? 'Digiflazz API request failed');
+            $rc = $errorData['data']['rc'] ?? null;
+            if ($rc === '43') {
+                $message = 'Produk tidak aktif atau sedang gangguan di Digiflazz.';
+            }
+
             return [
                 'success' => false,
-                'message' => $response->json()['data']['message'] ?? ($response->json()['message'] ?? 'Digiflazz API request failed'),
+                'message' => $message,
             ];
         } catch (Exception $e) {
             logger()->error('Digiflazz orderTopup failed: '.$e->getMessage());

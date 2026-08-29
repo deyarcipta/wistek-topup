@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
@@ -40,8 +41,11 @@ class ProductsTable
                     ->label('Harga Jual')
                     ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
-                IconColumn::make('status')
-                    ->label('Aktif')
+                ToggleColumn::make('status')
+                    ->label('Tampilkan di Web')
+                    ->sortable(),
+                IconColumn::make('digiflazz_status')
+                    ->label('Status Digiflazz')
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('created_at')

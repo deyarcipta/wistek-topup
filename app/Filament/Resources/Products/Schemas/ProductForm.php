@@ -50,7 +50,13 @@ class ProductForm
                     ->prefix('Rp')
                     ->required(),
                 Toggle::make('status')
-                    ->label('Aktif / Tampilkan')
+                    ->label('Tampilkan di Website')
+                    ->helperText('Nyalakan untuk menampilkan dan menjual produk ini kepada pembeli di website.')
+                    ->default(true)
+                    ->required(),
+                Toggle::make('digiflazz_status')
+                    ->label('Status Provider (Digiflazz)')
+                    ->helperText('Status otomatis dari Digiflazz (Aktif / Gangguan).')
                     ->default(true)
                     ->required(),
             ]);
