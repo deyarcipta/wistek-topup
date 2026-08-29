@@ -80,6 +80,10 @@ class TopupController extends Controller
         ]);
 
         $product = Product::findOrFail($request->product_id);
+        // Check if product is active; if not, reject the checkout
+        if ($product->status !== 1) {
+            return back()->withErrors(['error' => 'Produk ini sedang tidak aktif / tidak tersedia di Digiflazz.']);
+        }
         $category = Category::findOrFail($request->category_id);
 
         // Calculate dynamic fee from payment methods

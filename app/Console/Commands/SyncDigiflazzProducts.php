@@ -57,7 +57,10 @@ class SyncDigiflazzProducts extends Command
                 $matchedProductIds[] = $product->id;
 
                 $priceCost = $item['price'] ?? $product->price_cost;
-                $isActive = ($item['buyer_product_status'] ?? false) && ($item['seller_product_status'] ?? false);
+                // Determine active status considering possible string values from Digiflazz API
+                $buyerActive = in_array(strtolower((string) ($item['buyer_product_status'] ?? '')), ['1', 'true', 'active'], true);
+                $sellerActive = in_array(strtolower((string) ($item['seller_product_status'] ?? '')), ['1', 'true', 'active'], true);
+                $isActive = $buyerActive && $sellerActive;
                 $newStatus = $isActive ? 1 : 0;
 
                 $statusChanged = $product->status !== $newStatus;
