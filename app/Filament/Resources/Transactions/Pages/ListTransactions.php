@@ -9,10 +9,13 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DigiflazzService;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ListTransactions extends ListRecords
@@ -61,6 +64,7 @@ class ListTransactions extends ListRecords
                         ->label('User ID (Mobile Legends)')
                         ->placeholder('Contoh: 12345678')
                         ->required()
+                        ->live(onBlur: true)
                         ->visible(function (callable $get) {
                             $productId = $get('product_id');
                             if (! $productId) {
@@ -77,6 +81,7 @@ class ListTransactions extends ListRecords
                         ->label('Zone ID (Mobile Legends)')
                         ->placeholder('Contoh: 1234')
                         ->required()
+                        ->live(onBlur: true)
                         ->visible(function (callable $get) {
                             $productId = $get('product_id');
                             if (! $productId) {
@@ -88,6 +93,53 @@ class ListTransactions extends ListRecords
 
                             return Str::contains(strtolower($categoryName), 'mobile legends')
                                 || Str::contains(strtolower($categorySlug), 'mobile-legends');
+                        }),
+                    Placeholder::make('mlbb_nickname')
+                        ->label('Nickname Pemain (Verifikasi)')
+                        ->visible(function (callable $get) {
+                            $productId = $get('product_id');
+                            if (! $productId) {
+                                return false;
+                            }
+                            $product = Product::with('category')->find($productId);
+                            $categoryName = $product?->category?->name ?? '';
+                            $categorySlug = $product?->category?->slug ?? '';
+
+                            return Str::contains(strtolower($categoryName), 'mobile legends')
+                                || Str::contains(strtolower($categorySlug), 'mobile-legends');
+                        })
+                        ->content(function (callable $get) {
+                            $userId = $get('user_id_ml');
+                            $zoneId = $get('zone_id_ml');
+
+                            if (empty($userId) || empty($zoneId)) {
+                                return 'Silakan masukkan User ID dan Zone ID.';
+                            }
+
+                            try {
+                                $response = Http::timeout(3)
+                                    ->get(url('/api/check-mlbb'), [
+                                        'id' => $userId,
+                                        'zone' => $zoneId,
+                                    ]);
+
+                                if ($response->successful()) {
+                                    $data = $response->json();
+                                    if ($data['success'] && ! empty($data['nickname'])) {
+                                        return new HtmlString(
+                                            '<span class="text-success font-bold" style="color: #22c55e; font-weight: bold;">🟢 Nickname: '.e($data['nickname']).'</span>'
+                                        );
+                                    }
+                                }
+
+                                return new HtmlString(
+                                    '<span class="text-danger" style="color: #ef4444;">🔴 ID / Zone tidak ditemukan atau salah.</span>'
+                                );
+                            } catch (\Exception $e) {
+                                return new HtmlString(
+                                    '<span class="text-warning" style="color: #eab308;">⚠️ Gagal memvalidasi (Time out / offline)</span>'
+                                );
+                            }
                         }),
                     TextInput::make('target_no_game')
                         ->label('ID Akun / Target')

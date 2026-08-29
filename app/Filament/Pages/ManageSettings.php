@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Setting;
 use App\Services\DigiflazzService;
 use App\Services\DuitkuService;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -14,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -34,6 +36,37 @@ class ManageSettings extends Page implements HasForms
     public static function canAccess(): bool
     {
         return auth()->user()?->isAdmin() ?? false;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('syncProducts')
+                ->label('Sinkronkan Produk Digiflazz')
+                ->icon('heroicon-o-arrow-path')
+                ->color('success')
+                ->action(function () {
+                    $exitCode = Artisan::call('products:sync-digiflazz');
+                    $output = Artisan::output();
+
+                    if ($exitCode === 0) {
+                        Notification::make()
+                            ->title('Sinkronisasi Sukses')
+                            ->body(str_replace("\n", '<br>', $output))
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Sinkronisasi Gagal')
+                            ->body(str_replace("\n", '<br>', $output))
+                            ->danger()
+                            ->send();
+                    }
+
+                    // Refresh page state to show updated balance
+                    $this->mount();
+                }),
+        ];
     }
 
     public ?array $data = [];

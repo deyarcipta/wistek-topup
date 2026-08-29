@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CallbackController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TopupController;
+use App\Http\Controllers\ValidationController;
 use Illuminate\Support\Facades\Route;
 
 // Landing Homepage
@@ -23,6 +24,7 @@ Route::post('/history', [TopupController::class, 'checkHistory']);
 
 // API status lookup for AJAX checkout page status updates
 Route::get('/api/transaction-status/{invoice}', [TopupController::class, 'apiStatus']);
+Route::get('/api/check-mlbb', [ValidationController::class, 'checkMlbb']);
 
 // Webhooks (Exempt from CSRF in bootstrap/app.php)
 Route::post('/callback/duitku', [CallbackController::class, 'duitkuCallback']);

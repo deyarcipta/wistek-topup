@@ -215,12 +215,14 @@
                         <div class="input-group-row">
                             <div>
                                 <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">User ID</label>
-                                <input type="text" name="target_id" class="form-control" placeholder="Contoh: 12345678" required>
+                                <input type="text" name="target_id" id="mlbb_user_id" class="form-control" placeholder="Contoh: 12345678" required>
                             </div>
                             <div>
                                 <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Zone ID</label>
-                                <input type="text" name="zone_id" class="form-control" placeholder="Contoh: 1234" required>
+                                <input type="text" name="zone_id" id="mlbb_zone_id" class="form-control" placeholder="Contoh: 1234" required>
                             </div>
+                        </div>
+                        <div id="mlbb_nickname_result" style="margin-top: 0.5rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
                         </div>
                     @else
                         <div>
@@ -888,6 +890,49 @@
             applyBtn.style.opacity = '1';
             applyBtn.innerText = 'Terapkan';
         });
+    }
+
+    // AJAX Verification for Mobile Legends User ID & Zone ID
+    const mlUserIdInput = document.getElementById('mlbb_user_id');
+    const mlZoneIdInput = document.getElementById('mlbb_zone_id');
+    const mlNicknameResult = document.getElementById('mlbb_nickname_result');
+
+    if (mlUserIdInput && mlZoneIdInput && mlNicknameResult) {
+        const checkMlbbNickname = () => {
+            const userId = mlUserIdInput.value.trim();
+            const zoneId = mlZoneIdInput.value.trim();
+
+            if (userId === '' || zoneId === '') {
+                mlNicknameResult.style.display = 'none';
+                return;
+            }
+
+            // Display loading status
+            mlNicknameResult.style.display = 'flex';
+            mlNicknameResult.style.color = '#eab308'; // Warning yellow
+            mlNicknameResult.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.35rem;"></i> Memvalidasi data akun...`;
+
+            // Call check API
+            fetch(`/api/check-mlbb?id=${encodeURIComponent(userId)}&zone=${encodeURIComponent(zoneId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.nickname) {
+                        mlNicknameResult.style.color = '#10b981'; // Green
+                        mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-check" style="margin-right: 0.35rem;"></i> Nickname: <strong>${data.nickname}</strong>`;
+                    } else {
+                        mlNicknameResult.style.color = '#ef4444'; // Red
+                        mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-xmark" style="margin-right: 0.35rem;"></i> Data akun tidak ditemukan atau salah.`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error validating MLBB ID:', error);
+                    mlNicknameResult.style.color = '#eab308'; // Orange/Yellow
+                    mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="margin-right: 0.35rem;"></i> Gagal memvalidasi (offline).`;
+                });
+        };
+
+        mlUserIdInput.addEventListener('blur', checkMlbbNickname);
+        mlZoneIdInput.addEventListener('blur', checkMlbbNickname);
     }
 
     // Client-side validation before submit
