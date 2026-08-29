@@ -99,34 +99,74 @@ class MemberLoyaltyTest extends TestCase
     }
 
     /**
-     * Test registration with same IP referral code is blocked (Anti-Abuse)
+     * Test registration correctly extracts real client IP behind reverse proxy (aaPanel)
      */
-    public function test_registration_with_same_ip_referral_code_is_blocked(): void
+    public function test_registration_extracts_real_client_ip_behind_reverse_proxy(): void
+    {
+        $response = $this->withServerVariables([
+            'REMOTE_ADDR' => '15.15.15.2', // aaPanel reverse proxy IP
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.195', // Real client IP
+        ])->post('/register', [
+            'name' => 'Proxy User',
+            'username' => 'proxyuser',
+            'email' => 'proxy@example.com',
+            'phone' => '081299998888',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+
+        $response->assertRedirect('/register/verify');
+        $this->assertEquals('203.0.113.195', session('pending_registration.registration_ip'));
+
+        $otp = session('pending_registration.otp');
+        $this->post('/register/verify', ['otp' => $otp]);
+
+        $this->assertDatabaseHas('users', [
+            'username' => 'proxyuser',
+            'registration_ip' => '203.0.113.195',
+        ]);
+    }
+
+    /**
+     * Test registration with own referral code is blocked (Anti-Abuse)
+     */
+    public function test_registration_with_own_referral_code_is_blocked(): void
     {
         $referrer = User::create([
             'name' => 'Referrer User',
             'username' => 'referrer',
             'email' => 'referrer@example.com',
-            'phone' => '81234567891',
+            'phone' => '081234567891',
             'password' => Hash::make('secret123'),
             'role' => 'member',
             'registration_ip' => '192.168.1.10',
         ]);
 
-        $response = $this->withServerVariables(['REMOTE_ADDR' => '192.168.1.10'])->post('/register', [
-            'name' => 'Abusive User',
-            'username' => 'abusive',
-            'email' => 'abusive@example.com',
-            'phone' => '81234567892',
+        // Attempt using own email
+        $response = $this->post('/register', [
+            'name' => 'Self Referrer',
+            'username' => 'selfreferrer',
+            'email' => 'referrer@example.com', // same email
+            'phone' => '081234567892',
             'password' => 'secret123',
             'password_confirmation' => 'secret123',
             'referral_code' => $referrer->referral_code,
         ]);
 
-        $response->assertSessionHasErrors('referral_code');
-        $this->assertDatabaseMissing('users', [
-            'username' => 'abusive',
+        $response->assertSessionHasErrors(['email']);
+
+        // Attempt using own phone
+        $response2 = $this->post('/register', [
+            'name' => 'Self Referrer 2',
+            'username' => 'selfreferrer2',
+            'email' => 'other@example.com',
+            'phone' => '081234567891', // same phone as referrer
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+            'referral_code' => $referrer->referral_code,
         ]);
+
+        $response2->assertSessionHasErrors(['phone']);
     }
 
     /**

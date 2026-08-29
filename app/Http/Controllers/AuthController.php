@@ -45,32 +45,6 @@ class AuthController extends Controller
         $referredById = null;
         $ipAddress = $request->ip();
 
-        if ($request->filled('referral_code')) {
-            $referrer = User::where('referral_code', $request->referral_code)->first();
-
-            if ($referrer) {
-                // Anti-Abuse: Check if the referrer's registration IP matches the registrant's IP
-                if ($referrer->registration_ip === $ipAddress || $referrer->email === $request->email) {
-                    throw ValidationException::withMessages([
-                        'referral_code' => 'Anda tidak dapat menggunakan kode referral Anda sendiri atau dari perangkat yang sama.',
-                    ]);
-                }
-
-                // Anti-Abuse: Prevent farming multiple referral accounts from the same IP
-                $sameIpReferrals = User::where('registration_ip', $ipAddress)
-                    ->whereNotNull('referred_by_id')
-                    ->count();
-
-                if ($sameIpReferrals >= 1) {
-                    throw ValidationException::withMessages([
-                        'referral_code' => 'Pendaftaran akun dengan kode referral dibatasi 1 akun per perangkat / jaringan internet.',
-                    ]);
-                }
-
-                $referredById = $referrer->id;
-            }
-        }
-
         // Clean & Normalize Phone
         $cleanPhone = preg_replace('/[^0-9]/', '', $request->phone);
         if (str_starts_with($cleanPhone, '620')) {
@@ -81,6 +55,27 @@ class AuthController extends Controller
         }
         if (str_starts_with($cleanPhone, '8')) {
             $cleanPhone = '0'.$cleanPhone;
+        }
+
+        if (User::where('phone', $cleanPhone)->exists()) {
+            throw ValidationException::withMessages([
+                'phone' => 'Nomor WhatsApp ini sudah terdaftar sebagai member.',
+            ]);
+        }
+
+        if ($request->filled('referral_code')) {
+            $referrer = User::where('referral_code', $request->referral_code)->first();
+
+            if ($referrer) {
+                // Anti-Abuse: Check if the referrer is attempting to use their own referral code
+                if ($referrer->email === $request->email || $referrer->phone === $cleanPhone) {
+                    throw ValidationException::withMessages([
+                        'referral_code' => 'Anda tidak dapat menggunakan kode referral milik Anda sendiri.',
+                    ]);
+                }
+
+                $referredById = $referrer->id;
+            }
         }
 
         // Generate 6-digit OTP

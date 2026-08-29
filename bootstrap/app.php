@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->validateCsrfTokens(except: [
             '/callback/duitku',
             '/callback/digiflazz',
@@ -22,7 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'member' => EnsureUserIsMember::class,
         ]);
-
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
