@@ -36,6 +36,7 @@ class CategoryForm
                         'game' => 'Game',
                         'pulsa' => 'Pulsa & Data',
                         'emoney' => 'E-Money',
+                        'streaming' => 'Streaming & Hiburan',
                         'pln' => 'PLN / Listrik',
                         'tagihan' => 'Tagihan & PPOB',
                         'voucher' => 'Voucher',

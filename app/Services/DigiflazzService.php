@@ -409,13 +409,26 @@ class DigiflazzService
             return 'pln';
         }
 
-        // 2. Pertamina Gas, PDAM, BPJS, TV Kabel, PPOB, Tagihan
+        // 2. Streaming & Hiburan (Vidio, Netflix, Spotify, K-Vision, GOL, WeTV, Viu, Disney+, YouTube, dll.)
+        $streamingBrands = ['netflix', 'vidio', 'spotify', 'wetv', 'viu', 'disney', 'youtube', 'k-vision', 'kvision', 'gol', 'mola', 'iqiyi', 'catchplay', 'genflix', 'vision+'];
+        if (
+            str_contains($cat, 'streaming') || str_contains($cat, 'hiburan') || str_contains($cat, 'tv') ||
+            in_array($brand, $streamingBrands)
+        ) {
+            return 'streaming';
+        }
+        foreach ($streamingBrands as $sb) {
+            if (str_contains($brand, $sb)) {
+                return 'streaming';
+            }
+        }
+
+        // 3. Pertamina Gas, PDAM, BPJS, PPOB, Tagihan
         if (
             str_contains($cat, 'gas') || str_contains($brand, 'gas') ||
             str_contains($cat, 'pdam') || str_contains($brand, 'pdam') ||
             str_contains($cat, 'bpjs') || str_contains($brand, 'bpjs') ||
-            str_contains($cat, 'tv') || str_contains($brand, 'tv') ||
-            str_contains($brand, 'k-vision') || str_contains($brand, 'indihome') ||
+            str_contains($brand, 'indihome') ||
             str_contains($cat, 'pascabayar') || str_contains($cat, 'tagihan')
         ) {
             return 'tagihan';

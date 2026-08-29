@@ -228,6 +228,8 @@
                             <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">
                                 @if($category->type === 'pln')
                                     Nomor Meter / ID Pelanggan PLN
+                                @elseif($category->type === 'streaming')
+                                    ID Pelanggan / No. HP / Email Akun
                                 @elseif($category->type === 'tagihan')
                                     Nomor Pelanggan / ID Tagihan
                                 @elseif(in_array($category->type, ['pulsa', 'emoney']))
@@ -236,7 +238,7 @@
                                     ID Akun / Target
                                 @endif
                             </label>
-                            <input type="text" name="target_id" class="form-control" placeholder="Contoh: @if($category->type === 'pln')14123456789@elseif($category->type === 'tagihan')0123456789@elseif(in_array($category->type, ['pulsa', 'emoney']))081234567890@else523087265@endif" required>
+                            <input type="text" name="target_id" class="form-control" placeholder="Contoh: @if($category->type === 'pln')14123456789@elseif($category->type === 'streaming')081234567890 / user@email.com@elseif($category->type === 'tagihan')0123456789@elseif(in_array($category->type, ['pulsa', 'emoney']))081234567890@else523087265@endif" required>
                         </div>
                     @endif
                     <p class="form-help">Kesalahan input data oleh pembeli bukan tanggung jawab kami.</p>

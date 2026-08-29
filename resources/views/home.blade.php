@@ -151,15 +151,32 @@
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
             <h2 class="section-title" style="margin-bottom: 0;">Semua Game & Layanan</h2>
             
+            @php
+                $activeCategoryTypes = $categories->pluck('type')->unique()->toArray();
+                // Tipe utama yang selalu dipertahankan
+                $primaryTypes = ['game'];
+                
+                $allTypeDefinitions = [
+                    'game' => ['label' => 'Game', 'icon' => 'fa-solid fa-gamepad'],
+                    'pulsa' => ['label' => 'Pulsa & Data', 'icon' => 'fa-solid fa-mobile-screen-button'],
+                    'emoney' => ['label' => 'E-Money', 'icon' => 'fa-solid fa-wallet'],
+                    'streaming' => ['label' => 'Streaming', 'icon' => 'fa-solid fa-film'],
+                    'pln' => ['label' => 'PLN', 'icon' => 'fa-solid fa-bolt'],
+                    'tagihan' => ['label' => 'Tagihan', 'icon' => 'fa-solid fa-file-invoice-dollar'],
+                    'voucher' => ['label' => 'Voucher', 'icon' => 'fa-solid fa-ticket'],
+                ];
+            @endphp
+
             <!-- Filters Tabs -->
             <div class="filter-tabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <button onclick="filterCategory('all')" class="filter-btn active" data-type="all">Semua</button>
-                <button onclick="filterCategory('game')" class="filter-btn" data-type="game"><i class="fa-solid fa-gamepad"></i> Game</button>
-                <button onclick="filterCategory('pulsa')" class="filter-btn" data-type="pulsa"><i class="fa-solid fa-mobile-screen-button"></i> Pulsa & Data</button>
-                <button onclick="filterCategory('emoney')" class="filter-btn" data-type="emoney"><i class="fa-solid fa-wallet"></i> E-Money</button>
-                <button onclick="filterCategory('pln')" class="filter-btn" data-type="pln"><i class="fa-solid fa-bolt"></i> PLN</button>
-                <button onclick="filterCategory('tagihan')" class="filter-btn" data-type="tagihan"><i class="fa-solid fa-file-invoice-dollar"></i> Tagihan</button>
-                <button onclick="filterCategory('voucher')" class="filter-btn" data-type="voucher"><i class="fa-solid fa-ticket"></i> Voucher</button>
+                @foreach($allTypeDefinitions as $typeKey => $tabDef)
+                    @if(in_array($typeKey, $primaryTypes) || in_array($typeKey, $activeCategoryTypes))
+                        <button onclick="filterCategory('{{ $typeKey }}')" class="filter-btn" data-type="{{ $typeKey }}">
+                            <i class="{{ $tabDef['icon'] }}"></i> {{ $tabDef['label'] }}
+                        </button>
+                    @endif
+                @endforeach
             </div>
         </div>
         
@@ -173,6 +190,7 @@
                             'game' => 'Game',
                             'pulsa' => 'Pulsa & Data',
                             'emoney' => 'E-Money',
+                            'streaming' => 'Streaming',
                             'pln' => 'PLN Listrik',
                             'tagihan' => 'Tagihan',
                             'voucher' => 'Voucher',
