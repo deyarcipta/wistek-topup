@@ -42,6 +42,7 @@ class SyncDigiflazzProducts extends Command
 
         $syncedCount = 0;
         $deactivatedCount = 0;
+        $matchedProductIds = [];
 
         foreach ($dfProducts as $item) {
             $sku = $item['buyer_sku_code'] ?? null;
@@ -53,6 +54,8 @@ class SyncDigiflazzProducts extends Command
             $product = Product::where('sku', $sku)->first();
 
             if ($product) {
+                $matchedProductIds[] = $product->id;
+
                 $priceCost = $item['price'] ?? $product->price_cost;
                 $isActive = ($item['buyer_product_status'] ?? false) && ($item['seller_product_status'] ?? false);
                 $newStatus = $isActive ? 1 : 0;
@@ -74,9 +77,21 @@ class SyncDigiflazzProducts extends Command
             }
         }
 
+        // Deactivate any local active products whose SKU was NOT returned in Digiflazz pricelist
+        $unmatchedProducts = Product::where('status', 1)
+            ->whereNotIn('id', $matchedProductIds)
+            ->get();
+
+        $unmatchedCount = 0;
+        foreach ($unmatchedProducts as $unmatchedProduct) {
+            $unmatchedProduct->update(['status' => 0]);
+            $unmatchedCount++;
+        }
+
         $this->info('Synchronization completed successfully!');
         $this->info("- Synced / Updated products: {$syncedCount}");
         $this->info("- Deactivated due to supplier disturbance: {$deactivatedCount}");
+        $this->info("- Deactivated due to invalid/missing SKU on Digiflazz: {$unmatchedCount}");
 
         return 0;
     }
