@@ -52,7 +52,9 @@ class TopupController extends Controller
      */
     public function showCategory($slug, DuitkuService $duitku)
     {
-        $category = Category::where('slug', $slug)->firstOrFail();
+        $category = Category::where('slug', $slug)
+            ->where('status', true)
+            ->firstOrFail();
         $products = Product::with('subCategory')
             ->where('category_id', $category->id)
             ->where('status', true)
@@ -80,12 +82,16 @@ class TopupController extends Controller
             'voucher_code' => 'nullable|string',
         ]);
 
+        $category = Category::findOrFail($request->category_id);
+        if (! $category->status) {
+            return back()->withErrors(['error' => 'Kategori / game ini sedang dinonaktifkan sementara.']);
+        }
+
         $product = Product::findOrFail($request->product_id);
         // Check if product is active in store and available in Digiflazz
         if (! $product->status || ! $product->digiflazz_status) {
             return back()->withErrors(['error' => 'Produk ini sedang tidak aktif / tidak tersedia di Digiflazz.']);
         }
-        $category = Category::findOrFail($request->category_id);
 
         // Calculate dynamic fee from payment methods
         $paymentChannels = $duitku->getPaymentChannels();
