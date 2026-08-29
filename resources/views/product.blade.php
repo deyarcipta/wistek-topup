@@ -224,6 +224,7 @@
                         </div>
                         <div id="mlbb_nickname_result" style="margin-top: 0.5rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
                         </div>
+                    @else
                         <div>
                             <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">
                                 @if($category->type === 'pln')
@@ -238,7 +239,16 @@
                                     ID Akun / Target
                                 @endif
                             </label>
-                            <input type="text" name="target_id" class="form-control" placeholder="Contoh: @if($category->type === 'pln')14123456789@elseif($category->type === 'streaming')081234567890 / user@email.com@elseif($category->type === 'tagihan')0123456789@elseif(in_array($category->type, ['pulsa', 'emoney']))081234567890@else523087265@endif" required>
+                            @php
+                                $targetPlaceholder = match($category->type) {
+                                    'pln' => 'Contoh: 14123456789',
+                                    'streaming' => 'Contoh: 081234567890 / user@email.com',
+                                    'tagihan' => 'Contoh: 0123456789',
+                                    'pulsa', 'emoney' => 'Contoh: 081234567890',
+                                    default => 'Contoh: 523087265',
+                                };
+                            @endphp
+                            <input type="text" name="target_id" class="form-control" placeholder="{{ $targetPlaceholder }}" required>
                         </div>
                     @endif
                     <p class="form-help">Kesalahan input data oleh pembeli bukan tanggung jawab kami.</p>
