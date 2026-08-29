@@ -154,7 +154,7 @@
             @php
                 $activeCategoryTypes = $categories->pluck('type')->unique()->toArray();
                 // Tipe utama yang selalu dipertahankan
-                $primaryTypes = ['game'];
+                $primaryTypes = ['game', 'pulsa', 'streaming'];
                 
                 $allTypeDefinitions = [
                     'game' => ['label' => 'Game', 'icon' => 'fa-solid fa-gamepad'],
