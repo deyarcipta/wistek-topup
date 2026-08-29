@@ -712,4 +712,88 @@ class MemberLoyaltyTest extends TestCase
             'customer_phone' => '08222222223',
         ]);
     }
+
+    /**
+     * Test member cannot change phone number to one already used by another user
+     */
+    public function test_member_cannot_change_phone_to_already_used_number(): void
+    {
+        $user1 = User::create([
+            'name' => 'User One',
+            'username' => 'userone',
+            'email' => 'userone@example.com',
+            'phone' => '081211112222',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+        ]);
+
+        $user2 = User::create([
+            'name' => 'User Two',
+            'username' => 'usertwo',
+            'email' => 'usertwo@example.com',
+            'phone' => '081233334444',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+        ]);
+
+        $this->actingAs($user2);
+
+        // Attempt changing to user1's phone (with standard 08 format)
+        $response = $this->post('/dashboard/profile', [
+            'name' => 'User Two Updated',
+            'email' => 'usertwo@example.com',
+            'phone' => '081211112222', // already used by user1
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+
+        // Attempt changing to user1's phone with 62 prefix
+        $response2 = $this->post('/dashboard/profile', [
+            'name' => 'User Two Updated',
+            'email' => 'usertwo@example.com',
+            'phone' => '6281211112222', // also normalized to same number
+        ]);
+
+        $response2->assertSessionHasErrors(['phone']);
+
+        // Ensure user2's phone was not changed
+        $this->assertEquals('081233334444', $user2->fresh()->phone);
+    }
+
+    /**
+     * Test member can update profile keeping their own phone number or using a new unused number
+     */
+    public function test_member_can_update_profile_with_own_phone_or_new_phone(): void
+    {
+        $user = User::create([
+            'name' => 'Member User',
+            'username' => 'memberuser',
+            'email' => 'member@example.com',
+            'phone' => '081255556666',
+            'password' => Hash::make('secret123'),
+            'role' => 'member',
+        ]);
+
+        $this->actingAs($user);
+
+        // Update keeping own phone
+        $response = $this->post('/dashboard/profile', [
+            'name' => 'Member User New Name',
+            'email' => 'member@example.com',
+            'phone' => '081255556666',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertEquals('Member User New Name', $user->fresh()->name);
+
+        // Update with new unused phone
+        $response2 = $this->post('/dashboard/profile', [
+            'name' => 'Member User New Name',
+            'email' => 'member@example.com',
+            'phone' => '081277778888',
+        ]);
+
+        $response2->assertSessionHasNoErrors();
+        $this->assertEquals('081277778888', $user->fresh()->phone);
+    }
 }

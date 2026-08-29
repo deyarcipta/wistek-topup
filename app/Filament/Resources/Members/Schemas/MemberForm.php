@@ -25,6 +25,7 @@ class MemberForm
                     ->unique(ignoreRecord: true),
                 TextInput::make('phone')
                     ->label('WhatsApp')
+                    ->unique(ignoreRecord: true)
                     ->nullable(),
                 TextInput::make('password')
                     ->label('Kata Sandi')

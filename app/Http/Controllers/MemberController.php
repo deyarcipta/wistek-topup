@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -119,6 +120,17 @@ class MemberController extends Controller
         }
         if (str_starts_with($cleanPhone, '8')) {
             $cleanPhone = '0'.$cleanPhone;
+        }
+
+        // Check if normalized phone is already taken by another user
+        $isPhoneTaken = User::where('phone', $cleanPhone)
+            ->where('id', '!=', $user->id)
+            ->exists();
+
+        if ($isPhoneTaken) {
+            throw ValidationException::withMessages([
+                'phone' => 'Nomor WhatsApp ini sudah terdaftar oleh pengguna lain dan tidak dapat digunakan kembali.',
+            ]);
         }
 
         // Handle Photo Upload
