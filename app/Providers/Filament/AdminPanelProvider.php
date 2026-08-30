@@ -69,12 +69,12 @@ class AdminPanelProvider extends PanelProvider
                             margin-bottom: 0.15rem !important;
                         }
 
-                        /* Main Menu Dropdown Header Styling */
+                        /* Main Menu Dropdown Header Styling - Ukuran font & weight disamakan dengan Dasbor & Transaksi */
                         .fi-sidebar-group-btn {
                             display: flex !important;
                             align-items: center !important;
                             cursor: pointer !important;
-                            padding: 0.45rem 0.65rem !important;
+                            padding: 0.5rem 0.65rem !important;
                             border-radius: 0.5rem !important;
                             transition: all 0.15s ease !important;
                         }
@@ -82,8 +82,8 @@ class AdminPanelProvider extends PanelProvider
                             background-color: rgba(255, 255, 255, 0.04) !important;
                         }
                         .fi-sidebar-group-label {
-                            font-weight: 500 !important;
-                            font-size: 0.875rem !important;
+                            font-weight: 600 !important;
+                            font-size: 0.95rem !important;
                             color: #9ca3af !important; /* Warna netral abu-abu seperti Transaksi */
                             flex: 1 !important;
                             transition: color 0.15s ease !important;
@@ -93,13 +93,13 @@ class AdminPanelProvider extends PanelProvider
                             transition: color 0.15s ease !important;
                         }
 
-                        /* INACTIVE Icons: Warna abu-abu netral seperti menu Transaksi */
+                        /* INACTIVE Icons: Ukuran 1.4rem & margin disamakan dengan ikon Dasbor & Transaksi */
                         .fi-sidebar-group[data-group-label="Katalog Produk"] .fi-sidebar-group-btn::before {
                             content: "";
                             display: inline-block;
-                            width: 1.2rem;
-                            height: 1.2rem;
-                            margin-right: 0.65rem;
+                            width: 1.4rem !important;
+                            height: 1.4rem !important;
+                            margin-right: 0.75rem !important;
                             flex-shrink: 0;
                             background-size: contain;
                             background-repeat: no-repeat;
@@ -110,9 +110,9 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-group[data-group-label="Pengguna & Member"] .fi-sidebar-group-btn::before {
                             content: "";
                             display: inline-block;
-                            width: 1.2rem;
-                            height: 1.2rem;
-                            margin-right: 0.65rem;
+                            width: 1.4rem !important;
+                            height: 1.4rem !important;
+                            margin-right: 0.75rem !important;
                             flex-shrink: 0;
                             background-size: contain;
                             background-repeat: no-repeat;
@@ -123,9 +123,9 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-group[data-group-label="Promosi & Konten"] .fi-sidebar-group-btn::before {
                             content: "";
                             display: inline-block;
-                            width: 1.2rem;
-                            height: 1.2rem;
-                            margin-right: 0.65rem;
+                            width: 1.4rem !important;
+                            height: 1.4rem !important;
+                            margin-right: 0.75rem !important;
                             flex-shrink: 0;
                             background-size: contain;
                             background-repeat: no-repeat;
@@ -136,9 +136,9 @@ class AdminPanelProvider extends PanelProvider
                         .fi-sidebar-group[data-group-label="Pengaturan"] .fi-sidebar-group-btn::before {
                             content: "";
                             display: inline-block;
-                            width: 1.2rem;
-                            height: 1.2rem;
-                            margin-right: 0.65rem;
+                            width: 1.4rem !important;
+                            height: 1.4rem !important;
+                            margin-right: 0.75rem !important;
                             flex-shrink: 0;
                             background-size: contain;
                             background-repeat: no-repeat;
@@ -216,13 +216,13 @@ class AdminPanelProvider extends PanelProvider
                         }
                         .fi-sidebar-group:not([data-group-label]) .fi-sidebar-group-items .fi-sidebar-item-label,
                         .fi-sidebar-group[data-group-label=""] .fi-sidebar-group-items .fi-sidebar-item-label {
-                            font-size: 0.9rem !important;
+                            font-size: 0.95rem !important;
                             font-weight: 600 !important;
                         }
                         .fi-sidebar-group:not([data-group-label]) .fi-sidebar-group-items .fi-sidebar-item-icon,
                         .fi-sidebar-group[data-group-label=""] .fi-sidebar-group-items .fi-sidebar-item-icon {
-                            width: 1.35rem !important;
-                            height: 1.35rem !important;
+                            width: 1.4rem !important;
+                            height: 1.4rem !important;
                         }
                     </style>
                     <script>
