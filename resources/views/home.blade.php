@@ -251,80 +251,62 @@
     </section>
 
     <!-- Section: Ulasan Pelanggan -->
+    @php
+        $reviewEnabled = \App\Models\Setting::get('review_section_enabled', '1') === '1';
+        $reviewLimit = (int) \App\Models\Setting::get('review_display_limit', 3);
+        $publicReviews = $reviewEnabled 
+            ? \App\Models\Review::where('is_visible', true)->orderBy('sort_order', 'asc')->latest()->take($reviewLimit)->get()
+            : collect();
+        $avatarGradients = [
+            'linear-gradient(135deg, #e28743, #ef4444)',
+            'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            'linear-gradient(135deg, #10b981, #3b82f6)',
+            'linear-gradient(135deg, #ec4899, #f43f5e)',
+            'linear-gradient(135deg, #8b5cf6, #d946ef)',
+            'linear-gradient(135deg, #f59e0b, #e28743)',
+        ];
+    @endphp
+
+    @if($reviewEnabled && $publicReviews->isNotEmpty())
     <section style="margin-top: 4rem; margin-bottom: 2rem;">
         <h2 class="section-title" style="margin-bottom: 2rem;">Ulasan Pelanggan Setia</h2>
         
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-            <!-- Review 1 -->
-            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="background: linear-gradient(135deg, #e28743, #ef4444); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
-                            RG
+            @foreach($publicReviews as $index => $rev)
+                @php
+                    $initials = collect(explode(' ', trim($rev->name)))
+                        ->map(fn($part) => strtoupper(substr($part, 0, 1)))
+                        ->take(2)
+                        ->implode('');
+                    $gradient = $avatarGradients[$index % count($avatarGradients)];
+                @endphp
+                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='none';">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="background: {{ $gradient }}; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
+                                {{ $initials ?: 'WP' }}
+                            </div>
+                            <div>
+                                <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">{{ $rev->name }}</h4>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ $rev->role_or_title ?: 'Pelanggan Setia' }}</span>
+                            </div>
                         </div>
-                        <div>
-                            <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">Rian Gamers</h4>
-                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Mobile Legends Player</span>
+                        <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
+                            @for($i = 1; $i <= 5; $i++)
+                                @if($i <= $rev->rating)
+                                    <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
+                                @else
+                                    <i class="fa-regular fa-star" style="font-size: 0.75rem; color: #4b5563;"></i>
+                                @endif
+                            @endfor
                         </div>
                     </div>
-                    <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"{{ $rev->comment }}"</p>
                 </div>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"Gila! Cuma butuh waktu 5 detik diamond Mobile Legends langsung masuk ke akun saya. Biaya admin QRIS-nya juga murah banget dibandingkan toko sebelah."</p>
-            </div>
-
-            <!-- Review 2 -->
-            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="background: linear-gradient(135deg, #3b82f6, #8b5cf6); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
-                            AM
-                        </div>
-                        <div>
-                            <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">Amelia MLBB</h4>
-                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Gamer / Streamer</span>
-                        </div>
-                    </div>
-                    <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                    </div>
-                </div>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"Baru pertama kali coba topup di Wistek langsung ketagihan. Prosesnya instan dan CS-nya ramah banget pas nanya konfirmasi via WA. Recommended!"</p>
-            </div>
-
-            <!-- Review 3 -->
-            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                        <div style="background: linear-gradient(135deg, #10b981, #3b82f6); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
-                            RF
-                        </div>
-                        <div>
-                            <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">Reza Free Fire</h4>
-                            <span style="font-size: 0.75rem; color: var(--text-secondary);">Survivor</span>
-                        </div>
-                    </div>
-                    <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                        <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                    </div>
-                </div>
-                <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"Top up murah paling terpercaya! Saya selalu langganan di sini buat beli membership mingguan Free Fire, tidak pernah bermasalah dan selalu kilat."</p>
-            </div>
+            @endforeach
         </div>
     </section>
+    @endif
 
 </div>
 @endsection

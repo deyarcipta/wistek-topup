@@ -28,7 +28,7 @@ class ManageSettings extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'Pengaturan Sistem';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 99;
 
     protected static ?string $title = 'Pengaturan Sistem, API & Promo';
 
@@ -121,6 +121,8 @@ class ManageSettings extends Page implements HasForms
             'promo_grand_opening_points' => Setting::get('promo_grand_opening_points', '2000'),
             'promo_grand_opening_quota' => Setting::get('promo_grand_opening_quota', '100'),
             'promo_grand_opening_progress' => $progressText,
+            'review_section_enabled' => Setting::get('review_section_enabled', '1'),
+            'review_display_limit' => Setting::get('review_display_limit', '3'),
         ];
     }
 
@@ -264,6 +266,25 @@ class ManageSettings extends Page implements HasForms
                             ->dehydrated(false)
                             ->helperText('Jumlah member yang telah mengklaim bonus pada sesi ini. Klik tombol "Reset Hitungan" di kanan atas jika ingin memulai dari 0 lagi.'),
                     ])->columns(2),
+
+                Section::make('Pengaturan Tampilan Ulasan Pelanggan')
+                    ->description('Atur apakah ulasan pelanggan ditampilkan di halaman depan (homepage) dan tentukan batas jumlah ulasan yang tampil.')
+                    ->schema([
+                        Select::make('review_section_enabled')
+                            ->label('Status Tampilan Ulasan di Homepage')
+                            ->options([
+                                '1' => 'Tampilkan (ON)',
+                                '0' => 'Sembunyikan (OFF)',
+                            ])
+                            ->required(),
+                        TextInput::make('review_display_limit')
+                            ->label('Jumlah Ulasan Ditampilkan')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(30)
+                            ->default(3)
+                            ->helperText('Jumlah ulasan yang dimuat di homepage (contoh: 3 atau 6). Ulasan spesifik dapat diaktifkan/dinonaktifkan pada menu Ulasan Pelanggan.'),
+                    ])->columns(2),
             ])
             ->statePath('data');
     }
@@ -277,6 +298,7 @@ class ManageSettings extends Page implements HasForms
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
             'promo_grand_opening_active', 'promo_grand_opening_points', 'promo_grand_opening_quota',
+            'review_section_enabled', 'review_display_limit',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
         }

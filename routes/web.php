@@ -17,6 +17,7 @@ Route::post('/api/validate-voucher', [TopupController::class, 'validateVoucher']
 
 // Invoice / payment receipt details page
 Route::get('/transaction/{invoice}', [TopupController::class, 'showTransaction']);
+Route::post('/review/submit', [TopupController::class, 'submitReview']);
 
 // Check transaction status via search invoice
 Route::get('/history', [TopupController::class, 'showHistoryForm']);

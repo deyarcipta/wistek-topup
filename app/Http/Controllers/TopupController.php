@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
@@ -353,5 +354,44 @@ Terima kasih!";
             'discount' => $discount,
             'formatted_discount' => 'Rp '.number_format($discount, 0, ',', '.'),
         ]);
+    }
+
+    /**
+     * Handle review submission by customer/member
+     */
+    public function submitReview(Request $request)
+    {
+        $request->validate([
+            'invoice' => 'required|string',
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'required|string|max:1000',
+            'name' => 'required|string|max:100',
+        ]);
+
+        $transaction = Transaction::where('invoice', trim($request->invoice))->firstOrFail();
+
+        if ($transaction->topup_status !== 'success' && $transaction->payment_status !== 'paid') {
+            return back()->with('error', 'Ulasan hanya dapat diberikan untuk pesanan yang telah berhasil dibayar.');
+        }
+
+        $existing = Review::where('transaction_id', $transaction->id)->first();
+        if ($existing) {
+            return back()->with('info', 'Anda sudah memberikan ulasan untuk pesanan ini.');
+        }
+
+        $user = Auth::user() ?? $transaction->user;
+
+        Review::create([
+            'user_id' => $user?->id,
+            'transaction_id' => $transaction->id,
+            'name' => trim($request->name),
+            'role_or_title' => $transaction->category ? $transaction->category->name.' Player' : 'Pelanggan Setia',
+            'rating' => (int) $request->rating,
+            'comment' => trim($request->comment),
+            'is_visible' => true,
+            'sort_order' => 0,
+        ]);
+
+        return back()->with('success', 'Terima kasih! Ulasan Anda berhasil dikirim.');
     }
 }

@@ -36,6 +36,22 @@
             </div>
         </div>
 
+        @if(session('success'))
+            <div style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1rem; color: #10b981; margin-bottom: 1.5rem; font-weight: 600;">
+                <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 1rem; color: #ef4444; margin-bottom: 1.5rem; font-weight: 600;">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}
+            </div>
+        @endif
+        @if(session('info'))
+            <div style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1rem; color: #3b82f6; margin-bottom: 1.5rem; font-weight: 600;">
+                <i class="fa-solid fa-circle-info"></i> {{ session('info') }}
+            </div>
+        @endif
+
         <div class="invoice-card">
             
             <!-- Details -->
@@ -160,6 +176,71 @@
                 </div>
             @endif
 
+            <!-- Review Box if Paid / Success -->
+            @if($transaction->topup_status === 'success' || $transaction->payment_status === 'paid')
+                @php
+                    $existingReview = \App\Models\Review::where('transaction_id', $transaction->id)->first();
+                @endphp
+
+                @if($existingReview)
+                    <div style="margin-top: 2rem; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 14px; padding: 1.5rem; text-align: left;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <h4 style="color: #f59e0b; margin: 0; font-size: 1.05rem; font-weight: 700;">
+                                <i class="fa-solid fa-star"></i> Ulasan Anda untuk Pesanan Ini
+                            </h4>
+                            <span style="color: #f59e0b; font-size: 1.1rem;">
+                                @for($i = 1; $i <= 5; $i++)
+                                    @if($i <= $existingReview->rating)
+                                        <i class="fa-solid fa-star"></i>
+                                    @else
+                                        <i class="fa-regular fa-star" style="color: #4b5563;"></i>
+                                    @endif
+                                @endfor
+                            </span>
+                        </div>
+                        <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.5; font-style: italic; margin-bottom: 0;">"{{ $existingReview->comment }}"</p>
+                    </div>
+                @else
+                    <div style="margin-top: 2rem; background: rgba(226, 135, 67, 0.08); border: 1px solid rgba(226, 135, 67, 0.3); border-radius: 16px; padding: 1.75rem; text-align: left;">
+                        <h4 style="color: #fff; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                            <i class="fa-solid fa-star" style="color: #f59e0b; margin-right: 0.4rem;"></i> Beri Ulasan Pesanan Ini
+                        </h4>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Bagikan pengalaman Anda agar pelanggan lain dapat melihat ulasan terpercaya Anda di halaman depan.</p>
+
+                        <form action="{{ url('/review/submit') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="invoice" value="{{ $transaction->invoice }}">
+
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Beri Rating Bintang:</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;" id="starRatingGroup">
+                                    @for($s = 1; $s <= 5; $s++)
+                                        <label style="cursor: pointer; margin: 0;">
+                                            <input type="radio" name="rating" value="{{ $s }}" {{ $s === 5 ? 'checked' : '' }} style="display: none;">
+                                            <i class="fa-solid fa-star review-star-btn" data-star="{{ $s }}" style="font-size: 1.6rem; color: #f59e0b; transition: transform 0.15s, color 0.15s;"></i>
+                                        </label>
+                                    @endfor
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1rem;">
+                                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 600;">Nama Anda:</label>
+                                <input type="text" name="name" class="form-control" value="{{ Auth::check() ? Auth::user()->name : ($transaction->user ? $transaction->user->name : 'Pelanggan Wistek') }}" required style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 0.65rem 0.85rem; width: 100%;">
+                            </div>
+
+                            <div style="margin-bottom: 1.25rem;">
+                                <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.35rem; font-weight: 600;">Ulasan / Testimoni:</label>
+                                <textarea name="comment" class="form-control" rows="3" placeholder="Prosesnya super kilat dan memuaskan..." required style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; padding: 0.65rem 0.85rem; width: 100%; resize: vertical;"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn-checkout" style="width: auto; padding: 0.75rem 2rem; background: linear-gradient(135deg, #e28743, #f59e0b); color: #fff; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">
+                                <i class="fa-solid fa-paper-plane" style="margin-right: 0.4rem;"></i> Kirim Ulasan
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            @endif
+
             <!-- Payment Instructions Accordion -->
             @if($transaction->payment_status === 'unpaid' && isset($transaction->payment_details['instructions']))
                 <div class="instruction-accordion">
@@ -256,5 +337,24 @@
     if (!isCompleted) {
         setInterval(checkStatus, 5000);
     }
+
+    // Interactive Star Rating for Review
+    document.querySelectorAll('.review-star-btn').forEach(star => {
+        star.addEventListener('click', function() {
+            const val = parseInt(this.getAttribute('data-star'));
+            document.querySelectorAll('.review-star-btn').forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-star'));
+                if (sVal <= val) {
+                    s.style.color = '#f59e0b';
+                } else {
+                    s.style.color = '#4b5563';
+                }
+            });
+            const radio = this.closest('label').querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+            }
+        });
+    });
 </script>
 @endsection

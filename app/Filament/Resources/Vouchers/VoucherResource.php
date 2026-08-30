@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class VoucherResource extends Resource
 {
@@ -26,7 +27,9 @@ class VoucherResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
-    protected static ?int $navigationSort = 7;
+    protected static string|UnitEnum|null $navigationGroup = 'Promosi & Konten';
+
+    protected static ?int $navigationSort = 1;
 
     public static function canViewAny(): bool
     {
