@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Voucher;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -131,6 +132,46 @@ class DatabaseSeeder extends Seeder
 
         foreach ($gopayProducts as $p) {
             Product::create(array_merge($p, ['category_id' => $gopay->id, 'status' => true]));
+        }
+
+        // Seed Promotional Vouchers from Banner
+        $promotionalVouchers = [
+            [
+                'code' => 'WISTEKGRAND1K',
+                'type' => 'fixed',
+                'value' => 1000,
+                'min_purchase' => 10000,
+                'max_uses' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'WISTEKMECHA2K',
+                'type' => 'fixed',
+                'value' => 2000,
+                'min_purchase' => 20000,
+                'max_uses' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'WISTEKNEW3K',
+                'type' => 'fixed',
+                'value' => 3000,
+                'min_purchase' => 30000,
+                'max_uses' => 0,
+                'is_active' => true,
+            ],
+            [
+                'code' => 'WISTEKMEMBER5K',
+                'type' => 'fixed',
+                'value' => 5000,
+                'min_purchase' => 50000,
+                'max_uses' => 0,
+                'is_active' => true,
+            ],
+        ];
+
+        foreach ($promotionalVouchers as $v) {
+            Voucher::updateOrCreate(['code' => $v['code']], $v);
         }
     }
 }

@@ -122,7 +122,7 @@ class TopupController extends Controller
 
         if ($request->filled('voucher_code')) {
             $voucher = Voucher::where('code', $request->voucher_code)->first();
-            if ($voucher && $voucher->isValid()) {
+            if ($voucher && $voucher->isValid() && $voucher->meetsMinPurchase((float) $basePrice)) {
                 $discountAmount = (int) $voucher->calculateDiscount($basePrice);
                 $voucherCode = $voucher->code;
             }
@@ -346,7 +346,25 @@ Terima kasih!";
         }
 
         $product = Product::findOrFail($request->product_id);
-        $discount = $voucher->calculateDiscount($product->price_sell);
+
+        if (! $voucher->meetsMinPurchase((float) $product->price_sell)) {
+            $minFormatted = 'Rp '.number_format($voucher->min_purchase, 0, ',', '.');
+            $priceFormatted = 'Rp '.number_format($product->price_sell, 0, ',', '.');
+
+            return response()->json([
+                'success' => false,
+                'message' => "Voucher {$voucher->code} memerlukan minimal pembelian {$minFormatted}. (Harga produk pilihan: {$priceFormatted})",
+            ]);
+        }
+
+        $discount = $voucher->calculateDiscount((float) $product->price_sell);
+
+        if ($discount <= 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher tidak memberikan potongan pada produk ini.',
+            ]);
+        }
 
         return response()->json([
             'success' => true,

@@ -27,6 +27,10 @@ class VouchersTable
                     ->label('Nilai Potongan')
                     ->formatStateUsing(fn ($record) => $record->type === 'percent' ? $record->value.'%' : 'Rp '.number_format($record->value, 0, ',', '.'))
                     ->sortable(),
+                TextColumn::make('min_purchase')
+                    ->label('Min. Pembelian')
+                    ->formatStateUsing(fn ($state) => $state > 0 ? 'Rp '.number_format($state, 0, ',', '.') : 'Tanpa Minimal')
+                    ->sortable(),
                 TextColumn::make('max_uses')
                     ->label('Kuota Maksimal')
                     ->formatStateUsing(fn ($state) => $state == 0 ? '∞ (Tidak Terbatas)' : $state)

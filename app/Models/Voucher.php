@@ -10,6 +10,8 @@ class Voucher extends Model
         'code',
         'type',
         'value',
+        'min_purchase',
+        'max_discount',
         'max_uses',
         'used_count',
         'valid_until',
@@ -19,6 +21,8 @@ class Voucher extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'value' => 'float',
+        'min_purchase' => 'float',
+        'max_discount' => 'float',
         'max_uses' => 'integer',
         'used_count' => 'integer',
         'valid_until' => 'datetime',
@@ -45,19 +49,38 @@ class Voucher extends Model
     }
 
     /**
+     * Check if the purchase amount meets the minimum purchase requirement
+     */
+    public function meetsMinPurchase(float $amount): bool
+    {
+        if ($this->min_purchase === null || $this->min_purchase <= 0) {
+            return true;
+        }
+
+        return $amount >= (float) $this->min_purchase;
+    }
+
+    /**
      * Calculate discount amount based on original price
      */
     public function calculateDiscount(float $originalPrice): float
     {
+        if (! $this->meetsMinPurchase($originalPrice)) {
+            return 0.0;
+        }
+
         $discount = 0.0;
 
         if ($this->type === 'percent') {
             $discount = ($originalPrice * $this->value) / 100;
+            if ($this->max_discount !== null && $this->max_discount > 0) {
+                $discount = min($discount, (float) $this->max_discount);
+            }
         } else {
             $discount = $this->value;
         }
 
         // Limit discount to the original price to prevent negative prices
-        return min($discount, $originalPrice);
+        return max(0.0, min($discount, $originalPrice));
     }
 }
