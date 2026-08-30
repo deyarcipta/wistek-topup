@@ -125,29 +125,88 @@ class AdminPanelProvider extends PanelProvider
                             background-image: url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke-width=\'1.8\' stroke=\'%23f59e0b\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z\' /%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z\' /%3E%3C/svg%3E");
                         }
 
-                        /* Sub-Menu Indentation & Compact Font Styling */
-                        .fi-sidebar-group-items {
+                        /* Sub-Menu Indentation & Compact Font Styling - HANYA untuk grup dropdown bertingkat */
+                        .fi-sidebar-group[data-group-label]:not([data-group-label=""]) .fi-sidebar-group-items {
                             padding-left: 1.25rem !important;
                             margin-left: 0.65rem !important;
                             border-left: 1.5px dashed rgba(255, 255, 255, 0.12) !important;
                             margin-top: 0.25rem !important;
                             margin-bottom: 0.5rem !important;
                         }
-                        .fi-sidebar-group-items .fi-sidebar-item-btn {
+                        .fi-sidebar-group[data-group-label]:not([data-group-label=""]) .fi-sidebar-group-items .fi-sidebar-item-btn {
                             padding-top: 0.35rem !important;
                             padding-bottom: 0.35rem !important;
                             padding-left: 0.5rem !important;
                         }
-                        .fi-sidebar-group-items .fi-sidebar-item-label {
+                        .fi-sidebar-group[data-group-label]:not([data-group-label=""]) .fi-sidebar-group-items .fi-sidebar-item-label {
                             font-size: 0.8125rem !important; /* Dikecilkan 1-2px (13px) */
                             letter-spacing: 0.01em !important;
                             font-weight: 500 !important;
                         }
-                        .fi-sidebar-group-items .fi-sidebar-item-icon {
+                        .fi-sidebar-group[data-group-label]:not([data-group-label=""]) .fi-sidebar-group-items .fi-sidebar-item-icon {
                             width: 1.15rem !important;
                             height: 1.15rem !important;
                         }
+
+                        /* Standalone Main Menus (Dasbor, Transaksi, dll) - Normal, Tebal & Tanpa Garis Putus-Putus */
+                        .fi-sidebar-group:not([data-group-label]) .fi-sidebar-group-items,
+                        .fi-sidebar-group[data-group-label=""] .fi-sidebar-group-items {
+                            padding-left: 0 !important;
+                            margin-left: 0 !important;
+                            border-left: none !important;
+                        }
+                        .fi-sidebar-group:not([data-group-label]) .fi-sidebar-group-items .fi-sidebar-item-label,
+                        .fi-sidebar-group[data-group-label=""] .fi-sidebar-group-items .fi-sidebar-item-label {
+                            font-size: 0.9rem !important;
+                            font-weight: 600 !important;
+                        }
+                        .fi-sidebar-group:not([data-group-label]) .fi-sidebar-group-items .fi-sidebar-item-icon,
+                        .fi-sidebar-group[data-group-label=""] .fi-sidebar-group-items .fi-sidebar-item-icon {
+                            width: 1.35rem !important;
+                            height: 1.35rem !important;
+                        }
                     </style>
+                    <script>
+                        (function() {
+                            function syncSidebarAccordion() {
+                                var groups = document.querySelectorAll(".fi-sidebar-group[data-group-label]:not([data-group-label=\'\'])");
+                                if (!groups.length) return;
+
+                                var activeLabels = [];
+                                groups.forEach(function(group) {
+                                    if (group.classList.contains("fi-active") || group.querySelector(".fi-sidebar-item.fi-active, [aria-current=\'page\']")) {
+                                        activeLabels.push(group.dataset.groupLabel);
+                                    }
+                                });
+
+                                var allLabels = [];
+                                groups.forEach(function(g) {
+                                    allLabels.push(g.dataset.groupLabel);
+                                });
+
+                                var collapsedList = allLabels.filter(function(lbl) {
+                                    return !activeLabels.includes(lbl);
+                                });
+
+                                localStorage.setItem("collapsedGroups", JSON.stringify(collapsedList));
+
+                                if (window.Alpine && Alpine.store && Alpine.store("sidebar")) {
+                                    var store = Alpine.store("sidebar");
+                                    allLabels.forEach(function(lbl) {
+                                        var shouldBeCollapsed = !activeLabels.includes(lbl);
+                                        if (store.groupIsCollapsed(lbl) !== shouldBeCollapsed) {
+                                            store.toggleCollapsedGroup(lbl);
+                                        }
+                                    });
+                                }
+                            }
+
+                            document.addEventListener("DOMContentLoaded", syncSidebarAccordion);
+                            document.addEventListener("alpine:initialized", syncSidebarAccordion);
+                            setTimeout(syncSidebarAccordion, 50);
+                            setTimeout(syncSidebarAccordion, 250);
+                        })();
+                    </script>
                 ')
             )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
