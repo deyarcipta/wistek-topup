@@ -293,6 +293,14 @@
     <footer style="background: #090a0f; border-top: 1px solid var(--border-color); padding: 4.5rem 0 2rem; color: var(--text-primary); font-family: 'Outfit', sans-serif; margin-top: 2.5rem;">
         <div class="container footer-grid">
             
+            @php
+                $csWhatsappUrl = \App\Models\Setting::get('cs_whatsapp_url', 'https://wa.me/6281234567890');
+                $socialInstagram = \App\Models\Setting::get('social_instagram', 'https://instagram.com');
+                $socialTiktok = \App\Models\Setting::get('social_tiktok', 'https://tiktok.com');
+                $socialYoutube = \App\Models\Setting::get('social_youtube', 'https://youtube.com');
+                $socialWhatsapp = \App\Models\Setting::get('social_whatsapp', $csWhatsappUrl);
+            @endphp
+
             <!-- Column 1: Brand Info -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
                 <a href="{{ url('/') }}" class="logo" style="font-size: 1.75rem; width: fit-content; display: flex; align-items: center; gap: 0.5rem;">
@@ -303,19 +311,27 @@
                     Wistek Topup adalah platform penyedia layanan top-up game online terpercaya, tercepat, dan terlengkap di Indonesia. Kami menghadirkan proses transaksi instan otomatis 24 jam nonstop dengan dukungan pembayaran lengkap dan biaya admin termurah.
                 </p>
                 <!-- Social Media Buttons -->
-                <div style="display: flex; gap: 0.75rem;">
-                    <a href="https://instagram.com" target="_blank" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
+                <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    @if(!empty($socialInstagram))
+                    <a href="{{ $socialInstagram }}" target="_blank" title="Instagram" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
                         <i class="fa-brands fa-instagram" style="font-size: 1.1rem;"></i>
                     </a>
-                    <a href="https://tiktok.com" target="_blank" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
+                    @endif
+                    @if(!empty($socialTiktok))
+                    <a href="{{ $socialTiktok }}" target="_blank" title="TikTok" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
                         <i class="fa-brands fa-tiktok" style="font-size: 1.1rem;"></i>
                     </a>
-                    <a href="https://youtube.com" target="_blank" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
+                    @endif
+                    @if(!empty($socialYoutube))
+                    <a href="{{ $socialYoutube }}" target="_blank" title="YouTube" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
                         <i class="fa-brands fa-youtube" style="font-size: 1.1rem;"></i>
                     </a>
-                    <a href="https://wa.me/6281234567890" target="_blank" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
+                    @endif
+                    @if(!empty($socialWhatsapp))
+                    <a href="{{ $socialWhatsapp }}" target="_blank" title="WhatsApp" style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); color: var(--text-secondary); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;" onmouseover="this.style.color='#fff'; this.style.borderColor='#e28743'; this.style.background='rgba(226,135,67,0.1)'; this.style.transform='translateY(-3px)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.borderColor='var(--border-color)'; this.style.background='rgba(255,255,255,0.03)'; this.style.transform='none';">
                         <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem;"></i>
                     </a>
+                    @endif
                 </div>
             </div>
 
@@ -328,7 +344,9 @@
                 <div class="footer-sitemap-links" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <a href="{{ url('/') }}" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Halaman Utama</a>
                     <a href="{{ url('/history') }}" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Cek Transaksi</a>
-                    <a href="https://wa.me/6281234567890" target="_blank" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Hubungi CS</a>
+                    @if(!empty($csWhatsappUrl))
+                    <a href="{{ $csWhatsappUrl }}" target="_blank" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Hubungi CS</a>
+                    @endif
                 </div>
             </div>
 

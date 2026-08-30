@@ -127,6 +127,11 @@ class ManageSettings extends Page implements HasForms
             'review_section_enabled' => Setting::get('review_section_enabled', '1'),
             'review_display_limit' => Setting::get('review_display_limit', '3'),
             'review_autoplay_speed' => Setting::get('review_autoplay_speed', '5'),
+            'cs_whatsapp_url' => Setting::get('cs_whatsapp_url', 'https://wa.me/6281234567890'),
+            'social_instagram' => Setting::get('social_instagram', 'https://instagram.com'),
+            'social_tiktok' => Setting::get('social_tiktok', 'https://tiktok.com'),
+            'social_youtube' => Setting::get('social_youtube', 'https://youtube.com'),
+            'social_whatsapp' => Setting::get('social_whatsapp', 'https://wa.me/6281234567890'),
         ];
     }
 
@@ -303,6 +308,32 @@ class ManageSettings extends Page implements HasForms
                             ->required()
                             ->helperText('Tentukan durasi perpindahan slide ulasan secara otomatis di halaman beranda.'),
                     ])->columns(3),
+
+                Section::make('Kontak Layanan Pelanggan (CS) & Media Sosial')
+                    ->description('Kelola tautan menu Hubungi CS dan ikon media sosial resmi yang tampil pada footer website.')
+                    ->schema([
+                        TextInput::make('cs_whatsapp_url')
+                            ->label('Tautan Menu "Hubungi CS"')
+                            ->placeholder('https://wa.me/6281234567890')
+                            ->helperText('Tautan saat pelanggan mengklik menu Hubungi CS di footer (misal: WhatsApp, Telegram, atau livechat).')
+                            ->columnSpanFull(),
+                        TextInput::make('social_instagram')
+                            ->label('URL Akun Instagram')
+                            ->placeholder('https://instagram.com/username')
+                            ->helperText('Tautan ikon Instagram di footer. Kosongkan jika ingin disembunyikan.'),
+                        TextInput::make('social_tiktok')
+                            ->label('URL Akun TikTok')
+                            ->placeholder('https://tiktok.com/@username')
+                            ->helperText('Tautan ikon TikTok di footer. Kosongkan jika ingin disembunyikan.'),
+                        TextInput::make('social_youtube')
+                            ->label('URL Channel YouTube')
+                            ->placeholder('https://youtube.com/@channel')
+                            ->helperText('Tautan ikon YouTube di footer. Kosongkan jika ingin disembunyikan.'),
+                        TextInput::make('social_whatsapp')
+                            ->label('URL Ikon WhatsApp Footer')
+                            ->placeholder('https://wa.me/6281234567890')
+                            ->helperText('Tautan saat mengklik ikon WhatsApp di footer. Kosongkan jika ingin disembunyikan.'),
+                    ])->columns(2),
             ])
             ->statePath('data');
     }
@@ -317,6 +348,7 @@ class ManageSettings extends Page implements HasForms
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
             'promo_grand_opening_active', 'promo_grand_opening_points', 'promo_grand_opening_quota',
             'review_section_enabled', 'review_display_limit', 'review_autoplay_speed',
+            'cs_whatsapp_url', 'social_instagram', 'social_tiktok', 'social_youtube', 'social_whatsapp',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
         }
