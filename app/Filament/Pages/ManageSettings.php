@@ -85,7 +85,12 @@ class ManageSettings extends Page implements HasForms
         $duitku = new DuitkuService;
         $duitkuStatus = $duitku->getStatusDetails();
 
-        $claimedCount = PointLog::where('type', 'welcome_bonus')->count();
+        $startedAt = Setting::get('promo_grand_opening_started_at');
+        $query = PointLog::where('type', 'welcome_bonus');
+        if (! empty($startedAt)) {
+            $query->where('created_at', '>=', $startedAt);
+        }
+        $claimedCount = $query->count();
         $quota = (int) Setting::get('promo_grand_opening_quota', '100');
         $progressText = $quota > 0
             ? "{$claimedCount} dari {$quota} kuota member telah menerima bonus"
@@ -214,6 +219,25 @@ class ManageSettings extends Page implements HasForms
 
                 Section::make('Promo Grand Opening & Welcome Bonus Poin')
                     ->description('Berikan bonus poin gratis secara otomatis kepada member baru yang mendaftar dan memverifikasi WhatsApp saat periode Grand Opening.')
+                    ->headerActions([
+                        Action::make('resetPromoCounter')
+                            ->label('Reset Hitungan / Mulai Sesi Baru')
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('Reset Hitungan Kuota Promo?')
+                            ->modalDescription('Hitungan member yang menerima bonus akan dimulai kembali dari 0 untuk periode baru. Poin yang sudah diterima member lama tetap aman dan tidak akan hilang.')
+                            ->modalSubmitActionLabel('Ya, Reset ke 0')
+                            ->action(function () {
+                                Setting::set('promo_grand_opening_started_at', now()->toDateTimeString());
+                                $this->mount();
+                                Notification::make()
+                                    ->title('Hitungan Kuota Berhasil Di-reset')
+                                    ->body('Sesi promo baru telah dimulai. Hitungan kuota kini dimulai kembali dari 0.')
+                                    ->success()
+                                    ->send();
+                            }),
+                    ])
                     ->schema([
                         Select::make('promo_grand_opening_active')
                             ->label('Status Promo')
@@ -238,7 +262,7 @@ class ManageSettings extends Page implements HasForms
                             ->label('Progres Klaim Poin')
                             ->disabled()
                             ->dehydrated(false)
-                            ->helperText('Jumlah member yang telah mengklaim bonus ini.'),
+                            ->helperText('Jumlah member yang telah mengklaim bonus pada sesi ini. Klik tombol "Reset Hitungan" di kanan atas jika ingin memulai dari 0 lagi.'),
                     ])->columns(2),
             ])
             ->statePath('data');

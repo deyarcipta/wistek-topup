@@ -160,8 +160,13 @@ class AuthController extends Controller
         $promoActive = Setting::get('promo_grand_opening_active', '0') === '1';
         $promoPoints = (int) Setting::get('promo_grand_opening_points', 2000);
         $promoQuota = (int) Setting::get('promo_grand_opening_quota', 100);
+        $promoStartedAt = Setting::get('promo_grand_opening_started_at');
 
-        $claimedCount = PointLog::where('type', 'welcome_bonus')->count();
+        $claimedQuery = PointLog::where('type', 'welcome_bonus');
+        if (! empty($promoStartedAt)) {
+            $claimedQuery->where('created_at', '>=', $promoStartedAt);
+        }
+        $claimedCount = $claimedQuery->count();
         $isQuotaAvailable = ($promoQuota <= 0) || ($claimedCount < $promoQuota);
 
         $welcomePointsAwarded = 0;

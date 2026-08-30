@@ -152,4 +152,50 @@ class GrandOpeningBonusTest extends TestCase
             'type' => 'welcome_bonus',
         ]);
     }
+
+    public function test_reset_promo_quota_starts_fresh_session_from_zero(): void
+    {
+        // First session: quota is 1
+        Setting::set('promo_grand_opening_active', '1');
+        Setting::set('promo_grand_opening_points', '2000');
+        Setting::set('promo_grand_opening_quota', '1');
+        Setting::set('promo_grand_opening_started_at', now()->subHour()->toDateTimeString());
+
+        // First user claims quota in first session
+        $this->post('/register', [
+            'name' => 'Session One User',
+            'username' => 'sessionone',
+            'email' => 'session1@example.com',
+            'phone' => '081299990021',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+        $otp1 = session('pending_registration.otp');
+        $this->post('/register/verify', ['otp' => $otp1]);
+
+        $user1 = User::where('username', 'sessionone')->first();
+        $this->assertEquals(2000, $user1->points_balance);
+
+        auth()->logout();
+
+        // Now Admin resets the promo session to start clean from 0 with new quota of 2
+        Setting::set('promo_grand_opening_quota', '2');
+        Setting::set('promo_grand_opening_started_at', now()->toDateTimeString());
+
+        // Second user (registers after reset, should get 2000 points because session restarted from 0)
+        $this->post('/register', [
+            'name' => 'Session Two User One',
+            'username' => 'sessiontwouser1',
+            'email' => 'session2user1@example.com',
+            'phone' => '081299990022',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+        ]);
+        $otp2 = session('pending_registration.otp');
+        $this->post('/register/verify', ['otp' => $otp2]);
+
+        $user2 = User::where('username', 'sessiontwouser1')->first();
+        $this->assertNotNull($user2);
+        $this->assertEquals(2000, $user2->points_balance);
+    }
 }

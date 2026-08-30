@@ -75,7 +75,13 @@
                 $promoActive = \App\Models\Setting::get('promo_grand_opening_active', '0') === '1';
                 $promoPoints = (int) \App\Models\Setting::get('promo_grand_opening_points', 2000);
                 $promoQuota = (int) \App\Models\Setting::get('promo_grand_opening_quota', 100);
-                $claimedCount = \App\Models\PointLog::where('type', 'welcome_bonus')->count();
+                $promoStartedAt = \App\Models\Setting::get('promo_grand_opening_started_at');
+
+                $claimedQuery = \App\Models\PointLog::where('type', 'welcome_bonus');
+                if (! empty($promoStartedAt)) {
+                    $claimedQuery->where('created_at', '>=', $promoStartedAt);
+                }
+                $claimedCount = $claimedQuery->count();
                 $isQuotaAvailable = ($promoQuota <= 0) || ($claimedCount < $promoQuota);
             @endphp
 
