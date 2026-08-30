@@ -8,7 +8,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -37,13 +36,6 @@ class AdminPanelProvider extends PanelProvider
             ->profile(EditProfile::class, isSimple: false)
             ->userMenuItems([
                 'profile' => fn (Action $action) => $action->label('Edit Profil Saya'),
-            ])
-            ->navigationItems([
-                NavigationItem::make('Edit Profil Saya')
-                    ->icon('heroicon-o-user-circle')
-                    ->url(fn (): string => route('filament.admin.auth.profile'))
-                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.auth.profile'))
-                    ->sort(98),
             ])
             ->colors([
                 'primary' => Color::Amber,
