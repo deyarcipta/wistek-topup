@@ -17,7 +17,7 @@ class EnsureUserIsMember
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check() && ! Auth::user()->isMember()) {
-            return redirect('/admin');
+            return redirect('/w1st3k');
         }
 
         return $next($request);

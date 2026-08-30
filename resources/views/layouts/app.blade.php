@@ -231,7 +231,7 @@
                 @auth
                     @php
                         $user = Auth::user();
-                        $targetUrl = $user->isMember() ? url('/dashboard') : url('/admin');
+                        $targetUrl = $user->isMember() ? url('/dashboard') : url('/w1st3k');
                     @endphp
                     <a href="{{ $targetUrl }}" class="nav-link" style="color: #e28743; display: inline-flex; align-items: center; gap: 0.35rem;">
                         @if($user->profile_photo_path)

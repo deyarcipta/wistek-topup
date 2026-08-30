@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
-        $middleware->redirectGuestsTo(fn (Request $request) => $request->is('admin*') ? '/admin/login' : '/login');
+        $middleware->redirectGuestsTo(fn (Request $request) => ($request->is('w1st3k*') || $request->is('admin*')) ? '/w1st3k/login' : '/login');
 
         $middleware->validateCsrfTokens(except: [
             '/callback/duitku',
@@ -35,7 +35,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (HttpException $e, Request $request) {
             if ($e->getStatusCode() === 403) {
                 $user = auth()->user() ?? auth()->guard('web')->user();
-                if ($user && $user->isMember() && ($request->is('admin') || $request->is('admin/*'))) {
+                if ($user && $user->isMember() && ($request->is('w1st3k*') || $request->is('admin*'))) {
                     return redirect('/dashboard')->with('error', 'Anda tidak memiliki akses ke halaman admin.');
                 }
             }

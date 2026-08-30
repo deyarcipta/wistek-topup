@@ -30,15 +30,15 @@ class AuthSessionAndProfileTest extends TestCase
     }
 
     /**
-     * Test that guest accessing admin panel redirects to /admin/login
+     * Test that guest accessing admin panel redirects to /w1st3k/login
      */
     public function test_guest_accessing_admin_redirects_to_admin_login(): void
     {
-        $response = $this->get('/admin');
-        $response->assertRedirect('/admin/login');
+        $response = $this->get('/w1st3k');
+        $response->assertRedirect('/w1st3k/login');
 
-        $responseProfile = $this->get('/admin/profile');
-        $responseProfile->assertRedirect('/admin/login');
+        $responseProfile = $this->get('/w1st3k/profile');
+        $responseProfile->assertRedirect('/w1st3k/login');
     }
 
     /**
@@ -57,7 +57,7 @@ class AuthSessionAndProfileTest extends TestCase
 
         $this->actingAs($admin);
 
-        $response = $this->get('/admin/profile');
+        $response = $this->get('/w1st3k/profile');
         $response->assertStatus(200);
         $response->assertSee('Edit Profil Akun');
     }
@@ -78,7 +78,7 @@ class AuthSessionAndProfileTest extends TestCase
 
         $this->actingAs($cashier);
 
-        $response = $this->get('/admin/profile');
+        $response = $this->get('/w1st3k/profile');
         $response->assertStatus(200);
         $response->assertSee('Edit Profil Akun');
     }
@@ -99,7 +99,7 @@ class AuthSessionAndProfileTest extends TestCase
 
         $this->actingAs($member);
 
-        $response = $this->get('/admin/profile');
+        $response = $this->get('/w1st3k/profile');
         // Member receives 403 or redirect to member dashboard
         $this->assertTrue(in_array($response->status(), [403, 302]));
     }

@@ -240,7 +240,7 @@ class AuthController extends Controller
     {
         if (Auth::check()) {
             if (Auth::user()->isAdmin() || Auth::user()->isCashier()) {
-                return redirect('/admin');
+                return redirect('/w1st3k');
             }
 
             return redirect('/dashboard');
@@ -272,7 +272,7 @@ class AuthController extends Controller
 
             $user = Auth::user();
             if ($user->isAdmin() || $user->isCashier()) {
-                return redirect('/admin')->with('success', 'Selamat datang kembali!');
+                return redirect('/w1st3k')->with('success', 'Selamat datang kembali!');
             }
 
             return redirect()->intended('/dashboard')->with('success', 'Selamat datang kembali!');

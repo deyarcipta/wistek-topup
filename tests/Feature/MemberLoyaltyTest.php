@@ -715,7 +715,7 @@ class MemberLoyaltyTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)->get('/dashboard');
-        $response->assertRedirect('/admin');
+        $response->assertRedirect('/w1st3k');
     }
 
     /**
@@ -734,7 +734,7 @@ class MemberLoyaltyTest extends TestCase
 
         $this->assertFalse($customer->canAccessPanel(Filament::getPanel('admin')));
 
-        $response = $this->actingAs($customer)->get('/admin');
+        $response = $this->actingAs($customer)->get('/w1st3k');
         $response->assertRedirect('/dashboard');
         $response->assertSessionHas('error', 'Anda tidak memiliki akses ke halaman admin.');
     }
