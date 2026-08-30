@@ -255,6 +255,7 @@
         $reviewEnabled = \App\Models\Setting::get('review_section_enabled', '1') === '1';
         $reviewLimitSetting = (int) \App\Models\Setting::get('review_display_limit', 3);
         $reviewLimit = in_array($reviewLimitSetting, [3, 6]) ? $reviewLimitSetting : 3;
+        $reviewSpeedSetting = (int) \App\Models\Setting::get('review_autoplay_speed', 5);
         $publicReviews = $reviewEnabled 
             ? \App\Models\Review::where('is_visible', true)->orderBy('sort_order', 'asc')->latest()->get()
             : collect();
@@ -440,10 +441,12 @@
     });
 
     // ----------------------------------------------------
-    // Review Carousel Functionality
+    // Review Carousel Functionality with Autoplay
     // ----------------------------------------------------
     let currentReviewSlide = 0;
     const totalReviewSlides = {{ isset($reviewChunks) ? $reviewChunks->count() : 0 }};
+    const reviewAutoplaySpeed = {{ isset($reviewSpeedSetting) ? $reviewSpeedSetting : 5 }};
+    let reviewAutoplayInterval = null;
 
     function showReviewSlide(idx) {
         if (totalReviewSlides <= 1) return;
@@ -473,11 +476,43 @@
     }
 
     function moveReviewSlide(step) {
+        resetReviewAutoplay();
         showReviewSlide(currentReviewSlide + step);
     }
 
     function setReviewSlide(idx) {
+        resetReviewAutoplay();
         showReviewSlide(idx);
     }
+
+    function startReviewAutoplay() {
+        if (totalReviewSlides > 1 && reviewAutoplaySpeed > 0) {
+            reviewAutoplayInterval = setInterval(() => {
+                showReviewSlide(currentReviewSlide + 1);
+            }, reviewAutoplaySpeed * 1000);
+        }
+    }
+
+    function resetReviewAutoplay() {
+        if (reviewAutoplayInterval) {
+            clearInterval(reviewAutoplayInterval);
+            startReviewAutoplay();
+        }
+    }
+
+    // Initialize Review Autoplay on Load
+    document.addEventListener('DOMContentLoaded', () => {
+        startReviewAutoplay();
+
+        const viewport = document.querySelector('.review-slider-viewport');
+        if (viewport) {
+            viewport.addEventListener('mouseenter', () => {
+                if (reviewAutoplayInterval) clearInterval(reviewAutoplayInterval);
+            });
+            viewport.addEventListener('mouseleave', () => {
+                startReviewAutoplay();
+            });
+        }
+    });
 </script>
 @endsection

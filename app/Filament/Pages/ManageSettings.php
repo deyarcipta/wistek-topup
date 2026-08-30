@@ -126,6 +126,7 @@ class ManageSettings extends Page implements HasForms
             'promo_grand_opening_progress' => $progressText,
             'review_section_enabled' => Setting::get('review_section_enabled', '1'),
             'review_display_limit' => Setting::get('review_display_limit', '3'),
+            'review_autoplay_speed' => Setting::get('review_autoplay_speed', '5'),
         ];
     }
 
@@ -289,7 +290,19 @@ class ManageSettings extends Page implements HasForms
                             ->default('3')
                             ->required()
                             ->helperText('Pilih 3 atau 6 ulasan per slide. Jika jumlah ulasan aktif melebihi angka ini, sistem otomatis menampilkan tombol slider navigasi.'),
-                    ])->columns(2),
+                        Select::make('review_autoplay_speed')
+                            ->label('Kecepatan Slide Otomatis (Autoplay)')
+                            ->options([
+                                '3' => '3 Detik (Cepat)',
+                                '5' => '5 Detik (Sedang - Standar)',
+                                '7' => '7 Detik (Santai)',
+                                '10' => '10 Detik (Lambat)',
+                                '0' => 'Nonaktifkan (Hanya Geser Manual)',
+                            ])
+                            ->default('5')
+                            ->required()
+                            ->helperText('Tentukan durasi perpindahan slide ulasan secara otomatis di halaman beranda.'),
+                    ])->columns(3),
             ])
             ->statePath('data');
     }
@@ -303,7 +316,7 @@ class ManageSettings extends Page implements HasForms
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
             'promo_grand_opening_active', 'promo_grand_opening_points', 'promo_grand_opening_quota',
-            'review_section_enabled', 'review_display_limit',
+            'review_section_enabled', 'review_display_limit', 'review_autoplay_speed',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
         }
