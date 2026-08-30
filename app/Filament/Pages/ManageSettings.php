@@ -19,6 +19,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class ManageSettings extends Page implements HasForms
 {
@@ -28,7 +29,9 @@ class ManageSettings extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'Pengaturan Sistem';
 
-    protected static ?int $navigationSort = 99;
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
+
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $title = 'Pengaturan Sistem, API & Promo';
 
