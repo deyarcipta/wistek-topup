@@ -42,10 +42,10 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->navigationGroups([
-                NavigationGroup::make('Katalog Produk')->collapsed(),
-                NavigationGroup::make('Pengguna & Member')->collapsed(),
-                NavigationGroup::make('Promosi & Konten')->collapsed(),
-                NavigationGroup::make('Pengaturan')->collapsed(),
+                NavigationGroup::make('Katalog Produk')->collapsible(false),
+                NavigationGroup::make('Pengguna & Member')->collapsible(false),
+                NavigationGroup::make('Promosi & Konten')->collapsible(false),
+                NavigationGroup::make('Pengaturan')->collapsible(false),
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

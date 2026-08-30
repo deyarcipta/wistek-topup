@@ -253,10 +253,12 @@
     <!-- Section: Ulasan Pelanggan -->
     @php
         $reviewEnabled = \App\Models\Setting::get('review_section_enabled', '1') === '1';
-        $reviewLimit = (int) \App\Models\Setting::get('review_display_limit', 3);
+        $reviewLimitSetting = (int) \App\Models\Setting::get('review_display_limit', 3);
+        $reviewLimit = in_array($reviewLimitSetting, [3, 6]) ? $reviewLimitSetting : 3;
         $publicReviews = $reviewEnabled 
-            ? \App\Models\Review::where('is_visible', true)->orderBy('sort_order', 'asc')->latest()->take($reviewLimit)->get()
+            ? \App\Models\Review::where('is_visible', true)->orderBy('sort_order', 'asc')->latest()->get()
             : collect();
+        $reviewChunks = $publicReviews->chunk($reviewLimit);
         $avatarGradients = [
             'linear-gradient(135deg, #e28743, #ef4444)',
             'linear-gradient(135deg, #3b82f6, #8b5cf6)',
@@ -269,42 +271,71 @@
 
     @if($reviewEnabled && $publicReviews->isNotEmpty())
     <section style="margin-top: 4rem; margin-bottom: 2rem;">
-        <h2 class="section-title" style="margin-bottom: 2rem;">Ulasan Pelanggan Setia</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 class="section-title" style="margin-bottom: 0;">Ulasan Pelanggan Setia</h2>
+            
+            @if($reviewChunks->count() > 1)
+            <div style="display: flex; gap: 0.6rem; align-items: center;">
+                <button type="button" onclick="moveReviewSlide(-1)" class="review-nav-arrow" aria-label="Sebelumnya" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#e28743';this.style.color='#e28743';" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='#fff';">
+                    <i class="fa-solid fa-chevron-left" style="font-size: 0.9rem;"></i>
+                </button>
+                <button type="button" onclick="moveReviewSlide(1)" class="review-nav-arrow" aria-label="Berikutnya" style="background: var(--bg-card); border: 1px solid var(--border-color); color: #fff; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#e28743';this.style.color='#e28743';" onmouseout="this.style.borderColor='var(--border-color)';this.style.color='#fff';">
+                    <i class="fa-solid fa-chevron-right" style="font-size: 0.9rem;"></i>
+                </button>
+            </div>
+            @endif
+        </div>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
-            @foreach($publicReviews as $index => $rev)
-                @php
-                    $initials = collect(explode(' ', trim($rev->name)))
-                        ->map(fn($part) => strtoupper(substr($part, 0, 1)))
-                        ->take(2)
-                        ->implode('');
-                    $gradient = $avatarGradients[$index % count($avatarGradients)];
-                @endphp
-                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='none';">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div style="background: {{ $gradient }}; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
-                                {{ $initials ?: 'WP' }}
-                            </div>
-                            <div>
-                                <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">{{ $rev->name }}</h4>
-                                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ $rev->role_or_title ?: 'Pelanggan Setia' }}</span>
-                            </div>
-                        </div>
-                        <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
-                            @for($i = 1; $i <= 5; $i++)
-                                @if($i <= $rev->rating)
-                                    <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
-                                @else
-                                    <i class="fa-regular fa-star" style="font-size: 0.75rem; color: #4b5563;"></i>
-                                @endif
-                            @endfor
+        <div class="review-slider-viewport" style="overflow: hidden; width: 100%; position: relative;">
+            <div class="review-slider-track" style="display: flex; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); width: 100%;">
+                @foreach($reviewChunks as $chunkIndex => $chunk)
+                    <div class="review-slide-page" style="min-width: 100%; flex-shrink: 0; box-sizing: border-box;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                            @foreach($chunk as $index => $rev)
+                                @php
+                                    $initials = collect(explode(' ', trim($rev->name)))
+                                        ->map(fn($part) => strtoupper(substr($part, 0, 1)))
+                                        ->take(2)
+                                        ->implode('');
+                                    $gradient = $avatarGradients[($chunkIndex * $reviewLimit + $index) % count($avatarGradients)];
+                                @endphp
+                                <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 1.75rem; display: flex; flex-direction: column; gap: 1rem; text-align: left; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 10px 25px rgba(0,0,0,0.3)';" onmouseout="this.style.transform='none';this.style.boxShadow='none';">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                            <div style="background: {{ $gradient }}; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; font-family: 'Outfit', sans-serif;">
+                                                {{ $initials ?: 'WP' }}
+                                            </div>
+                                            <div>
+                                                <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">{{ $rev->name }}</h4>
+                                                <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ $rev->role_or_title ?: 'Pelanggan Setia' }}</span>
+                                            </div>
+                                        </div>
+                                        <div style="color: #f59e0b; display: flex; gap: 0.15rem;">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                @if($i <= $rev->rating)
+                                                    <i class="fa-solid fa-star" style="font-size: 0.75rem;"></i>
+                                                @else
+                                                    <i class="fa-regular fa-star" style="font-size: 0.75rem; color: #4b5563;"></i>
+                                                @endif
+                                            @endfor
+                                        </div>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"{{ $rev->comment }}"</p>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                    <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; font-style: italic; margin-bottom: 0;">"{{ $rev->comment }}"</p>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
+
+        @if($reviewChunks->count() > 1)
+        <div class="review-dots" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 1.5rem;">
+            @for($d = 0; $d < $reviewChunks->count(); $d++)
+                <span class="review-dot-item {{ $d === 0 ? 'active' : '' }}" onclick="setReviewSlide({{ $d }})" style="width: 10px; height: 10px; border-radius: 50%; background: {{ $d === 0 ? '#e28743' : 'rgba(255,255,255,0.2)' }}; cursor: pointer; transition: all 0.2s; display: inline-block;"></span>
+            @endfor
+        </div>
+        @endif
     </section>
     @endif
 
@@ -407,5 +438,46 @@
     document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
     });
+
+    // ----------------------------------------------------
+    // Review Carousel Functionality
+    // ----------------------------------------------------
+    let currentReviewSlide = 0;
+    const totalReviewSlides = {{ isset($reviewChunks) ? $reviewChunks->count() : 0 }};
+
+    function showReviewSlide(idx) {
+        if (totalReviewSlides <= 1) return;
+        if (idx >= totalReviewSlides) {
+            currentReviewSlide = 0;
+        } else if (idx < 0) {
+            currentReviewSlide = totalReviewSlides - 1;
+        } else {
+            currentReviewSlide = idx;
+        }
+
+        const track = document.querySelector('.review-slider-track');
+        if (track) {
+            track.style.transform = `translateX(-${currentReviewSlide * 100}%)`;
+        }
+
+        const dots = document.querySelectorAll('.review-dot-item');
+        dots.forEach((dot, i) => {
+            if (i === currentReviewSlide) {
+                dot.style.background = '#e28743';
+                dot.style.transform = 'scale(1.3)';
+            } else {
+                dot.style.background = 'rgba(255,255,255,0.2)';
+                dot.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    function moveReviewSlide(step) {
+        showReviewSlide(currentReviewSlide + step);
+    }
+
+    function setReviewSlide(idx) {
+        showReviewSlide(idx);
+    }
 </script>
 @endsection

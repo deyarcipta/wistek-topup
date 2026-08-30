@@ -171,7 +171,7 @@ class ReviewSystemTest extends TestCase
     public function test_homepage_respects_visibility_and_limit_settings(): void
     {
         Setting::set('review_section_enabled', '1');
-        Setting::set('review_display_limit', '2');
+        Setting::set('review_display_limit', '3');
 
         Review::create([
             'name' => 'Reviewer Satu',
@@ -201,6 +201,15 @@ class ReviewSystemTest extends TestCase
         ]);
 
         Review::create([
+            'name' => 'Reviewer Empat',
+            'role_or_title' => 'Genshin Player',
+            'rating' => 5,
+            'comment' => 'Komentar ulasan nomor empat.',
+            'is_visible' => true,
+            'sort_order' => 4,
+        ]);
+
+        Review::create([
             'name' => 'Reviewer Sembunyi',
             'role_or_title' => 'Hidden Player',
             'rating' => 1,
@@ -212,15 +221,18 @@ class ReviewSystemTest extends TestCase
         $response = $this->get('/');
         $response->assertStatus(200);
 
-        // Visible within limit
+        // Visible reviews are in the slider
         $response->assertSee('Reviewer Satu');
         $response->assertSee('Reviewer Dua');
+        $response->assertSee('Reviewer Tiga');
+        $response->assertSee('Reviewer Empat');
 
         // Hidden review should NOT be seen
         $response->assertDontSee('Reviewer Sembunyi');
 
-        // Beyond limit should NOT be seen
-        $response->assertDontSee('Reviewer Tiga');
+        // Carousel navigation arrows and dots should be present because 4 reviews > limit 3
+        $response->assertSee('review-nav-arrow');
+        $response->assertSee('review-dot-item');
     }
 
     public function test_homepage_hides_reviews_when_setting_disabled(): void

@@ -280,13 +280,15 @@ class ManageSettings extends Page implements HasForms
                                 '0' => 'Sembunyikan (OFF)',
                             ])
                             ->required(),
-                        TextInput::make('review_display_limit')
-                            ->label('Jumlah Ulasan Ditampilkan')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(30)
-                            ->default(3)
-                            ->helperText('Jumlah ulasan yang dimuat di homepage (contoh: 3 atau 6). Ulasan spesifik dapat diaktifkan/dinonaktifkan pada menu Ulasan Pelanggan.'),
+                        Select::make('review_display_limit')
+                            ->label('Jumlah Ulasan per Slide (Maksimal 6)')
+                            ->options([
+                                '3' => '3 Ulasan per Slide',
+                                '6' => '6 Ulasan per Slide (Maksimal)',
+                            ])
+                            ->default('3')
+                            ->required()
+                            ->helperText('Pilih 3 atau 6 ulasan per slide. Jika jumlah ulasan aktif melebihi angka ini, sistem otomatis menampilkan tombol slider navigasi.'),
                     ])->columns(2),
             ])
             ->statePath('data');
