@@ -208,6 +208,8 @@ class DigiflazzService
         $deactivatedCount = 0;
         $matchedProductIds = [];
 
+        // 1. Group Digiflazz items by brand + product_name to select active seller with lowest cost
+        $bestSellersMap = [];
         foreach ($dfProducts as $item) {
             $sku = trim((string) ($item['buyer_sku_code'] ?? ''));
             if ($sku === '') {
@@ -219,31 +221,97 @@ class DigiflazzService
             $sellerActive = in_array(strtolower((string) ($item['seller_product_status'] ?? '')), ['1', 'true', 'active'], true);
             $isDigiflazzActive = $buyerActive && $sellerActive;
 
+            $brand = trim((string) ($item['brand'] ?? ''));
+            $productName = trim((string) ($item['product_name'] ?? $sku));
+            $groupKey = Str::slug(($brand !== '' ? $brand.' ' : '').$productName);
+
+            if (! isset($bestSellersMap[$groupKey])) {
+                $bestSellersMap[$groupKey] = [
+                    'sku' => $sku,
+                    'price_cost' => $priceCost,
+                    'is_active' => $isDigiflazzActive,
+                    'item' => $item,
+                ];
+            } else {
+                $existing = $bestSellersMap[$groupKey];
+                $shouldReplace = false;
+
+                if ($isDigiflazzActive) {
+                    if (! $existing['is_active']) {
+                        $shouldReplace = true;
+                    } elseif ($priceCost < $existing['price_cost']) {
+                        $shouldReplace = true;
+                    }
+                }
+
+                if ($shouldReplace) {
+                    $bestSellersMap[$groupKey] = [
+                        'sku' => $sku,
+                        'price_cost' => $priceCost,
+                        'is_active' => $isDigiflazzActive,
+                        'item' => $item,
+                    ];
+                }
+            }
+        }
+
+        // 2. Process each item, auto-linking products to the cheapest active seller SKU
+        foreach ($dfProducts as $item) {
+            $sku = trim((string) ($item['buyer_sku_code'] ?? ''));
+            if ($sku === '') {
+                continue;
+            }
+
+            $priceCost = (float) ($item['price'] ?? 0);
+            $buyerActive = in_array(strtolower((string) ($item['buyer_product_status'] ?? '')), ['1', 'true', 'active'], true);
+            $sellerActive = in_array(strtolower((string) ($item['seller_product_status'] ?? '')), ['1', 'true', 'active'], true);
+            $isDigiflazzActive = $buyerActive && $sellerActive;
+
+            $brand = trim((string) ($item['brand'] ?? ''));
+            $productName = trim((string) ($item['product_name'] ?? $sku));
+            $groupKey = Str::slug(($brand !== '' ? $brand.' ' : '').$productName);
+
+            $bestSeller = $bestSellersMap[$groupKey] ?? [
+                'sku' => $sku,
+                'price_cost' => $priceCost,
+                'is_active' => $isDigiflazzActive,
+                'item' => $item,
+            ];
+
+            // Match product by exact SKU or by Name & Category
             $product = Product::where('sku', $sku)->first();
+            if (! $product) {
+                $product = Product::where('name', $productName)->first();
+            }
 
             if ($product) {
                 $matchedProductIds[] = $product->id;
 
-                $costChanged = (float) $product->price_cost !== $priceCost;
-                $dfStatusChanged = (bool) $product->digiflazz_status !== $isDigiflazzActive;
+                // Auto-switch to the cheapest active seller SKU if available
+                $targetSku = $bestSeller['sku'];
+                $targetCost = $bestSeller['price_cost'];
+                $targetStatus = $bestSeller['is_active'];
 
-                if ($costChanged || $dfStatusChanged) {
+                $skuChanged = $product->sku !== $targetSku;
+                $costChanged = (float) $product->price_cost !== $targetCost;
+                $dfStatusChanged = (bool) $product->digiflazz_status !== $targetStatus;
+
+                if ($skuChanged || $costChanged || $dfStatusChanged) {
                     $product->update([
-                        'price_cost' => $priceCost,
-                        'digiflazz_status' => $isDigiflazzActive,
+                        'sku' => $targetSku,
+                        'price_cost' => $targetCost,
+                        'digiflazz_status' => $targetStatus,
                     ]);
 
-                    if ($dfStatusChanged && ! $isDigiflazzActive) {
+                    if ($dfStatusChanged && ! $targetStatus) {
                         $deactivatedCount++;
                     }
                     $updatedCount++;
                 }
             } else {
-                // If product does not exist in local database, auto-import it if buyer status is active in Digiflazz
+                // Auto-import product using cheapest active seller SKU
                 if ($buyerActive) {
-                    $brand = trim((string) ($item['brand'] ?? ''));
                     $categoryName = trim((string) ($item['category'] ?? ''));
-                    $productName = trim((string) ($item['product_name'] ?? $sku));
 
                     $category = null;
                     if ($brand !== '') {
@@ -272,25 +340,28 @@ class DigiflazzService
                         $category = Category::first();
                     }
 
-                    // Sensible default selling price: cost + markup
+                    $optimalSku = $bestSeller['sku'];
+                    $optimalCost = $bestSeller['price_cost'];
+                    $optimalStatus = $bestSeller['is_active'];
+
                     $margin = match (true) {
-                        $priceCost <= 5000 => 500,
-                        $priceCost <= 20000 => 1000,
-                        $priceCost <= 50000 => 2000,
-                        $priceCost <= 100000 => 3500,
-                        default => ceil(($priceCost * 0.05) / 100) * 100,
+                        $optimalCost <= 5000 => 500,
+                        $optimalCost <= 20000 => 1000,
+                        $optimalCost <= 50000 => 2000,
+                        $optimalCost <= 100000 => 3500,
+                        default => ceil(($optimalCost * 0.05) / 100) * 100,
                     };
-                    $priceSell = $priceCost + $margin;
+                    $priceSell = $optimalCost + $margin;
 
                     if ($category) {
                         $newProduct = Product::create([
                             'category_id' => $category->id,
                             'name' => $productName,
-                            'sku' => $sku,
-                            'price_cost' => $priceCost,
+                            'sku' => $optimalSku,
+                            'price_cost' => $optimalCost,
                             'price_sell' => $priceSell,
-                            'status' => true, // Tampilkan di web secara default
-                            'digiflazz_status' => $isDigiflazzActive,
+                            'status' => true,
+                            'digiflazz_status' => $optimalStatus,
                         ]);
 
                         $matchedProductIds[] = $newProduct->id;
@@ -302,7 +373,7 @@ class DigiflazzService
 
         // Mark any existing products that were not returned by Digiflazz as inactive in Digiflazz
         $unmatchedProducts = Product::where('digiflazz_status', true)
-            ->whereNotIn('id', $matchedProductIds)
+            ->whereNotIn('id', array_unique($matchedProductIds))
             ->get();
 
         foreach ($unmatchedProducts as $unmatchedProduct) {
