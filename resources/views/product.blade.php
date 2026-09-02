@@ -997,7 +997,8 @@
     const accountZoneIdInput = document.getElementById('account_zone_id');
     const nicknameResult = document.getElementById('nickname_check_result');
     const currentGameSlug = "{{ strtolower($category->slug) }}";
-    const currentCategoryType = "{{ strtolower($category->type) }}";
+    const isCategoryNicknameCheckEnabled = {{ ($category->is_nickname_check_enabled ?? true) ? 'true' : 'false' }};
+    const nicknameCheckProvider = "{{ $category->nickname_check_provider ?? 'public' }}";
 
     const nicknameSupportedGames = [
         'mobile-legends', 'mobile-legends-bang-bang', 'mlbb', 'magic-chess',
@@ -1010,7 +1011,7 @@
         'honor-of-kings', 'hok'
     ];
 
-    const isNicknameCheckSupported = nicknameSupportedGames.includes(currentGameSlug);
+    const isNicknameCheckSupported = isCategoryNicknameCheckEnabled && nicknameCheckProvider !== 'disabled' && nicknameSupportedGames.includes(currentGameSlug);
 
     let nicknameCheckTimeout = null;
 
@@ -1029,13 +1030,12 @@
                 return;
             }
 
-            // Display loading status
-            nicknameResult.style.display = 'flex';
-            nicknameResult.style.borderColor = 'rgba(234, 179, 8, 0.3)';
-            nicknameResult.style.color = '#eab308'; // Warning yellow
-            nicknameResult.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.35rem;"></i> Memverifikasi data akun...`;
-
             nicknameCheckTimeout = setTimeout(() => {
+                // Display loading status right before fetch
+                nicknameResult.style.display = 'flex';
+                nicknameResult.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+                nicknameResult.style.color = '#eab308'; // Warning yellow
+                nicknameResult.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.35rem;"></i> Memverifikasi data akun...`;
                 fetch(`/api/check-nickname?game=${encodeURIComponent(currentGameSlug)}&id=${encodeURIComponent(userId)}&zone=${encodeURIComponent(zoneId)}`)
                     .then(response => response.json())
                     .then(data => {
