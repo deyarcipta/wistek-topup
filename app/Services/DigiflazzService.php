@@ -208,7 +208,10 @@ class DigiflazzService
         $deactivatedCount = 0;
         $matchedProductIds = [];
 
-        // 1. Group Digiflazz items by brand + product_name to select active seller with lowest cost
+        $isTrustedEnabled = Setting::get('digiflazz_trusted_seller_enabled', '1') === '1';
+        $priceTolerance = (float) Setting::get('digiflazz_price_tolerance', '200');
+
+        // 1. Group Digiflazz items by brand + product_name to select active & trusted seller
         $bestSellersMap = [];
         foreach ($dfProducts as $item) {
             $sku = trim((string) ($item['buyer_sku_code'] ?? ''));
@@ -225,11 +228,22 @@ class DigiflazzService
             $productName = trim((string) ($item['product_name'] ?? $sku));
             $groupKey = Str::slug(($brand !== '' ? $brand.' ' : '').$productName);
 
+            // Compute Trust Score for seller evaluation
+            $desc = strtolower(($item['desc'] ?? '').' '.($item['seller_name'] ?? '').' '.($item['note'] ?? ''));
+            $trustScore = 100;
+            if (str_contains($desc, 'instant') || str_contains($desc, '24 jam') || str_contains($desc, '24h') || str_contains($desc, 'otmatis') || str_contains($desc, 'official') || str_contains($desc, 'gas')) {
+                $trustScore += 20;
+            }
+            if (str_contains($desc, 'slow') || str_contains($desc, 'manual') || str_contains($desc, '1x24') || str_contains($desc, 'proses lama') || str_contains($desc, 'antri')) {
+                $trustScore -= 30;
+            }
+
             if (! isset($bestSellersMap[$groupKey])) {
                 $bestSellersMap[$groupKey] = [
                     'sku' => $sku,
                     'price_cost' => $priceCost,
                     'is_active' => $isDigiflazzActive,
+                    'trust_score' => $trustScore,
                     'item' => $item,
                 ];
             } else {
@@ -239,8 +253,19 @@ class DigiflazzService
                 if ($isDigiflazzActive) {
                     if (! $existing['is_active']) {
                         $shouldReplace = true;
-                    } elseif ($priceCost < $existing['price_cost']) {
-                        $shouldReplace = true;
+                    } else {
+                        $priceDiff = $priceCost - $existing['price_cost'];
+
+                        if ($isTrustedEnabled && abs($priceDiff) <= $priceTolerance) {
+                            // Within price tolerance: favor seller with higher Trust Score
+                            if ($trustScore > $existing['trust_score']) {
+                                $shouldReplace = true;
+                            } elseif ($trustScore === $existing['trust_score'] && $priceCost < $existing['price_cost']) {
+                                $shouldReplace = true;
+                            }
+                        } elseif ($priceCost < $existing['price_cost']) {
+                            $shouldReplace = true;
+                        }
                     }
                 }
 
@@ -249,6 +274,7 @@ class DigiflazzService
                         'sku' => $sku,
                         'price_cost' => $priceCost,
                         'is_active' => $isDigiflazzActive,
+                        'trust_score' => $trustScore,
                         'item' => $item,
                     ];
                 }

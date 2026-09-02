@@ -97,6 +97,8 @@ class ManageApiSettings extends Page implements HasForms
             'digiflazz_api_key' => Setting::get('digiflazz_api_key'),
             'digiflazz_webhook_secret' => Setting::get('digiflazz_webhook_secret'),
             'digiflazz_mode' => Setting::get('digiflazz_mode', 'development'),
+            'digiflazz_trusted_seller_enabled' => Setting::get('digiflazz_trusted_seller_enabled', '1'),
+            'digiflazz_price_tolerance' => Setting::get('digiflazz_price_tolerance', '200'),
             'digiflazz_connection_status' => ($status['success'] ?? false) ? '🟢 Terhubung (OK)' : '🔴 Gagal: '.($status['message'] ?? 'Belum dikonfigurasi'),
             'digiflazz_balance' => ($status['success'] ?? false) ? 'Rp '.number_format((float) ($status['balance'] ?? 0), 0, ',', '.') : 'Rp 0',
             'whatsapp_enabled' => Setting::get('whatsapp_enabled', '0'),
@@ -156,6 +158,21 @@ class ManageApiSettings extends Page implements HasForms
                                 'development' => 'Development (Testing)',
                                 'production' => 'Production (Live)',
                             ]),
+                        Select::make('digiflazz_trusted_seller_enabled')
+                            ->label('Algoritma Pencarian Seller')
+                            ->options([
+                                '1' => 'Smart Trusted Seller (Termurah + Paling Terpercaya/Cepat)',
+                                '0' => 'Harga Termurah Saja (Tanpa Filter Kestabilan)',
+                            ])
+                            ->default('1')
+                            ->required()
+                            ->helperText('Saat aktif, sistem memilih seller terpercaya & cepat jika selisih harga masih dalam batas toleransi.'),
+                        TextInput::make('digiflazz_price_tolerance')
+                            ->label('Toleransi Selisih Harga Modal (Rp)')
+                            ->numeric()
+                            ->default(200)
+                            ->placeholder('200')
+                            ->helperText('Batas maksimal selisih harga modal (Rp) di mana sistem akan mengutamakan seller yang lebih terpercaya & cepat.'),
                     ])->columns(2),
 
                 Section::make('WhatsApp Notification Gateway (open-wa)')
@@ -214,6 +231,7 @@ class ManageApiSettings extends Page implements HasForms
         foreach ([
             'duitku_merchant_code', 'duitku_api_key', 'duitku_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
+            'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
