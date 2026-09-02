@@ -211,47 +211,128 @@
                         <h3 class="step-title">Masukkan Data Akun</h3>
                     </div>
                     
-                    @if($category->slug === 'mobile-legends')
+                    @php
+                        $slug = strtolower($category->slug);
+                        $type = strtolower($category->type);
+                    @endphp
+
+                    @if(in_array($slug, ['mobile-legends', 'mobile-legends-bang-bang', 'mlbb', 'magic-chess', 'magic-chess-go-go', 'magic-chess-pass', 'mc']))
                         <div class="input-group-row">
                             <div>
                                 <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">User ID</label>
-                                <input type="text" name="target_id" id="mlbb_user_id" class="form-control" placeholder="Contoh: 12345678" required>
+                                <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 12345678" inputmode="numeric" required>
                             </div>
                             <div>
                                 <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Zone ID</label>
-                                <input type="text" name="zone_id" id="mlbb_zone_id" class="form-control" placeholder="Contoh: 1234" required>
+                                <input type="text" name="zone_id" id="account_zone_id" class="form-control" placeholder="Contoh: 1234" inputmode="numeric" required>
                             </div>
                         </div>
-                        <div id="mlbb_nickname_result" style="margin-top: 0.5rem; font-size: 0.85rem; display: none; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif;">
+                        <p class="form-help" style="margin-top: 0.5rem;">User ID & Zone ID tertera di profil game Mobile Legends / Magic Chess Anda.</p>
+
+                    @elseif(in_array($slug, ['genshin-impact', 'honkai-star-rail']))
+                        <div class="input-group-row">
+                            <div>
+                                <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">User ID (UID)</label>
+                                <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 800000000" inputmode="numeric" required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Server</label>
+                                <select name="zone_id" id="account_zone_id" class="form-control" style="background: rgba(15, 15, 15, 0.8); color: #fff; border: 1px solid var(--border-color);" required>
+                                    <option value="os_asia">Asia</option>
+                                    <option value="os_usa">America</option>
+                                    <option value="os_euro">Europe</option>
+                                    <option value="os_cht">TW / HK / MO</option>
+                                </select>
+                            </div>
                         </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">UID tertera pada sudut kanan bawah layar game.</p>
+
+                    @elseif($slug === 'valorant')
+                        <div class="input-group-row">
+                            <div>
+                                <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Riot ID</label>
+                                <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: PlayerOne" required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Tagline (#)</label>
+                                <input type="text" name="zone_id" id="account_zone_id" class="form-control" placeholder="Contoh: IDN atau 1234" required>
+                            </div>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan Riot ID dan Tagline tanpa tanda hashtag (#).</p>
+
+                    @elseif(in_array($slug, ['free-fire', 'free-fire-max', 'ff']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Player ID (User ID)</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 123456789" inputmode="numeric" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Player ID tertera di menu profil game Free Fire Anda.</p>
+
+                    @elseif(in_array($slug, ['pubg-mobile', 'pubg']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Character ID</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 5123456789" inputmode="numeric" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Character ID berupa angka di sebelah avatar profil game.</p>
+
+                    @elseif(in_array($slug, ['call-of-duty-mobile', 'codm']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">OpenID</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 1234567890123456789" inputmode="numeric" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">OpenID tertera pada menu Pengaturan (Settings) > Legal & Privacy.</p>
+
+                    @elseif(in_array($slug, ['honor-of-kings', 'hok']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Player ID</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 123456789" inputmode="numeric" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Player ID tertera pada profil game Honor of Kings Anda.</p>
+
+                    @elseif(in_array($slug, ['point-blank', 'pb']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Username / ID Zepetto</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: player_pb" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan Username / ID Akun Zepetto Point Blank Anda.</p>
+
+                    @elseif($type === 'pln')
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Nomor Meter / ID Pelanggan PLN</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 14123456789" inputmode="numeric" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan 11-12 digit Nomor Meter atau ID Pelanggan PLN Anda.</p>
+
+                    @elseif(in_array($type, ['pulsa', 'paket-data']))
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Nomor Handphone</label>
+                            <input type="tel" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 081234567890" inputmode="tel" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan nomor handphone aktif penerima pulsa/paket data.</p>
+
+                    @elseif($type === 'emoney')
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Nomor HP Terdaftar</label>
+                            <input type="tel" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 081234567890" inputmode="tel" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan nomor telepon yang terdaftar pada akun e-wallet penerima.</p>
+
+                    @elseif($type === 'streaming' || $type === 'voucher')
+                        <div>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">ID Pelanggan / No. HP / Email Akun</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 081234567890 / user@email.com" required>
+                        </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Masukkan No. HP atau Email terdaftar untuk pengiriman voucher/akses.</p>
+
                     @else
                         <div>
-                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">
-                                @if($category->type === 'pln')
-                                    Nomor Meter / ID Pelanggan PLN
-                                @elseif($category->type === 'streaming')
-                                    ID Pelanggan / No. HP / Email Akun
-                                @elseif($category->type === 'tagihan')
-                                    Nomor Pelanggan / ID Tagihan
-                                @elseif(in_array($category->type, ['pulsa', 'emoney']))
-                                    Nomor Handphone / Tujuan
-                                @else
-                                    ID Akun / Target
-                                @endif
-                            </label>
-                            @php
-                                $targetPlaceholder = match($category->type) {
-                                    'pln' => 'Contoh: 14123456789',
-                                    'streaming' => 'Contoh: 081234567890 / user@email.com',
-                                    'tagihan' => 'Contoh: 0123456789',
-                                    'pulsa', 'emoney' => 'Contoh: 081234567890',
-                                    default => 'Contoh: 523087265',
-                                };
-                            @endphp
-                            <input type="text" name="target_id" class="form-control" placeholder="{{ $targetPlaceholder }}" required>
+                            <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">ID Akun / Target</label>
+                            <input type="text" name="target_id" id="account_user_id" class="form-control" placeholder="Contoh: 523087265" required>
                         </div>
+                        <p class="form-help" style="margin-top: 0.5rem;">Kesalahan input data oleh pembeli bukan tanggung jawab kami.</p>
                     @endif
-                    <p class="form-help">Kesalahan input data oleh pembeli bukan tanggung jawab kami.</p>
+
+                    <div id="nickname_check_result" style="margin-top: 0.75rem; font-size: 0.88rem; display: none; align-items: center; gap: 0.5rem; font-family: 'Outfit', sans-serif; padding: 0.6rem 0.85rem; border-radius: 6px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.2s ease;">
+                    </div>
                 </div>
 
                 <!-- Step 2: Choose Nominal / Products -->
@@ -911,47 +992,90 @@
         });
     }
 
-    // AJAX Verification for Mobile Legends User ID & Zone ID
-    const mlUserIdInput = document.getElementById('mlbb_user_id');
-    const mlZoneIdInput = document.getElementById('mlbb_zone_id');
-    const mlNicknameResult = document.getElementById('mlbb_nickname_result');
+    // Dynamic Nickname Checker for Games ONLY
+    const accountUserIdInput = document.getElementById('account_user_id');
+    const accountZoneIdInput = document.getElementById('account_zone_id');
+    const nicknameResult = document.getElementById('nickname_check_result');
+    const currentGameSlug = "{{ strtolower($category->slug) }}";
+    const currentCategoryType = "{{ strtolower($category->type) }}";
 
-    if (mlUserIdInput && mlZoneIdInput && mlNicknameResult) {
-        const checkMlbbNickname = () => {
-            const userId = mlUserIdInput.value.trim();
-            const zoneId = mlZoneIdInput.value.trim();
+    const nicknameSupportedGames = [
+        'mobile-legends', 'mobile-legends-bang-bang', 'mlbb', 'magic-chess',
+        'free-fire', 'free-fire-max', 'ff',
+        'genshin-impact', 'honkai-star-rail',
+        'pubg-mobile', 'pubg',
+        'valorant',
+        'call-of-duty-mobile', 'codm',
+        'point-blank', 'pb',
+        'honor-of-kings', 'hok'
+    ];
 
-            if (userId === '' || zoneId === '') {
-                mlNicknameResult.style.display = 'none';
+    const isNicknameCheckSupported = nicknameSupportedGames.includes(currentGameSlug);
+
+    let nicknameCheckTimeout = null;
+
+    if (accountUserIdInput && nicknameResult && isNicknameCheckSupported) {
+        const triggerNicknameCheck = () => {
+            clearTimeout(nicknameCheckTimeout);
+
+            const userId = accountUserIdInput.value.trim();
+            const zoneId = accountZoneIdInput ? accountZoneIdInput.value.trim() : '';
+
+            // If game needs zone/server (e.g. MLBB, Magic Chess, Genshin, Valorant) and it's empty, wait
+            const needsZone = ['mobile-legends', 'mobile-legends-bang-bang', 'mlbb', 'magic-chess', 'magic-chess-go-go', 'magic-chess-pass', 'mc', 'genshin-impact', 'honkai-star-rail', 'valorant'].includes(currentGameSlug);
+
+            if (userId === '' || (needsZone && zoneId === '')) {
+                nicknameResult.style.display = 'none';
                 return;
             }
 
             // Display loading status
-            mlNicknameResult.style.display = 'flex';
-            mlNicknameResult.style.color = '#eab308'; // Warning yellow
-            mlNicknameResult.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.35rem;"></i> Memvalidasi data akun...`;
+            nicknameResult.style.display = 'flex';
+            nicknameResult.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+            nicknameResult.style.color = '#eab308'; // Warning yellow
+            nicknameResult.innerHTML = `<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.35rem;"></i> Memverifikasi data akun...`;
 
-            // Call check API
-            fetch(`/api/check-mlbb?id=${encodeURIComponent(userId)}&zone=${encodeURIComponent(zoneId)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.nickname) {
-                        mlNicknameResult.style.color = '#10b981'; // Green
-                        mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-check" style="margin-right: 0.35rem;"></i> Nickname: <strong>${data.nickname}</strong>`;
-                    } else {
-                        mlNicknameResult.style.color = '#ef4444'; // Red
-                        mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-xmark" style="margin-right: 0.35rem;"></i> Data akun tidak ditemukan atau salah.`;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error validating MLBB ID:', error);
-                    mlNicknameResult.style.color = '#eab308'; // Orange/Yellow
-                    mlNicknameResult.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="margin-right: 0.35rem;"></i> Gagal memvalidasi (offline).`;
-                });
+            nicknameCheckTimeout = setTimeout(() => {
+                fetch(`/api/check-nickname?game=${encodeURIComponent(currentGameSlug)}&id=${encodeURIComponent(userId)}&zone=${encodeURIComponent(zoneId)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.disabled) {
+                            nicknameResult.style.display = 'none';
+                        } else if (data.success && data.nickname) {
+                            nicknameResult.style.display = 'flex';
+                            nicknameResult.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                            nicknameResult.style.color = '#10b981'; // Green
+                            const providerBadge = data.provider === 'digiflazz' ? ' <span style="font-size: 0.75rem; background: rgba(16, 185, 129, 0.15); padding: 2px 6px; border-radius: 4px; margin-left: 0.4rem;">Resmi</span>' : '';
+                            nicknameResult.innerHTML = `<i class="fa-solid fa-circle-check" style="margin-right: 0.35rem;"></i> Nickname: <strong style="margin-left: 0.25rem;">${data.nickname}</strong>${providerBadge}`;
+                        } else if (data.offline) {
+                            nicknameResult.style.display = 'flex';
+                            nicknameResult.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+                            nicknameResult.style.color = '#eab308'; // Yellow notice
+                            nicknameResult.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right: 0.35rem;"></i> Server verifikasi nama sedang sibuk. Anda tetap dapat melakukan transaksi (pastikan ID sudah benar).`;
+                        } else {
+                            nicknameResult.style.display = 'flex';
+                            nicknameResult.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                            nicknameResult.style.color = '#ef4444'; // Red
+                            nicknameResult.innerHTML = `<i class="fa-solid fa-circle-xmark" style="margin-right: 0.35rem;"></i> ${data.message || 'Data akun tidak ditemukan.'}`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error validating account:', error);
+                        nicknameResult.style.display = 'flex';
+                        nicknameResult.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+                        nicknameResult.style.color = '#eab308';
+                        nicknameResult.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="margin-right: 0.35rem;"></i> Server verifikasi nama sedang sibuk. Anda tetap dapat melakukan transaksi (pastikan ID sudah benar).`;
+                    });
+            }, 400); // 400ms debounce
         };
 
-        mlUserIdInput.addEventListener('blur', checkMlbbNickname);
-        mlZoneIdInput.addEventListener('blur', checkMlbbNickname);
+        accountUserIdInput.addEventListener('input', triggerNicknameCheck);
+        accountUserIdInput.addEventListener('blur', triggerNicknameCheck);
+        if (accountZoneIdInput) {
+            accountZoneIdInput.addEventListener('input', triggerNicknameCheck);
+            accountZoneIdInput.addEventListener('change', triggerNicknameCheck);
+            accountZoneIdInput.addEventListener('blur', triggerNicknameCheck);
+        }
     }
 
     // Client-side validation before submit

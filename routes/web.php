@@ -26,6 +26,7 @@ Route::post('/history', [TopupController::class, 'checkHistory']);
 // API status lookup for AJAX checkout page status updates
 Route::get('/api/transaction-status/{invoice}', [TopupController::class, 'apiStatus']);
 Route::get('/api/check-mlbb', [ValidationController::class, 'checkMlbb']);
+Route::get('/api/check-nickname', [ValidationController::class, 'checkNickname']);
 
 // Webhooks (Exempt from CSRF in bootstrap/app.php)
 Route::post('/callback/duitku', [CallbackController::class, 'duitkuCallback']);

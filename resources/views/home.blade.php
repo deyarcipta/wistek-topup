@@ -72,16 +72,10 @@
                 @foreach($banners as $index => $banner)
                     <div class="slide" style="min-width: 100%; box-sizing: border-box; position: relative;">
                         @if($banner->link_url)
-                            <a href="{{ $banner->link_url }}">
+                            <a href="{{ $banner->link_url }}" style="display: block;">
                         @endif
                         
                         <img src="{{ asset('storage/' . $banner->image_path) }}" alt="{{ $banner->title ?? 'Promo Banner' }}" style="width: 100%; height: auto; aspect-ratio: 1200/500; object-fit: cover; display: block;">
-                        
-                        @if($banner->title)
-                            <div class="slide-caption" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(8,9,12,0.9) 0%, rgba(8,9,12,0) 100%); padding: 3rem 2rem 2rem; color: #fff;">
-                                <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">{{ $banner->title }}</h3>
-                            </div>
-                        @endif
                         
                         @if($banner->link_url)
                             </a>
@@ -90,20 +84,15 @@
                 @endforeach
             </div>
             
-            <!-- Navigation Arrows -->
-            <button onclick="moveSlide(-1)" style="position: absolute; top: 50%; left: 1.5rem; transform: translateY(-50%); background: rgba(8,9,12,0.6); backdrop-filter: blur(4px); border: 1px solid var(--border-color); color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;">
-                <i class="fa-solid fa-chevron-left" style="font-size: 1rem;"></i>
-            </button>
-            <button onclick="moveSlide(1)" style="position: absolute; top: 50%; right: 1.5rem; transform: translateY(-50%); background: rgba(8,9,12,0.6); backdrop-filter: blur(4px); border: 1px solid var(--border-color); color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10;">
-                <i class="fa-solid fa-chevron-right" style="font-size: 1rem;"></i>
-            </button>
-            
-            <!-- Indicators / Dots -->
-            <div class="slider-dots" style="position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 10;">
-                @foreach($banners as $index => $banner)
-                    <span class="dot {{ $index === 0 ? 'active' : '' }}" onclick="setSlide({{ $index }})" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.3s;"></span>
-                @endforeach
-            </div>
+            @if(count($banners) > 1)
+                <!-- Navigation Arrows (Clean circular floating buttons) -->
+                <button onclick="moveSlide(-1)" aria-label="Previous Slide" style="position: absolute; top: 50%; left: 1rem; transform: translateY(-50%); background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: background 0.2s, transform 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'; this.style.transform='translateY(-50%) scale(1.08)';" onmouseout="this.style.background='rgba(0,0,0,0.45)'; this.style.transform='translateY(-50%) scale(1)';">
+                    <i class="fa-solid fa-chevron-left" style="font-size: 1.1rem;"></i>
+                </button>
+                <button onclick="moveSlide(1)" aria-label="Next Slide" style="position: absolute; top: 50%; right: 1rem; transform: translateY(-50%); background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10; transition: background 0.2s, transform 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.7)'; this.style.transform='translateY(-50%) scale(1.08)';" onmouseout="this.style.background='rgba(0,0,0,0.45)'; this.style.transform='translateY(-50%) scale(1)';">
+                    <i class="fa-solid fa-chevron-right" style="font-size: 1.1rem;"></i>
+                </button>
+            @endif
         </div>
     @else
         <!-- Fallback Default Hero Section if no slides are added by Admin yet -->
@@ -435,9 +424,19 @@
         });
     }
 
-    // Initialize Slider Autoplay on Load
+    // Initialize Slider Autoplay on Load with pause on hover
     document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
+
+        const slider = document.querySelector('.slider-container');
+        if (slider) {
+            slider.addEventListener('mouseenter', () => {
+                if (autoplayInterval) clearInterval(autoplayInterval);
+            });
+            slider.addEventListener('mouseleave', () => {
+                startAutoplay();
+            });
+        }
     });
 
     // ----------------------------------------------------

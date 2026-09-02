@@ -472,4 +472,70 @@ class DigiflazzService
         // 6. Game (default)
         return 'game';
     }
+
+    /**
+     * Inquire account name using Digiflazz Inquiry SKU (e.g. pre33614125 for Mobile Legends Cek Username)
+     */
+    public function inquireAccountName(string $inquirySku, string $customerNo): array
+    {
+        if (empty($inquirySku) || empty($customerNo)) {
+            return [
+                'success' => false,
+                'message' => 'SKU Inquiry dan Nomor Pelanggan/Target wajib diisi.',
+            ];
+        }
+
+        $refId = 'INQ-'.date('YmdHis').rand(100, 999);
+        $sign = md5($this->username.$this->apiKey.$refId);
+
+        $payload = [
+            'username' => $this->username,
+            'buyer_sku_code' => $inquirySku,
+            'customer_no' => $customerNo,
+            'ref_id' => $refId,
+            'sign' => $sign,
+        ];
+
+        try {
+            $response = Http::post($this->baseUrl.'transaction', $payload);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (isset($data['data'])) {
+                    $item = $data['data'];
+                    $customerName = trim((string) ($item['customer_name'] ?? ''));
+
+                    if ($customerName === '' && ! empty($item['sn'])) {
+                        $parts = explode('/', $item['sn']);
+                        $customerName = trim($parts[0]);
+                    }
+
+                    if ($customerName !== '') {
+                        return [
+                            'success' => true,
+                            'nickname' => $customerName,
+                            'message' => $item['message'] ?? 'Berhasil verifikasi via Digiflazz',
+                        ];
+                    }
+
+                    return [
+                        'success' => false,
+                        'message' => $item['message'] ?? 'Data akun tidak ditemukan.',
+                    ];
+                }
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Gagal melakukan inquiry via Digiflazz.',
+            ];
+        } catch (Exception $e) {
+            logger()->error('Digiflazz inquireAccountName failed: '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
 }

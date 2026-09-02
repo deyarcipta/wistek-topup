@@ -38,6 +38,30 @@ class DigiflazzSyncAndValidationTest extends TestCase
     }
 
     /**
+     * Test checking Free Fire nickname via multi-game check-nickname endpoint.
+     */
+    public function test_check_nickname_free_fire_success()
+    {
+        Http::fake([
+            'https://api.isan.eu.org/nickname/ff*' => Http::response([
+                'success' => true,
+                'game' => 'Garena Free Fire',
+                'id' => '10000000',
+                'name' => 'FFBooyahHero',
+            ], 200),
+        ]);
+
+        $response = $this->getJson('/api/check-nickname?game=free-fire&id=10000000');
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'game' => 'free-fire',
+                'nickname' => 'FFBooyahHero',
+            ]);
+    }
+
+    /**
      * Test checking MLBB nickname endpoint returns error when not found.
      */
     public function test_check_mlbb_nickname_not_found()

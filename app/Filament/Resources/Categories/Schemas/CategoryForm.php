@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Categories\Schemas;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -45,6 +46,26 @@ class CategoryForm
                     ->label('Aktif / Tampilkan di Web')
                     ->default(true)
                     ->required(),
+                Toggle::make('is_nickname_check_enabled')
+                    ->label('Aktifkan Cek Username')
+                    ->default(true)
+                    ->live()
+                    ->helperText('Aktifkan atau matikan pencarian nama/nickname pada form masukkan data akun.'),
+                Select::make('nickname_check_provider')
+                    ->label('Mode Provider Pengecekan')
+                    ->default('public')
+                    ->options([
+                        'public' => 'API Publik Gratis (Rekomendasi Utama)',
+                        'digiflazz' => 'Digiflazz Inquiry SKU (Resmi 99% Akurat)',
+                        'disabled' => 'Nonaktifkan Pengecekan',
+                    ])
+                    ->live()
+                    ->visible(fn (Get $get): bool => (bool) $get('is_nickname_check_enabled')),
+                TextInput::make('digiflazz_inquiry_sku')
+                    ->label('SKU Digiflazz Cek Username')
+                    ->placeholder('Contoh: pre33614125')
+                    ->helperText('Masukkan kode SKU Digiflazz Cek Username (seperti pre33614125).')
+                    ->visible(fn (Get $get): bool => $get('is_nickname_check_enabled') && $get('nickname_check_provider') === 'digiflazz'),
             ]);
     }
 }

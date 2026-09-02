@@ -56,6 +56,9 @@ class CategoriesTable
                 ToggleColumn::make('status')
                     ->label('Aktif / Tampilkan')
                     ->sortable(),
+                ToggleColumn::make('is_nickname_check_enabled')
+                    ->label('Cek Username')
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('Dibuat Pada')
                     ->dateTime()
