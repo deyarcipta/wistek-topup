@@ -343,24 +343,46 @@
                     </div>
                     
                     @php
+                        // Smart Sub-Category Grouping
                         $groupedProducts = $products->groupBy(function($item) {
-                            return $item->subCategory ? $item->subCategory->name : 'Top Up';
-                        })->sortBy(function($group) {
-                            return $group->first()->subCategory ? $group->first()->subCategory->sort_order : 999;
+                            if ($item->subCategory) {
+                                return $item->subCategory->name;
+                            }
+
+                            $name = strtolower($item->name);
+                            if (str_contains($name, 'pass') || str_contains($name, 'weekly') || str_contains($name, 'twilight') || str_contains($name, 'starlight') || str_contains($name, 'membership')) {
+                                return 'Special Items ✨';
+                            } elseif (str_contains($name, 'first') || str_contains($name, 'double') || str_contains($name, 'perdana') || str_contains($name, 'first top up')) {
+                                return 'First Top Up (Double Diamonds) ✨';
+                            } elseif (str_contains($name, 'pack') || str_contains($name, 'bundle') || str_contains($name, 'box') || str_contains($name, 'epic') || str_contains($name, 'elite')) {
+                                return 'Weekly / Monthly Pack ✨';
+                            }
+
+                            return 'Top Up ✨';
+                        })->sortBy(function($group, $key) {
+                            $order = match ($key) {
+                                'Special Items ✨' => 1,
+                                'First Top Up (Double Diamonds) ✨' => 2,
+                                'Weekly / Monthly Pack ✨' => 3,
+                                'Top Up ✨' => 4,
+                                default => 5,
+                            };
+                            return $group->first()->subCategory ? $group->first()->subCategory->sort_order : $order;
                         });
                     @endphp
 
                     @forelse($groupedProducts as $subCategory => $groupItems)
-                        <h4 style="color: #fff; font-size: 0.88rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 0.75rem; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; border-left: 3px solid #e28743; padding-left: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <h4 style="color: #fff; font-size: 0.9rem; font-weight: 700; margin-top: 1.75rem; margin-bottom: 0.85rem; font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; border-left: 3.5px solid #e28743; padding-left: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             {{ $subCategory }}
                         </h4>
-                        <div class="nominal-grid" style="margin-bottom: 1.75rem;">
+                        <div class="nominal-grid" style="margin-bottom: 2rem;">
                             @foreach($groupItems as $product)
                                 @php
                                     // Clean redundant brand prefix for display
                                     $displayName = $product->name;
                                     $categorySlug = strtolower($category->slug);
                                     $categoryName = strtolower($category->name);
+                                    $nameLower = strtolower($displayName);
 
                                     // Strip brand name prefix
                                     $prefixes = [
@@ -387,36 +409,78 @@
                                         $displayName = $product->name;
                                     }
 
-                                    // Determine Currency/Item Icon
+                                    // Determine Currency/Item Icon and Badge Text
                                     $iconClass = 'fa-solid fa-coins';
                                     $iconColor = '#f59e0b'; // Gold
+                                    $iconBg = 'rgba(245, 158, 11, 0.12)';
+                                    $badgeText = null;
 
-                                    if (str_contains($categorySlug, 'mobile-legend') || str_contains($categorySlug, 'magic-chess') || str_contains($categorySlug, 'free-fire') || str_contains(strtolower($displayName), 'diamond')) {
+                                    if (str_contains($nameLower, 'pass') || str_contains($nameLower, 'weekly') || str_contains($nameLower, 'twilight') || str_contains($nameLower, 'starlight') || str_contains($nameLower, 'membership')) {
+                                        $iconClass = 'fa-solid fa-crown';
+                                        $iconColor = '#f59e0b';
+                                        $iconBg = 'rgba(245, 158, 11, 0.15)';
+                                        $badgeText = 'Special Pass';
+                                    } elseif (str_contains($nameLower, 'first') || str_contains($nameLower, 'double') || str_contains($nameLower, 'perdana') || str_contains($nameLower, 'bonus')) {
+                                        $iconClass = 'fa-solid fa-fire';
+                                        $iconColor = '#ef4444';
+                                        $iconBg = 'rgba(239, 68, 68, 0.15)';
+                                        $badgeText = 'First Top Up';
+                                    } elseif (str_contains($nameLower, 'pack') || str_contains($nameLower, 'bundle') || str_contains($nameLower, 'box')) {
+                                        $iconClass = 'fa-solid fa-box-open';
+                                        $iconColor = '#a855f7';
+                                        $iconBg = 'rgba(168, 85, 247, 0.15)';
+                                        $badgeText = 'Special Bundle';
+                                    } elseif (str_contains($categorySlug, 'mobile-legend') || str_contains($categorySlug, 'magic-chess') || str_contains($categorySlug, 'free-fire') || str_contains($nameLower, 'diamond')) {
                                         $iconClass = 'fa-solid fa-gem';
                                         $iconColor = '#3b82f6'; // Diamond Blue
-                                    } elseif (str_contains($categorySlug, 'pubg') || str_contains(strtolower($displayName), 'uc')) {
+                                        $iconBg = 'rgba(59, 130, 246, 0.12)';
+                                    } elseif (str_contains($categorySlug, 'pubg') || str_contains($nameLower, 'uc')) {
                                         $iconClass = 'fa-solid fa-bolt';
                                         $iconColor = '#eab308'; // UC Gold/Yellow
-                                    } elseif (str_contains($categorySlug, 'genshin') || str_contains($categorySlug, 'star-rail') || str_contains(strtolower($displayName), 'crystal')) {
+                                        $iconBg = 'rgba(234, 179, 8, 0.12)';
+                                    } elseif (str_contains($categorySlug, 'genshin') || str_contains($categorySlug, 'star-rail') || str_contains($nameLower, 'crystal')) {
                                         $iconClass = 'fa-solid fa-wand-magic-sparkles';
                                         $iconColor = '#a855f7'; // Crystal Purple
-                                    } elseif (str_contains($categorySlug, 'valorant') || str_contains(strtolower($displayName), 'vp')) {
+                                        $iconBg = 'rgba(168, 85, 247, 0.12)';
+                                    } elseif (str_contains($categorySlug, 'valorant') || str_contains($nameLower, 'vp')) {
                                         $iconClass = 'fa-solid fa-shield-halved';
                                         $iconColor = '#ef4444'; // Valorant Red
+                                        $iconBg = 'rgba(239, 68, 68, 0.12)';
                                     } elseif (in_array($category->type, ['pulsa', 'paket-data'])) {
                                         $iconClass = 'fa-solid fa-mobile-screen-button';
                                         $iconColor = '#10b981'; // Green
+                                        $iconBg = 'rgba(16, 185, 129, 0.12)';
                                     } elseif ($category->type === 'emoney') {
                                         $iconClass = 'fa-solid fa-wallet';
                                         $iconColor = '#06b6d4'; // Cyan
+                                        $iconBg = 'rgba(6, 182, 212, 0.12)';
                                     }
                                 @endphp
-                                <div class="nominal-card" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $product->price_sell }})">
-                                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 0.25rem;">
-                                        <span class="nominal-name" style="font-weight: 700; color: #fff;">{{ $displayName }}</span>
-                                        <i class="{{ $iconClass }}" style="color: {{ $iconColor }}; font-size: 1.05rem;"></i>
+                                <div class="nominal-card" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $product->price_sell }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.22s ease; cursor: pointer; position: relative;">
+                                    
+                                    <!-- Upper Row: Title & Styled Icon Box -->
+                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; width: 100%;">
+                                        <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                            <span class="nominal-name" style="font-weight: 700; color: #fff; font-size: 0.95rem; line-height: 1.35; font-family: 'Outfit', sans-serif;">{{ $displayName }}</span>
+                                            @if($badgeText)
+                                                <span style="font-size: 0.65rem; background: {{ $iconBg }}; color: {{ $iconColor }}; padding: 1px 6px; border-radius: 4px; font-weight: 600; width: fit-content; border: 1px solid {{ $iconColor }}33;">
+                                                    {{ $badgeText }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                        
+                                        <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: {{ $iconBg }}; display: flex; align-items: center; justify-content: center; border: 1px solid {{ $iconColor }}33;">
+                                            <i class="{{ $iconClass }}" style="color: {{ $iconColor }}; font-size: 1.1rem;"></i>
+                                        </div>
                                     </div>
-                                    <span class="nominal-price">Rp {{ number_format($product->price_sell, 0, ',', '.') }}</span>
+
+                                    <!-- Bottom Row: Price & Instant Delivery Badge -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.06);">
+                                        <span class="nominal-price" style="font-weight: 700; color: #3b82f6; font-size: 1.05rem; font-family: 'Outfit', sans-serif;">Rp {{ number_format($product->price_sell, 0, ',', '.') }}</span>
+                                        <span style="font-size: 0.68rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px; font-weight: 600;">
+                                            <i class="fa-solid fa-bolt" style="font-size: 0.6rem; color: #eab308;"></i> Instan
+                                        </span>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
