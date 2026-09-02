@@ -378,36 +378,28 @@
                         <div class="nominal-grid" style="margin-bottom: 2rem;">
                             @foreach($groupItems as $product)
                                 @php
-                                    // Clean redundant brand prefix for display
-                                    $displayName = $product->name;
+                                    // Robust Regex to strip brand name prefix + optional hyphen/colon/pipe/spaces
                                     $categorySlug = strtolower($category->slug);
                                     $categoryName = strtolower($category->name);
-                                    $nameLower = strtolower($displayName);
+                                    $cleanCategoryName = preg_replace('/[^a-zA-Z0-9]/', '', $categoryName);
+                                    $cleanCategorySlug = preg_replace('/[^a-zA-Z0-9]/', '', $categorySlug);
 
-                                    // Strip brand name prefix
-                                    $prefixes = [
-                                        $categoryName,
-                                        str_replace('-', ' ', $categorySlug),
-                                        'pubg mobile', 'pubg',
-                                        'mobile legends bang bang', 'mobile legends', 'mlbb',
-                                        'free fire max', 'free fire', 'ff',
-                                        'genshin impact', 'honkai star rail',
-                                        'call of duty mobile', 'codm',
-                                        'point blank', 'pb',
-                                        'honor of kings', 'hok',
-                                        'magic chess'
-                                    ];
+                                    $pattern = '/^('
+                                        . preg_quote($categoryName, '/') . '|'
+                                        . preg_quote(str_replace('-', ' ', $categorySlug), '/') . '|'
+                                        . preg_quote($cleanCategoryName, '/') . '|'
+                                        . preg_quote($cleanCategorySlug, '/') . '|'
+                                        . 'MOBILE\s*LEGENDS?|MOBILELEGEND|MOBILE\s*LEGEND|MLBB|PUBG\s*MOBILE|PUBG|FREE\s*FIRE\s*MAX|FREE\s*FIRE|FF|GENSHIN\s*IMPACT|HONKAI\s*STAR\s*RAIL|CALL\s*OF\s*DUTY\s*MOBILE|CODM|POINT\s*BLANK|PB|HONOR\s*OF\s*KINGS|HOK|MAGIC\s*CHESS|TELKOMSEL|INDOSAT|AXIS|XL|SMARTFREN|TRI|THREE|BYU|GOPAY|DANA|OVO|SHOPEEPAY'
+                                        . ')[\s\-\:\|\.\,]+/i';
 
-                                    foreach ($prefixes as $prefix) {
-                                        if (str_starts_with(strtolower($displayName), strtolower($prefix))) {
-                                            $displayName = trim(substr($displayName, strlen($prefix)));
-                                            break;
-                                        }
-                                    }
+                                    $displayName = preg_replace($pattern, '', $product->name);
+                                    $displayName = trim(ltrim($displayName, '-:|= '));
 
                                     if (empty($displayName)) {
                                         $displayName = $product->name;
                                     }
+
+                                    $nameLower = strtolower($displayName);
 
                                     // Determine Currency/Item Icon and Badge Text
                                     $iconClass = 'fa-solid fa-coins';
