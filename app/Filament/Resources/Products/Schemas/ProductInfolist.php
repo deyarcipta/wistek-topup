@@ -18,9 +18,11 @@ class ProductInfolist
                 TextEntry::make('sku')
                     ->label('SKU'),
                 TextEntry::make('price_cost')
-                    ->money(),
+                    ->label('Harga Modal')
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((float) $state, 0, ',', '.')),
                 TextEntry::make('price_sell')
-                    ->numeric(),
+                    ->label('Harga Jual')
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((float) $state, 0, ',', '.')),
                 IconEntry::make('status')
                     ->boolean(),
                 TextEntry::make('created_at')

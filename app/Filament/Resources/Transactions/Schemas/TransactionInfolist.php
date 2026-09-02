@@ -20,7 +20,8 @@ class TransactionInfolist
                     ->label('SKU'),
                 TextEntry::make('target_no'),
                 TextEntry::make('price')
-                    ->money(),
+                    ->label('Harga')
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((float) $state, 0, ',', '.')),
                 TextEntry::make('payment_method'),
                 TextEntry::make('payment_status'),
                 TextEntry::make('topup_status'),
