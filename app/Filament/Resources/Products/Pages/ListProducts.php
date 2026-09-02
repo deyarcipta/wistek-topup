@@ -16,6 +16,32 @@ class ListProducts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('autoSwitchSeller')
+                ->label('⚡ Switch Seller Termurah')
+                ->icon('heroicon-o-bolt')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Otomatiskan & Switch Seller Termurah')
+                ->modalDescription('Sistem akan memindai seluruh seller di Digiflazz, memilih seller teraktif dengan harga modal terendah, dan otomatis mengalihkan SKU produk ke seller termurah saat ini.')
+                ->modalSubmitActionLabel('Jalankan Switch Seller Termurah')
+                ->action(function () {
+                    try {
+                        $digiflazz = new DigiflazzService;
+                        $result = $digiflazz->syncProducts(true);
+
+                        Notification::make()
+                            ->title('Seller Termurah Berhasil Dialihkan!')
+                            ->body("Sistem telah memindai {$result['total']} produk. {$result['updated']} produk berhasil diperbarui/dialihkan ke seller teraktif dengan harga termurah.")
+                            ->success()
+                            ->send();
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Gagal Melakukan Switch Seller')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Action::make('syncDigiflazz')
                 ->label('Sinkronkan Digiflazz')
                 ->icon('heroicon-o-arrow-path')
