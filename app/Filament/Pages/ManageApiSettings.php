@@ -91,6 +91,7 @@ class ManageApiSettings extends Page implements HasForms
             'duitku_merchant_code' => Setting::get('duitku_merchant_code'),
             'duitku_api_key' => Setting::get('duitku_api_key'),
             'duitku_mode' => Setting::get('duitku_mode', 'sandbox'),
+            'duitku_callback_url' => url('/callback/duitku'),
             'duitku_connection_status' => ($duitkuStatus['success'] ?? false) ? '🟢 Terhubung (OK)' : '🔴 Gagal: '.($duitkuStatus['message'] ?? 'Belum dikonfigurasi'),
             'digiflazz_username' => Setting::get('digiflazz_username'),
             'digiflazz_api_key' => Setting::get('digiflazz_api_key'),
@@ -110,7 +111,7 @@ class ManageApiSettings extends Page implements HasForms
         return $schema
             ->components([
                 Section::make('Duitku Payment Gateway')
-                    ->description('Hubungkan sistem pembayaran dengan Duitku')
+                    ->description('Hubungkan sistem pembayaran dengan Duitku. Salin Callback URL ke Duitku Merchant Portal.')
                     ->schema([
                         TextInput::make('duitku_merchant_code')
                             ->label('Merchant Code')
@@ -126,6 +127,11 @@ class ManageApiSettings extends Page implements HasForms
                                 'sandbox' => 'Sandbox (Testing)',
                                 'production' => 'Production (Live)',
                             ]),
+                        TextInput::make('duitku_callback_url')
+                            ->label('Callback / Webhook URL (HTTP POST)')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->helperText('Salin URL ini ke Duitku Merchant Dashboard (Project Callback URL) agar Duitku dapat mengirimkan respon transaksi (HTTP POST).'),
                     ])->columns(2),
 
                 Section::make('Digiflazz H2H Topup')
