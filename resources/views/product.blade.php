@@ -356,8 +356,66 @@
                         </h4>
                         <div class="nominal-grid" style="margin-bottom: 1.75rem;">
                             @foreach($groupItems as $product)
+                                @php
+                                    // Clean redundant brand prefix for display
+                                    $displayName = $product->name;
+                                    $categorySlug = strtolower($category->slug);
+                                    $categoryName = strtolower($category->name);
+
+                                    // Strip brand name prefix
+                                    $prefixes = [
+                                        $categoryName,
+                                        str_replace('-', ' ', $categorySlug),
+                                        'pubg mobile', 'pubg',
+                                        'mobile legends bang bang', 'mobile legends', 'mlbb',
+                                        'free fire max', 'free fire', 'ff',
+                                        'genshin impact', 'honkai star rail',
+                                        'call of duty mobile', 'codm',
+                                        'point blank', 'pb',
+                                        'honor of kings', 'hok',
+                                        'magic chess'
+                                    ];
+
+                                    foreach ($prefixes as $prefix) {
+                                        if (str_starts_with(strtolower($displayName), strtolower($prefix))) {
+                                            $displayName = trim(substr($displayName, strlen($prefix)));
+                                            break;
+                                        }
+                                    }
+
+                                    if (empty($displayName)) {
+                                        $displayName = $product->name;
+                                    }
+
+                                    // Determine Currency/Item Icon
+                                    $iconClass = 'fa-solid fa-coins';
+                                    $iconColor = '#f59e0b'; // Gold
+
+                                    if (str_contains($categorySlug, 'mobile-legend') || str_contains($categorySlug, 'magic-chess') || str_contains($categorySlug, 'free-fire') || str_contains(strtolower($displayName), 'diamond')) {
+                                        $iconClass = 'fa-solid fa-gem';
+                                        $iconColor = '#3b82f6'; // Diamond Blue
+                                    } elseif (str_contains($categorySlug, 'pubg') || str_contains(strtolower($displayName), 'uc')) {
+                                        $iconClass = 'fa-solid fa-bolt';
+                                        $iconColor = '#eab308'; // UC Gold/Yellow
+                                    } elseif (str_contains($categorySlug, 'genshin') || str_contains($categorySlug, 'star-rail') || str_contains(strtolower($displayName), 'crystal')) {
+                                        $iconClass = 'fa-solid fa-wand-magic-sparkles';
+                                        $iconColor = '#a855f7'; // Crystal Purple
+                                    } elseif (str_contains($categorySlug, 'valorant') || str_contains(strtolower($displayName), 'vp')) {
+                                        $iconClass = 'fa-solid fa-shield-halved';
+                                        $iconColor = '#ef4444'; // Valorant Red
+                                    } elseif (in_array($category->type, ['pulsa', 'paket-data'])) {
+                                        $iconClass = 'fa-solid fa-mobile-screen-button';
+                                        $iconColor = '#10b981'; // Green
+                                    } elseif ($category->type === 'emoney') {
+                                        $iconClass = 'fa-solid fa-wallet';
+                                        $iconColor = '#06b6d4'; // Cyan
+                                    }
+                                @endphp
                                 <div class="nominal-card" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $product->price_sell }})">
-                                    <span class="nominal-name">{{ $product->name }}</span>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-bottom: 0.25rem;">
+                                        <span class="nominal-name" style="font-weight: 700; color: #fff;">{{ $displayName }}</span>
+                                        <i class="{{ $iconClass }}" style="color: {{ $iconColor }}; font-size: 1.05rem;"></i>
+                                    </div>
                                     <span class="nominal-price">Rp {{ number_format($product->price_sell, 0, ',', '.') }}</span>
                                 </div>
                             @endforeach
