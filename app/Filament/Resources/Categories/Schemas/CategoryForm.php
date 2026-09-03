@@ -42,6 +42,11 @@ class CategoryForm
                         'tagihan' => 'Tagihan & PPOB',
                         'voucher' => 'Voucher',
                     ]),
+                TextInput::make('sort_order')
+                    ->label('Urutan Tampilan')
+                    ->numeric()
+                    ->default(0)
+                    ->helperText('Makin kecil angkanya (misal 1, 2, 3...), makin depan posisinya di halaman utama.'),
                 Toggle::make('status')
                     ->label('Aktif / Tampilkan di Web')
                     ->default(true)

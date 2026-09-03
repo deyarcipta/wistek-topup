@@ -40,10 +40,13 @@ class TopupController extends Controller
 
         // Fallback to first 4 categories if no transactions exist yet
         if ($popularCategories->isEmpty()) {
-            $popularCategories = Category::where('status', true)->limit(4)->get();
+            $popularCategories = Category::where('status', true)->orderBy('sort_order', 'asc')->limit(4)->get();
         }
 
-        $categories = Category::where('status', true)->get();
+        $categories = Category::where('status', true)
+            ->orderBy('sort_order', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
 
         return view('home', compact('banners', 'popularCategories', 'categories'));
     }

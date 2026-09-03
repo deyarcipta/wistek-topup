@@ -194,6 +194,14 @@
                 </div>
             @endforelse
         </div>
+
+        <!-- Tombol Tampilkan Lainnya (Limit 12) -->
+        <div id="showMoreContainer" style="display: none; justify-content: center; margin-top: 2rem;">
+            <button type="button" id="btnToggleCategories" onclick="toggleShowMoreCategories()" style="background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border-color); color: var(--text-primary); font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 600; padding: 0.75rem 2.25rem; border-radius: 30px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.6rem; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.15);" onmouseover="this.style.background='#e28743'; this.style.borderColor='#e28743'; this.style.color='#fff'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(255, 255, 255, 0.04)'; this.style.borderColor='var(--border-color)'; this.style.color='var(--text-primary)'; this.style.transform='none';">
+                <span id="showMoreText">Tampilkan Lainnya...</span>
+                <i class="fa-solid fa-chevron-down" id="showMoreIcon" style="font-size: 0.8rem; transition: transform 0.3s ease;"></i>
+            </button>
+        </div>
     </section>
 
     <!-- Section: Keunggulan Wistek Topup -->
@@ -393,9 +401,58 @@
     }
 
     // ----------------------------------------------------
-    // Category Filtering Functionality
+    // Category Filtering & "Tampilkan Lainnya" Functionality
     // ----------------------------------------------------
+    let currentCategoryType = 'all';
+    let isCategoriesExpanded = false;
+    const CATEGORY_LIMIT = 12;
+
+    function updateCategoryVisibility() {
+        const cards = document.querySelectorAll('#allCategoriesGrid .category-card');
+        let matchingIndex = 0;
+
+        cards.forEach(card => {
+            const cardType = card.getAttribute('data-category-type');
+            const isMatch = (currentCategoryType === 'all' || cardType === currentCategoryType);
+
+            if (isMatch) {
+                matchingIndex++;
+                if (isCategoriesExpanded || matchingIndex <= CATEGORY_LIMIT) {
+                    card.style.display = 'flex';
+                    card.style.opacity = '1';
+                } else {
+                    card.style.display = 'none';
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Toggle "Tampilkan Lainnya..." button visibility
+        const container = document.getElementById('showMoreContainer');
+        const textEl = document.getElementById('showMoreText');
+        const iconEl = document.getElementById('showMoreIcon');
+
+        if (container && textEl && iconEl) {
+            if (matchingIndex > CATEGORY_LIMIT) {
+                container.style.display = 'flex';
+                if (isCategoriesExpanded) {
+                    textEl.innerText = 'Sembunyikan';
+                    iconEl.style.transform = 'rotate(180deg)';
+                } else {
+                    textEl.innerText = 'Tampilkan Lainnya...';
+                    iconEl.style.transform = 'rotate(0deg)';
+                }
+            } else {
+                container.style.display = 'none';
+            }
+        }
+    }
+
     function filterCategory(type) {
+        currentCategoryType = type;
+        isCategoriesExpanded = false; // Reset expand state when tab changes
+
         // Toggle active button
         document.querySelectorAll('.filter-btn').forEach(btn => {
             if (btn.getAttribute('data-type') === type) {
@@ -405,28 +462,18 @@
             }
         });
 
-        // Filter cards in grid
-        const cards = document.querySelectorAll('#allCategoriesGrid .category-card');
-        cards.forEach(card => {
-            const cardType = card.getAttribute('data-category-type');
-            
-            if (type === 'all' || cardType === type) {
-                card.style.display = 'flex';
-                // Trigger simple animation
-                card.style.opacity = '0';
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transition = 'opacity 0.2s ease-in-out';
-                }, 50);
-            } else {
-                card.style.display = 'none';
-            }
-        });
+        updateCategoryVisibility();
     }
 
-    // Initialize Slider Autoplay on Load with pause on hover
+    function toggleShowMoreCategories() {
+        isCategoriesExpanded = !isCategoriesExpanded;
+        updateCategoryVisibility();
+    }
+
+    // Initialize Slider Autoplay & Category Limit on Load
     document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
+        updateCategoryVisibility();
 
         const slider = document.querySelector('.slider-container');
         if (slider) {

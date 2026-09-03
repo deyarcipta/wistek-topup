@@ -25,6 +25,10 @@ class CategoriesTable
                     ->label('Nama Kategori')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('sort_order')
+                    ->label('Urutan')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('slug')
                     ->label('Slug')
                     ->searchable(),
@@ -98,6 +102,6 @@ class CategoriesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at', 'desc');
+            ->defaultSort('sort_order', 'asc');
     }
 }

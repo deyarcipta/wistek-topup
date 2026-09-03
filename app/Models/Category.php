@@ -11,6 +11,7 @@ class Category extends Model
         'slug',
         'thumbnail',
         'type',
+        'sort_order',
         'status',
         'is_nickname_check_enabled',
         'nickname_check_provider',
@@ -20,6 +21,7 @@ class Category extends Model
     protected $casts = [
         'status' => 'boolean',
         'is_nickname_check_enabled' => 'boolean',
+        'sort_order' => 'integer',
     ];
 
     public function products()
