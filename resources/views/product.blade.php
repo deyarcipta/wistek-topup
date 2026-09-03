@@ -176,6 +176,65 @@
     .payment-row-item.active .payment-row-price {
         color: #e28743;
     }
+
+    /* Nominal Product Card Styles */
+    .nominal-card {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nominal-card:hover {
+        border-color: rgba(226, 135, 67, 0.5) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .nominal-card.active {
+        background: linear-gradient(135deg, rgba(226, 135, 67, 0.18), rgba(20, 20, 25, 0.95)) !important;
+        border: 2px solid #e28743 !important;
+        box-shadow: 0 0 22px rgba(226, 135, 67, 0.4), 0 6px 18px rgba(0, 0, 0, 0.5) !important;
+        transform: translateY(-3px) scale(1.015);
+    }
+
+    .nominal-card .check-indicator {
+        position: absolute;
+        top: -18px;
+        right: -18px;
+        width: 38px;
+        height: 38px;
+        background: #e28743;
+        transform: rotate(45deg);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        box-shadow: 0 2px 8px rgba(226, 135, 67, 0.4);
+        z-index: 5;
+    }
+
+    .nominal-card.active .check-indicator {
+        opacity: 1;
+    }
+
+    .nominal-card .check-indicator i {
+        transform: rotate(-45deg);
+        font-size: 0.6rem;
+        color: #fff;
+        margin-bottom: 2px;
+    }
+
+    .nominal-card.active .nominal-name {
+        color: #fff !important;
+        text-shadow: 0 0 10px rgba(226, 135, 67, 0.3);
+    }
+
+    .nominal-card.active .nominal-price {
+        color: #f59e0b !important;
+        font-size: 1.1rem !important;
+        font-weight: 800 !important;
+    }
 </style>
 @endsection
 
@@ -449,6 +508,7 @@
                                     }
                                 @endphp
                                 <div class="nominal-card" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $product->price_sell }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.22s ease; cursor: pointer; position: relative;">
+                                    <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
                                     
                                     <!-- Upper Row: Title & Styled Icon Box -->
                                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; width: 100%;">
