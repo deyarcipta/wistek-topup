@@ -45,10 +45,16 @@ class ProductForm
                     ->prefix('Rp')
                     ->required(),
                 TextInput::make('price_sell')
-                    ->label('Harga Jual')
+                    ->label('Harga Jual (Online / Gateway)')
                     ->numeric()
                     ->prefix('Rp')
                     ->required(),
+                TextInput::make('price_cash')
+                    ->label('Harga Cash (Petugas / Kasir)')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->placeholder('Opsional (opsional jika sama dengan harga online)')
+                    ->helperText('Harga khusus transaksi tunai oleh Petugas. Jika dikosongkan, sistem otomatis memakai Harga Jual Online.'),
                 Toggle::make('status')
                     ->label('Tampilkan di Website')
                     ->helperText('Nyalakan untuk menampilkan dan menjual produk ini kepada pembeli di website.')

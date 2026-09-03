@@ -117,7 +117,8 @@ class TopupController extends Controller
             $feeFlat = 1500;
         }
 
-        $basePrice = (int) $product->price_sell;
+        $isCashPayment = in_array(strtoupper((string) $request->payment_method), ['CASH', 'MANUAL']);
+        $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $product->price_sell);
 
         // Apply voucher discount if valid
         $discountAmount = 0;

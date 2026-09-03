@@ -38,8 +38,12 @@ class ProductsTable
                     ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
                     ->sortable(),
                 TextColumn::make('price_sell')
-                    ->label('Harga Jual')
+                    ->label('Harga Online')
                     ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
+                    ->sortable(),
+                TextColumn::make('price_cash')
+                    ->label('Harga Cash')
+                    ->formatStateUsing(fn ($state, $record) => $state ? 'Rp '.number_format($state, 0, ',', '.') : 'Rp '.number_format($record->price_sell, 0, ',', '.').' (auto)')
                     ->sortable(),
                 ToggleColumn::make('status')
                     ->label('Tampilkan di Web')

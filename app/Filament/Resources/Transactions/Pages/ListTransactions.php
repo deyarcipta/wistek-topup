@@ -54,7 +54,7 @@ class ListTransactions extends ListRecords
                                 ->with('category')
                                 ->get()
                                 ->mapWithKeys(fn ($product) => [
-                                    $product->id => "{$product->category?->name} - {$product->name} (Rp ".number_format($product->price_sell, 0, ',', '.').')',
+                                    $product->id => "{$product->category?->name} - {$product->name} (Rp ".number_format($product->final_price_cash, 0, ',', '.').')',
                                 ])
                         )
                         ->searchable()
@@ -214,7 +214,7 @@ class ListTransactions extends ListRecords
                         $user = User::whereIn('phone', $variants)->first();
                     }
 
-                    $pointsEarned = $user ? (int) ($product->price_sell * 0.01) : 0;
+                    $pointsEarned = $user ? (int) ($product->final_price_cash * 0.01) : 0;
 
                     // Determine the correct target no based on product category
                     $targetNo = '';
@@ -243,7 +243,7 @@ class ListTransactions extends ListRecords
                         'product_name' => $product->name,
                         'sku' => $product->sku,
                         'target_no' => $targetNo,
-                        'price' => $product->price_sell,
+                        'price' => $product->final_price_cash,
                         'points_earned' => $pointsEarned,
                         'payment_method' => 'CASH',
                         'payment_status' => 'unpaid',
