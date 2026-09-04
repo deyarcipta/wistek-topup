@@ -135,6 +135,11 @@ class ManageApiSettings extends Page implements HasForms
             'whatsapp_api_url' => Setting::get('whatsapp_api_url', 'http://localhost:2785/api'),
             'whatsapp_api_token' => Setting::get('whatsapp_api_token'),
             'whatsapp_session_id' => Setting::get('whatsapp_session_id', 'default'),
+
+            // SIMUP Wistek Integration Settings
+            'simup_enabled' => Setting::get('simup_enabled', '1'),
+            'simup_webhook_url' => Setting::get('simup_webhook_url', config('services.simup.url')),
+            'simup_webhook_secret' => Setting::get('simup_webhook_secret', config('services.simup.secret')),
         ];
     }
 
@@ -339,6 +344,31 @@ class ManageApiSettings extends Page implements HasForms
                             ->columnSpanFull(),
                     ])->columns(2),
 
+                Section::make('Integrasi Laporan Keuangan SIMUP Wistek (Lintas Server)')
+                    ->description('Konfigurasi pengiriman otomatis laporan pemasukan transaksi lunas ke sistem SIMUP Wistek.')
+                    ->schema([
+                        Select::make('simup_enabled')
+                            ->label('Status Fitur Integrasi')
+                            ->options([
+                                '1' => 'Aktif (Otomatis Sync Pemasukan Real-time)',
+                                '0' => 'Nonaktif (Matikan Sync Ke SIMUP)',
+                            ])
+                            ->default('1')
+                            ->required(),
+                        TextInput::make('simup_webhook_url')
+                            ->label('URL Server SIMUP Wistek')
+                            ->placeholder('Contoh: http://127.0.0.1:8000 atau https://simup.wistek.xyz')
+                            ->required()
+                            ->helperText('Masukkan domain / IP server lokasi sistem SIMUP Wistek terpasang.'),
+                        TextInput::make('simup_webhook_secret')
+                            ->label('Secret Key Token Webhook')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan secret key token pengaman webhook')
+                            ->required()
+                            ->helperText('Token rahasia ini harus sama dengan token yang diset pada server SIMUP Wistek.'),
+                    ])->columns(2),
+
                 Section::make('Status Integrasi & Koneksi API')
                     ->description('Ringkasan status koneksi real-time ke provider payment gateway dan top-up supplier.')
                     ->schema([
@@ -372,6 +402,7 @@ class ManageApiSettings extends Page implements HasForms
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
+            'simup_enabled', 'simup_webhook_url', 'simup_webhook_secret',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
         }

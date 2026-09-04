@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Http;
 
@@ -20,11 +21,16 @@ class SimupIntegrationService
             return true;
         }
 
-        $simupUrl = config('services.simup.url');
-        $simupSecret = config('services.simup.secret');
+        $enabled = Setting::get('simup_enabled', '1') === '1';
+        if (! $enabled) {
+            return false;
+        }
+
+        $simupUrl = Setting::get('simup_webhook_url', config('services.simup.url'));
+        $simupSecret = Setting::get('simup_webhook_secret', config('services.simup.secret'));
 
         if (empty($simupUrl) || empty($simupSecret)) {
-            logger()->warning('Simup integration skipped: SIMUP_WEBHOOK_URL or SIMUP_WEBHOOK_SECRET is not configured.');
+            logger()->warning('Simup integration skipped: SIMUP URL or Secret is not configured.');
 
             return false;
         }
