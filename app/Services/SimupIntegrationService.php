@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Http;
+
+class SimupIntegrationService
+{
+    /**
+     * Sync single transaction to simup_wistek server
+     */
+    public function syncTransaction(Transaction $transaction): bool
+    {
+        if ($transaction->payment_status !== 'paid') {
+            return false;
+        }
+
+        if ($transaction->is_synced_to_simup) {
+            return true;
+        }
+
+        $simupUrl = config('services.simup.url');
+        $simupSecret = config('services.simup.secret');
+
+        if (empty($simupUrl) || empty($simupSecret)) {
+            logger()->warning('Simup integration skipped: SIMUP_WEBHOOK_URL or SIMUP_WEBHOOK_SECRET is not configured.');
+
+            return false;
+        }
+
+        $endpoint = rtrim($simupUrl, '/').'/api/v1/webhook/topup-income';
+
+        try {
+            $response = Http::withHeaders([
+                'X-Wistek-Secret' => $simupSecret,
+                'Accept' => 'application/json',
+            ])->timeout(10)->post($endpoint, [
+                'kode_transaksi' => $transaction->invoice,
+                'tanggal' => $transaction->created_at ? $transaction->created_at->format('Y-m-d H:i:s') : now()->format('Y-m-d H:i:s'),
+                'nama_pembeli' => $transaction->customer_phone ?? 'Pelanggan Topup Wistek',
+                'total' => (float) $transaction->price,
+                'category_name' => $transaction->category_name,
+                'product_name' => $transaction->product_name,
+                'payment_method' => $transaction->payment_method,
+            ]);
+
+            if ($response->successful() && $response->json('success') === true) {
+                $transaction->update([
+                    'is_synced_to_simup' => true,
+                    'synced_to_simup_at' => now(),
+                ]);
+
+                return true;
+            }
+
+            logger()->error('Failed to sync transaction to Simup: '.$response->body());
+
+            return false;
+        } catch (\Throwable $e) {
+            logger()->error('Exception syncing transaction to Simup: '.$e->getMessage());
+
+            return false;
+        }
+    }
+
+    /**
+     * Batch sync all unsynced paid transactions to simup_wistek server
+     */
+    public function syncPendingTransactions(): array
+    {
+        $pendingTransactions = Transaction::where('payment_status', 'paid')
+            ->where(function ($query) {
+                $query->where('is_synced_to_simup', false)
+                    ->orWhereNull('is_synced_to_simup');
+            })
+            ->get();
+
+        $successCount = 0;
+        $failedCount = 0;
+
+        foreach ($pendingTransactions as $transaction) {
+            if ($this->syncTransaction($transaction)) {
+                $successCount++;
+            } else {
+                $failedCount++;
+            }
+        }
+
+        return [
+            'total' => $pendingTransactions->count(),
+            'success' => $successCount,
+            'failed' => $failedCount,
+        ];
+    }
+}

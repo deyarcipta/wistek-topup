@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'simup' => [
+        'url' => env('SIMUP_WEBHOOK_URL', 'http://127.0.0.1:8000'),
+        'secret' => env('SIMUP_WEBHOOK_SECRET', 'wistek_simup_secret_key_2026'),
+    ],
+
 ];

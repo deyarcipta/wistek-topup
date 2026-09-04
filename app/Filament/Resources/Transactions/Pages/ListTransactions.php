@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\DigiflazzService;
+use App\Services\SimupIntegrationService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -277,6 +278,21 @@ class ListTransactions extends ListRecords
                         ->title('Pesanan Cash Sukses')
                         ->body("Pesanan untuk {$product->name} telah diproses.<br>".strip_tags($response))
                         ->success()
+                        ->send();
+                }),
+
+            Action::make('syncSimup')
+                ->label('Sync Ke SIMUP')
+                ->color('info')
+                ->icon('heroicon-o-arrow-path')
+                ->action(function () {
+                    $service = app(SimupIntegrationService::class);
+                    $result = $service->syncPendingTransactions();
+
+                    Notification::make()
+                        ->title('Proses Sync SIMUP Selesai')
+                        ->body("Total transaksi: <strong>{$result['total']}</strong><br>Berhasil ter-sync: <strong>{$result['success']}</strong><br>Gagal / Skip: <strong>{$result['failed']}</strong>")
+                        ->color($result['failed'] > 0 ? 'warning' : 'success')
                         ->send();
                 }),
         ];

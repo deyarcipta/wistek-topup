@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\SimupIntegrationService;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
@@ -25,6 +26,8 @@ class Transaction extends Model
         'topup_status',
         'note',
         'payment_details',
+        'is_synced_to_simup',
+        'synced_to_simup_at',
     ];
 
     protected $casts = [
@@ -32,6 +35,8 @@ class Transaction extends Model
         'user_id' => 'integer',
         'points_used' => 'integer',
         'points_earned' => 'integer',
+        'is_synced_to_simup' => 'boolean',
+        'synced_to_simup_at' => 'datetime',
     ];
 
     public function user()
@@ -42,8 +47,18 @@ class Transaction extends Model
     protected static function booted(): void
     {
         static::saved(function (Transaction $transaction) {
-            if ($transaction->payment_status === 'paid' && $transaction->topup_status === 'success') {
-                $transaction->creditPointsIfEligible();
+            if ($transaction->payment_status === 'paid') {
+                if (! $transaction->is_synced_to_simup) {
+                    try {
+                        app(SimupIntegrationService::class)->syncTransaction($transaction);
+                    } catch (\Throwable $e) {
+                        logger()->error('Simup Auto Sync Exception: '.$e->getMessage());
+                    }
+                }
+
+                if ($transaction->topup_status === 'success') {
+                    $transaction->creditPointsIfEligible();
+                }
             }
         });
     }
