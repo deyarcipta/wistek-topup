@@ -286,7 +286,11 @@ Terima kasih!";
      */
     public function showTransaction($invoice)
     {
-        $transaction = Transaction::where('invoice', $invoice)->firstOrFail();
+        $transaction = Transaction::where('invoice', $invoice)->first();
+
+        if (! $transaction) {
+            return redirect('/history')->with('error', 'Kode invoice tidak ditemukan! Silakan periksa kembali.');
+        }
 
         return view('checkout', compact('transaction'));
     }
