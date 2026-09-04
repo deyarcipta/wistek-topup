@@ -30,6 +30,9 @@ Route::get('/api/check-nickname', [ValidationController::class, 'checkNickname']
 
 // Webhooks (Exempt from CSRF in bootstrap/app.php)
 Route::post('/callback/duitku', [CallbackController::class, 'duitkuCallback']);
+Route::post('/callback/midtrans', [CallbackController::class, 'midtransCallback']);
+Route::post('/callback/xendit', [CallbackController::class, 'xenditCallback']);
+Route::post('/callback/tripay', [CallbackController::class, 'tripayCallback']);
 Route::match(['get', 'post'], '/callback/digiflazz', [CallbackController::class, 'digiflazzCallback']);
 
 // Local Simulation Route for Testing

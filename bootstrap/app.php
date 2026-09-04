@@ -20,7 +20,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->validateCsrfTokens(except: [
             '/callback/duitku',
+            '/callback/midtrans',
+            '/callback/xendit',
+            '/callback/tripay',
             '/callback/digiflazz',
+            '/callback/*',
         ]);
 
         $middleware->alias([

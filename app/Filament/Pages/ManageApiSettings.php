@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use App\Services\DigiflazzService;
-use App\Services\DuitkuService;
+use App\Services\PaymentGatewayManager;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -84,15 +84,42 @@ class ManageApiSettings extends Page implements HasForms
         $digiflazz = new DigiflazzService;
         $status = $digiflazz->getStatusDetails();
 
-        $duitku = new DuitkuService;
-        $duitkuStatus = $duitku->getStatusDetails();
+        $paymentManager = new PaymentGatewayManager;
+        $activeGatewayStatus = $paymentManager->getStatusDetails();
 
         return [
+            'active_payment_gateway' => Setting::get('active_payment_gateway', 'duitku'),
+            'active_gateway_status' => ($activeGatewayStatus['success'] ?? false)
+                ? '🟢 '.$paymentManager->getActiveGatewayName().' (OK)'
+                : '🔴 '.$paymentManager->getActiveGatewayName().' Gagal: '.($activeGatewayStatus['message'] ?? 'Belum dikonfigurasi'),
+
+            // Duitku Settings
             'duitku_merchant_code' => Setting::get('duitku_merchant_code'),
             'duitku_api_key' => Setting::get('duitku_api_key'),
             'duitku_mode' => Setting::get('duitku_mode', 'sandbox'),
             'duitku_callback_url' => url('/callback/duitku'),
-            'duitku_connection_status' => ($duitkuStatus['success'] ?? false) ? '🟢 Terhubung (OK)' : '🔴 Gagal: '.($duitkuStatus['message'] ?? 'Belum dikonfigurasi'),
+
+            // Midtrans Settings
+            'midtrans_server_key' => Setting::get('midtrans_server_key'),
+            'midtrans_client_key' => Setting::get('midtrans_client_key'),
+            'midtrans_mode' => Setting::get('midtrans_mode', 'sandbox'),
+            'midtrans_callback_url' => url('/callback/midtrans'),
+
+            // Xendit Settings
+            'xendit_secret_key' => Setting::get('xendit_secret_key'),
+            'xendit_public_key' => Setting::get('xendit_public_key'),
+            'xendit_verification_token' => Setting::get('xendit_verification_token'),
+            'xendit_mode' => Setting::get('xendit_mode', 'development'),
+            'xendit_callback_url' => url('/callback/xendit'),
+
+            // Tripay Settings
+            'tripay_merchant_code' => Setting::get('tripay_merchant_code'),
+            'tripay_api_key' => Setting::get('tripay_api_key'),
+            'tripay_private_key' => Setting::get('tripay_private_key'),
+            'tripay_mode' => Setting::get('tripay_mode', 'sandbox'),
+            'tripay_callback_url' => url('/callback/tripay'),
+
+            // Digiflazz Settings
             'digiflazz_username' => Setting::get('digiflazz_username'),
             'digiflazz_api_key' => Setting::get('digiflazz_api_key'),
             'digiflazz_webhook_secret' => Setting::get('digiflazz_webhook_secret'),
@@ -101,6 +128,8 @@ class ManageApiSettings extends Page implements HasForms
             'digiflazz_price_tolerance' => Setting::get('digiflazz_price_tolerance', '200'),
             'digiflazz_connection_status' => ($status['success'] ?? false) ? '🟢 Terhubung (OK)' : '🔴 Gagal: '.($status['message'] ?? 'Belum dikonfigurasi'),
             'digiflazz_balance' => ($status['success'] ?? false) ? 'Rp '.number_format((float) ($status['balance'] ?? 0), 0, ',', '.') : 'Rp 0',
+
+            // WhatsApp Settings
             'whatsapp_enabled' => Setting::get('whatsapp_enabled', '0'),
             'whatsapp_api_url' => Setting::get('whatsapp_api_url', 'http://localhost:2785/api'),
             'whatsapp_api_token' => Setting::get('whatsapp_api_token'),
@@ -112,8 +141,24 @@ class ManageApiSettings extends Page implements HasForms
     {
         return $schema
             ->components([
+                Section::make('Pemilihan Payment Gateway Utama')
+                    ->description('Tentukan provider Payment Gateway mana yang aktif digunakan pelanggan untuk membayar di website.')
+                    ->schema([
+                        Select::make('active_payment_gateway')
+                            ->label('Payment Gateway Aktif')
+                            ->options([
+                                'duitku' => 'Duitku Payment Gateway (Rekomendasi Utama)',
+                                'midtrans' => 'Midtrans Payment Gateway (Snap API & Core)',
+                                'xendit' => 'Xendit Payment Gateway (Invoice & QRIS API)',
+                                'tripay' => 'Tripay Payment Gateway (Multi Channel)',
+                            ])
+                            ->required()
+                            ->columnSpanFull()
+                            ->helperText('Sistem otomatis mengalihkan metode pembayaran dan kalkulasi fee di website ke provider gateway yang terpilih.'),
+                    ]),
+
                 Section::make('Duitku Payment Gateway')
-                    ->description('Hubungkan sistem pembayaran dengan Duitku. Salin Callback URL ke Duitku Merchant Portal.')
+                    ->description('Konfigurasi Duitku Payment Gateway')
                     ->schema([
                         TextInput::make('duitku_merchant_code')
                             ->label('Merchant Code')
@@ -130,10 +175,94 @@ class ManageApiSettings extends Page implements HasForms
                                 'production' => 'Production (Live)',
                             ]),
                         TextInput::make('duitku_callback_url')
-                            ->label('Callback / Webhook URL (HTTP POST)')
+                            ->label('Callback / Webhook URL')
                             ->disabled()
                             ->dehydrated(false)
-                            ->helperText('Salin URL ini ke Duitku Merchant Dashboard (Project Callback URL) agar Duitku dapat mengirimkan respon transaksi (HTTP POST).'),
+                            ->helperText('Salin URL ini ke Duitku Merchant Portal -> Project Callback URL.'),
+                    ])->columns(2),
+
+                Section::make('Midtrans Payment Gateway')
+                    ->description('Konfigurasi Midtrans Payment Gateway')
+                    ->schema([
+                        TextInput::make('midtrans_server_key')
+                            ->label('Server Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan Midtrans Server Key (SB-Mid-server-...)'),
+                        TextInput::make('midtrans_client_key')
+                            ->label('Client Key')
+                            ->placeholder('Masukkan Midtrans Client Key (SB-Mid-client-...)'),
+                        Select::make('midtrans_mode')
+                            ->label('Mode')
+                            ->options([
+                                'sandbox' => 'Sandbox (Testing)',
+                                'production' => 'Production (Live)',
+                            ]),
+                        TextInput::make('midtrans_callback_url')
+                            ->label('Notification Callback URL')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->helperText('Salin URL ini ke Midtrans Dashboard -> Settings -> Configuration -> Payment Notification URL.'),
+                    ])->columns(2),
+
+                Section::make('Xendit Payment Gateway')
+                    ->description('Konfigurasi Xendit Payment Gateway')
+                    ->schema([
+                        TextInput::make('xendit_secret_key')
+                            ->label('Secret API Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan Xendit Secret Key (xnd_development_...)'),
+                        TextInput::make('xendit_public_key')
+                            ->label('Public Key (Opsional)')
+                            ->placeholder('Masukkan Xendit Public Key'),
+                        TextInput::make('xendit_verification_token')
+                            ->label('Webhook Verification Token')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan Verification Token dari Dashboard Xendit'),
+                        Select::make('xendit_mode')
+                            ->label('Mode')
+                            ->options([
+                                'development' => 'Development (Testing)',
+                                'production' => 'Production (Live)',
+                            ]),
+                        TextInput::make('xendit_callback_url')
+                            ->label('Callback URL (Invoice Paid)')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpanFull()
+                            ->helperText('Salin URL ini ke Xendit Dashboard -> Developers -> Webhooks -> Invoice Paid.'),
+                    ])->columns(2),
+
+                Section::make('Tripay Payment Gateway')
+                    ->description('Konfigurasi Tripay Payment Gateway')
+                    ->schema([
+                        TextInput::make('tripay_merchant_code')
+                            ->label('Merchant Code')
+                            ->placeholder('Masukkan Merchant Code (Contoh: T1234)'),
+                        TextInput::make('tripay_api_key')
+                            ->label('API Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan API Key Tripay'),
+                        TextInput::make('tripay_private_key')
+                            ->label('Private Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan Private Key Tripay'),
+                        Select::make('tripay_mode')
+                            ->label('Mode')
+                            ->options([
+                                'sandbox' => 'Sandbox (Testing)',
+                                'production' => 'Production (Live)',
+                            ]),
+                        TextInput::make('tripay_callback_url')
+                            ->label('Callback URL')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpanFull()
+                            ->helperText('Salin URL ini ke Merchant Tripay -> Pengaturan -> Callback URL.'),
                     ])->columns(2),
 
                 Section::make('Digiflazz H2H Topup')
@@ -207,8 +336,8 @@ class ManageApiSettings extends Page implements HasForms
                 Section::make('Status Integrasi & Koneksi API')
                     ->description('Ringkasan status koneksi real-time ke provider payment gateway dan top-up supplier.')
                     ->schema([
-                        TextInput::make('duitku_connection_status')
-                            ->label('Status Koneksi Duitku')
+                        TextInput::make('active_gateway_status')
+                            ->label('Status Gateway Aktif')
                             ->disabled()
                             ->dehydrated(false),
                         TextInput::make('digiflazz_connection_status')
@@ -229,7 +358,11 @@ class ManageApiSettings extends Page implements HasForms
         $data = $this->form->getState();
 
         foreach ([
+            'active_payment_gateway',
             'duitku_merchant_code', 'duitku_api_key', 'duitku_mode',
+            'midtrans_server_key', 'midtrans_client_key', 'midtrans_mode',
+            'xendit_secret_key', 'xendit_public_key', 'xendit_verification_token', 'xendit_mode',
+            'tripay_merchant_code', 'tripay_api_key', 'tripay_private_key', 'tripay_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',

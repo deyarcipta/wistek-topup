@@ -6,7 +6,10 @@ use App\Models\Setting;
 use App\Models\Transaction;
 use App\Services\DigiflazzService;
 use App\Services\DuitkuService;
+use App\Services\MidtransService;
+use App\Services\TripayService;
 use App\Services\WhatsappService;
+use App\Services\XenditService;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -38,86 +41,13 @@ class CallbackController extends Controller
 
         // 3. Process payment status update based on resultCode
         if ($resultCode === '00') {
-            if ($transaction->payment_status !== 'paid') {
-                $transaction->payment_status = 'paid';
-                $transaction->topup_status = 'processing';
-                if ($reference) {
-                    $transaction->reference = $reference;
-                }
-                $transaction->save();
-
-                // 4. Trigger Automatic Top-Up via Digiflazz
-                try {
-                    $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
-
-                    $dfResponse = $digiflazz->orderTopup(
-                        $transaction->invoice,
-                        $transaction->sku,
-                        $targetNo
-                    );
-
-                    if ($dfResponse['success']) {
-                        $dfData = $dfResponse['data'];
-                        $dfStatus = strtolower($dfData['status'] ?? 'pending');
-
-                        if ($dfStatus === 'sukses') {
-                            $transaction->topup_status = 'success';
-                            $transaction->note = $dfData['sn'] ?? 'Top-up sukses';
-                            $transaction->save();
-                            $this->creditPointsForSuccessfulTransaction($transaction);
-
-                            // Send WhatsApp notification for successful topup
-                            try {
-                                if ($transaction->customer_phone) {
-                                    $whatsapp = new WhatsappService;
-                                    $whatsapp->sendMessage(
-                                        $transaction->customer_phone,
-                                        "Top-up BERHASIL dikirim! 🎉\n\n*Invoice*: {$transaction->invoice}\n*Produk*: {$transaction->category_name} - {$transaction->product_name}\n*Target*: {$transaction->target_no}\n*Serial Number (SN)*: {$transaction->note}\n\nTerima kasih telah berbelanja di Wistek Topup!"
-                                    );
-                                }
-                            } catch (Exception $ex) {
-                                logger()->error('WhatsApp topup success notification failed: '.$ex->getMessage());
-                            }
-                        } elseif ($dfStatus === 'gagal') {
-                            $transaction->topup_status = 'failed';
-                            $transaction->note = $dfData['message'] ?? 'Gagal dari provider';
-
-                            // Send WhatsApp notification for failed topup
-                            try {
-                                if ($transaction->customer_phone) {
-                                    $whatsapp = new WhatsappService;
-                                    $whatsapp->sendMessage(
-                                        $transaction->customer_phone,
-                                        "Mohon maaf, transaksi top-up untuk Invoice *{$transaction->invoice}* GAGAL diproses oleh provider.\nDetail: {$transaction->note}\n\nSilakan hubungi Customer Service kami untuk bantuan pengembalian dana."
-                                    );
-                                }
-                            } catch (Exception $ex) {
-                                logger()->error('WhatsApp topup failed notification failed: '.$ex->getMessage());
-                            }
-                        } else {
-                            $transaction->topup_status = 'processing';
-                            $transaction->note = 'Sedang diproses oleh provider';
-                        }
-                    } else {
-                        $transaction->topup_status = 'processing';
-                        $transaction->note = $dfResponse['message'] ?? 'Gagal menempatkan pesanan';
-                    }
-                } catch (Exception $e) {
-                    logger()->error('Auto topup trigger failed for '.$merchantOrderId.': '.$e->getMessage());
-                    $transaction->topup_status = 'processing';
-                    $transaction->note = 'Eror pemicu otomatis: '.$e->getMessage();
-                }
-
-                $transaction->save();
-            }
+            $this->fulfillPaidTransaction($transaction, $reference, $digiflazz);
         } else {
-            // Other result codes indicate payment failed or expired
             $transaction->payment_status = 'failed';
             $transaction->topup_status = 'failed';
             $transaction->note = 'Pembayaran gagal (Duitku Result Code: '.$resultCode.')';
             $transaction->save();
 
-            // Send WhatsApp notification for failed payment
             try {
                 if ($transaction->customer_phone) {
                     $whatsapp = new WhatsappService;
@@ -131,8 +61,187 @@ class CallbackController extends Controller
             }
         }
 
-        // Duitku expects raw "OK" response on success
         return response('OK', 200)->header('Content-Type', 'text/plain');
+    }
+
+    /**
+     * Handle webhook callback from Midtrans
+     */
+    public function midtransCallback(Request $request, MidtransService $midtrans, DigiflazzService $digiflazz)
+    {
+        $orderId = $request->input('order_id') ?? '';
+        $statusCode = $request->input('status_code') ?? '';
+        $grossAmount = $request->input('gross_amount') ?? '';
+        $signatureKey = $request->input('signature_key') ?? '';
+        $transactionStatus = $request->input('transaction_status') ?? '';
+        $fraudStatus = $request->input('fraud_status') ?? '';
+
+        if (! $midtrans->validateCallbackSignature($orderId, (string) $statusCode, (string) $grossAmount, $signatureKey)) {
+            return response()->json(['message' => 'Invalid signature'], 400);
+        }
+
+        $transaction = Transaction::where('invoice', $orderId)->first();
+        if (! $transaction) {
+            return response()->json(['message' => 'Transaction not found'], 404);
+        }
+
+        if (in_array($transactionStatus, ['capture', 'settlement'])) {
+            if ($transactionStatus === 'capture' && $fraudStatus === 'challenge') {
+                $transaction->payment_status = 'unpaid';
+                $transaction->note = 'Fraud challenge by Midtrans';
+                $transaction->save();
+            } else {
+                $this->fulfillPaidTransaction($transaction, $request->input('transaction_id'), $digiflazz);
+            }
+        } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
+            $transaction->payment_status = 'failed';
+            $transaction->topup_status = 'failed';
+            $transaction->note = 'Pembayaran dibatalkan/kedaluwarsa (Midtrans: '.$transactionStatus.')';
+            $transaction->save();
+        }
+
+        return response()->json(['message' => 'OK']);
+    }
+
+    /**
+     * Handle webhook callback from Xendit
+     */
+    public function xenditCallback(Request $request, XenditService $xendit, DigiflazzService $digiflazz)
+    {
+        $tokenHeader = $request->header('x-callback-token');
+        if (! $xendit->validateCallbackToken($tokenHeader)) {
+            return response()->json(['message' => 'Invalid token'], 400);
+        }
+
+        $externalId = $request->input('external_id') ?? '';
+        $status = strtoupper((string) ($request->input('status') ?? ''));
+
+        $transaction = Transaction::where('invoice', $externalId)->first();
+        if (! $transaction) {
+            return response()->json(['message' => 'Transaction not found'], 404);
+        }
+
+        if ($status === 'PAID' || $status === 'SETTLED') {
+            $this->fulfillPaidTransaction($transaction, $request->input('id'), $digiflazz);
+        } elseif ($status === 'EXPIRED') {
+            $transaction->payment_status = 'failed';
+            $transaction->topup_status = 'failed';
+            $transaction->note = 'Invoice Xendit kedaluwarsa';
+            $transaction->save();
+        }
+
+        return response()->json(['message' => 'OK']);
+    }
+
+    /**
+     * Handle webhook callback from Tripay
+     */
+    public function tripayCallback(Request $request, TripayService $tripay, DigiflazzService $digiflazz)
+    {
+        $jsonPayload = $request->getContent();
+        $signatureHeader = $request->header('X-Callback-Signature');
+
+        if (! $tripay->validateCallbackSignature($jsonPayload, $signatureHeader)) {
+            return response()->json(['success' => false, 'message' => 'Invalid signature'], 400);
+        }
+
+        $data = json_decode($jsonPayload, true);
+        $merchantRef = $data['merchant_ref'] ?? '';
+        $status = strtoupper((string) ($data['status'] ?? ''));
+
+        $transaction = Transaction::where('invoice', $merchantRef)->first();
+        if (! $transaction) {
+            return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
+        }
+
+        if ($status === 'PAID') {
+            $this->fulfillPaidTransaction($transaction, $data['reference'] ?? null, $digiflazz);
+        } elseif (in_array($status, ['EXPIRED', 'FAILED', 'REFUND'])) {
+            $transaction->payment_status = 'failed';
+            $transaction->topup_status = 'failed';
+            $transaction->note = 'Pembayaran Tripay '.$status;
+            $transaction->save();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Fulfill a paid transaction and trigger automatic Digiflazz topup
+     */
+    private function fulfillPaidTransaction(Transaction $transaction, ?string $reference, DigiflazzService $digiflazz): void
+    {
+        if ($transaction->payment_status === 'paid') {
+            return;
+        }
+
+        $transaction->payment_status = 'paid';
+        $transaction->topup_status = 'processing';
+        if ($reference) {
+            $transaction->reference = $reference;
+        }
+        $transaction->save();
+
+        try {
+            $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
+
+            $dfResponse = $digiflazz->orderTopup(
+                $transaction->invoice,
+                $transaction->sku,
+                $targetNo
+            );
+
+            if ($dfResponse['success']) {
+                $dfData = $dfResponse['data'];
+                $dfStatus = strtolower($dfData['status'] ?? 'pending');
+
+                if ($dfStatus === 'sukses') {
+                    $transaction->topup_status = 'success';
+                    $transaction->note = $dfData['sn'] ?? 'Top-up sukses';
+                    $transaction->save();
+                    $this->creditPointsForSuccessfulTransaction($transaction);
+
+                    try {
+                        if ($transaction->customer_phone) {
+                            $whatsapp = new WhatsappService;
+                            $whatsapp->sendMessage(
+                                $transaction->customer_phone,
+                                "Top-up BERHASIL dikirim! 🎉\n\n*Invoice*: {$transaction->invoice}\n*Produk*: {$transaction->category_name} - {$transaction->product_name}\n*Target*: {$transaction->target_no}\n*Serial Number (SN)*: {$transaction->note}\n\nTerima kasih telah berbelanja di Wistek Topup!"
+                            );
+                        }
+                    } catch (Exception $ex) {
+                        logger()->error('WhatsApp topup success notification failed: '.$ex->getMessage());
+                    }
+                } elseif ($dfStatus === 'gagal') {
+                    $transaction->topup_status = 'failed';
+                    $transaction->note = $dfData['message'] ?? 'Gagal dari provider';
+
+                    try {
+                        if ($transaction->customer_phone) {
+                            $whatsapp = new WhatsappService;
+                            $whatsapp->sendMessage(
+                                $transaction->customer_phone,
+                                "Mohon maaf, transaksi top-up untuk Invoice *{$transaction->invoice}* GAGAL diproses oleh provider.\nDetail: {$transaction->note}\n\nSilakan hubungi Customer Service kami untuk bantuan pengembalian dana."
+                            );
+                        }
+                    } catch (Exception $ex) {
+                        logger()->error('WhatsApp topup failed notification failed: '.$ex->getMessage());
+                    }
+                } else {
+                    $transaction->topup_status = 'processing';
+                    $transaction->note = 'Sedang diproses oleh provider';
+                }
+            } else {
+                $transaction->topup_status = 'processing';
+                $transaction->note = $dfResponse['message'] ?? 'Gagal menempatkan pesanan';
+            }
+        } catch (Exception $e) {
+            logger()->error('Auto topup trigger failed for '.$transaction->invoice.': '.$e->getMessage());
+            $transaction->topup_status = 'processing';
+            $transaction->note = 'Eror pemicu otomatis: '.$e->getMessage();
+        }
+
+        $transaction->save();
     }
 
     /**

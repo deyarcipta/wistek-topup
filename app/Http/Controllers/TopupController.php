@@ -9,7 +9,7 @@ use App\Models\Review;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
-use App\Services\DuitkuService;
+use App\Services\PaymentGatewayManager;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +54,7 @@ class TopupController extends Controller
     /**
      * Display a specific category's detail / products form
      */
-    public function showCategory($slug, DuitkuService $duitku)
+    public function showCategory($slug, PaymentGatewayManager $paymentManager)
     {
         $category = Category::where('slug', $slug)
             ->where('status', true)
@@ -66,15 +66,15 @@ class TopupController extends Controller
             ->orderBy('price_sell', 'asc')
             ->get();
 
-        $paymentChannels = $duitku->getPaymentChannels();
+        $paymentChannels = $paymentManager->getPaymentChannels();
 
         return view('product', compact('category', 'products', 'paymentChannels'));
     }
 
     /**
-     * Handle topup form checkout and request Duitku billing
+     * Handle topup form checkout and request Payment Gateway billing
      */
-    public function checkout(Request $request, DuitkuService $duitku)
+    public function checkout(Request $request, PaymentGatewayManager $paymentManager)
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -98,7 +98,7 @@ class TopupController extends Controller
         }
 
         // Calculate dynamic fee from payment methods
-        $paymentChannels = $duitku->getPaymentChannels();
+        $paymentChannels = $paymentManager->getPaymentChannels();
         $feeFlat = 0;
         $feePercent = 0;
 
@@ -192,33 +192,33 @@ class TopupController extends Controller
             $target .= ' ('.$request->zone_id.')';
         }
 
-        // Send payment request to Duitku with total price
+        // Send payment request to Active Payment Gateway
         $productName = $category->name.' - '.$product->name;
 
-        $duitkuResponse = $duitku->createTransaction(
+        $gatewayResponse = $paymentManager->createTransaction(
             $invoice,
             $productName,
             $totalPrice,
-            $request->payment_method,
-            $request->customer_phone
+            $request->customer_phone,
+            $request->payment_method
         );
 
-        if (! $duitkuResponse['success']) {
-            return back()->withErrors(['error' => $duitkuResponse['message']]);
+        if (! ($gatewayResponse['success'] ?? false)) {
+            return back()->withErrors(['error' => $gatewayResponse['message'] ?? 'Gagal membuat transaksi pembayaran']);
         }
 
-        $duitkuData = $duitkuResponse['data'];
-        $duitkuData['base_price'] = $basePrice;
-        $duitkuData['admin_fee'] = $calculatedFee;
-        $duitkuData['discount_amount'] = $discountAmount;
-        $duitkuData['voucher_code'] = $voucherCode;
-        $duitkuData['points_used'] = $pointsToUse;
+        $paymentDetails = $gatewayResponse;
+        $paymentDetails['base_price'] = $basePrice;
+        $paymentDetails['admin_fee'] = $calculatedFee;
+        $paymentDetails['discount_amount'] = $discountAmount;
+        $paymentDetails['voucher_code'] = $voucherCode;
+        $paymentDetails['points_used'] = $pointsToUse;
 
         // Save transaction to DB
         $transaction = Transaction::create([
             'user_id' => $userId,
             'invoice' => $invoice,
-            'reference' => $duitkuData['reference'] ?? null,
+            'reference' => $gatewayResponse['reference'] ?? null,
             'category_name' => $category->name,
             'product_name' => $product->name,
             'sku' => $product->sku,
@@ -232,7 +232,7 @@ class TopupController extends Controller
             'payment_method' => $request->payment_method,
             'payment_status' => 'unpaid',
             'topup_status' => 'pending',
-            'payment_details' => $duitkuData,
+            'payment_details' => $paymentDetails,
         ]);
 
         // Deduct points balance from member account
@@ -248,8 +248,8 @@ class TopupController extends Controller
         // Trigger WhatsApp Notification for Pending Payment
         try {
             $whatsapp = new WhatsappService;
-            $payCodeText = isset($duitkuData['pay_code']) ? "\n*Kode VA / Bayar*: {$duitkuData['pay_code']}" : '';
-            $transactionUrl = url('/transaction/'.$invoice);
+            $payCodeText = isset($paymentDetails['pay_code']) ? "\n*Kode VA / Bayar*: {$paymentDetails['pay_code']}" : '';
+            $transactionUrl = ! empty($paymentDetails['payment_url']) ? $paymentDetails['payment_url'] : url('/transaction/'.$invoice);
             $paymentUrlText = "\n*Link Pembayaran*: {$transactionUrl}";
 
             $message = "Halo, terima kasih telah melakukan pemesanan di Wistek Topup.
