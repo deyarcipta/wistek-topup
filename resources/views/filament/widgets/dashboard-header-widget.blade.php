@@ -70,8 +70,11 @@
                     </span>
 
 
-                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); font-size: 0.775rem; font-weight: 600; color: #818cf8;">
-                        💳 Gateway: <strong>{{ $gatewayName }}</strong>
+                    @php
+                        $isGatewayActive = !empty($gatewayStatus['success']);
+                    @endphp
+                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: {{ $isGatewayActive ? 'rgba(34, 197, 94, 0.12)' : 'rgba(245, 158, 11, 0.12)' }}; border: 1px solid {{ $isGatewayActive ? 'rgba(34, 197, 94, 0.25)' : 'rgba(245, 158, 11, 0.25)' }}; font-size: 0.775rem; font-weight: 600; color: {{ $isGatewayActive ? '#4ade80' : '#fbbf24' }};">
+                        💳 Gateway: <strong>{{ $gatewayName }} {{ $isGatewayActive ? 'Aktif' : 'Belum Konfigurasi' }}</strong>
                     </span>
                 </div>
 

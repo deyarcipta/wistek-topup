@@ -16,11 +16,7 @@
                 <input type="text" name="invoice" class="form-control" placeholder="Masukkan ID Invoice Anda..." style="text-align: center; font-size: 1.1rem; text-transform: uppercase;" required>
             </div>
             
-            @if(session('error'))
-                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.75rem; border-radius: 10px; color: var(--danger); font-size: 0.9rem; margin-bottom: 1.5rem;">
-                    {{ session('error') }}
-                </div>
-            @endif
+
 
             <button type="submit" class="btn-checkout">
                 <i class="fa-solid fa-search"></i> Periksa Transaksi

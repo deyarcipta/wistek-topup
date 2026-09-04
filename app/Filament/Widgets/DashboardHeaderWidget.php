@@ -32,6 +32,7 @@ class DashboardHeaderWidget extends Widget
         $paymentManager = new PaymentGatewayManager;
         $gatewayName = strtoupper($paymentManager->getActiveGateway());
         $gatewayFullName = $paymentManager->getActiveGatewayName();
+        $gatewayStatus = $paymentManager->getStatusDetails();
 
         return [
             'user' => $user,
@@ -39,6 +40,7 @@ class DashboardHeaderWidget extends Widget
             'waStatus' => $waStatus,
             'gatewayName' => $gatewayName,
             'gatewayFullName' => $gatewayFullName,
+            'gatewayStatus' => $gatewayStatus,
             'todayDate' => now()->translatedFormat('l, d F Y'),
         ];
     }
