@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Services\DigiflazzService;
@@ -378,7 +379,21 @@ class CallbackController extends Controller
                 return 'Simulasi Pembayaran Berhasil!<br>Kredensial Digiflazz belum dikonfigurasi, sistem mensimulasikan order sukses dengan serial number buatan: <strong>'.$transaction->note.'</strong><br><br>Kembali ke halaman transaksi untuk melihat pembaruan otomatis.';
             }
 
+            // Check if Digiflazz deposit balance is sufficient for this product
+            $product = Product::where('sku', $transaction->sku)->first();
+            if ($product && $digiflazz->isConfigured()) {
+                $balanceCheck = $digiflazz->checkBalanceForProduct($product);
+                if (! $balanceCheck['sufficient']) {
+                    $transaction->topup_status = 'failed';
+                    $transaction->note = $balanceCheck['message'];
+                    $transaction->save();
+
+                    return '<strong>Gagal Memproses Topup!</strong><br>'.$balanceCheck['message'];
+                }
+            }
+
             $dfResponse = $digiflazz->orderTopup(
+
                 $transaction->invoice,
                 $transaction->sku,
                 $targetNo

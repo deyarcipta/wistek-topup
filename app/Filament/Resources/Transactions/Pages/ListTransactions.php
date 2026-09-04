@@ -201,6 +201,24 @@ class ListTransactions extends ListRecords
                 ])
                 ->action(function (array $data) {
                     $product = Product::findOrFail($data['product_id']);
+
+                    // Validate Digiflazz deposit balance before proceeding with Order Cash
+                    $digiflazz = new DigiflazzService;
+                    $balanceCheck = $digiflazz->checkBalanceForProduct($product);
+                    if (! $balanceCheck['sufficient']) {
+                        $formattedBalance = 'Rp '.number_format($balanceCheck['balance'], 0, ',', '.');
+                        $formattedCost = 'Rp '.number_format($balanceCheck['cost'], 0, ',', '.');
+
+                        Notification::make()
+                            ->title('Gagal Memproses Pesanan Cash')
+                            ->body("Saldo Digiflazz saat ini (<strong>{$formattedBalance}</strong>) tidak mencukupi untuk modal produk <strong>{$product->name}</strong> (Harga Modal: <strong>{$formattedCost}</strong>). Silakan lakukan isi ulang (deposit) saldo Digiflazz terlebih dahulu.")
+                            ->danger()
+                            ->persistent()
+                            ->send();
+
+                        return;
+                    }
+
                     $user = ! empty($data['user_id']) ? User::find($data['user_id']) : null;
 
                     // Auto-detect member if not chosen explicitly from dropdown but phone matches

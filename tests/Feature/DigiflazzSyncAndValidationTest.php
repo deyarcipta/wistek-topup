@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -268,5 +269,55 @@ class DigiflazzSyncAndValidationTest extends TestCase
         $product->refresh();
         $this->assertEquals(1, $product->status);
         $this->assertTrue((bool) $product->digiflazz_status);
+    }
+
+    /**
+     * Test checkout is blocked when Digiflazz balance is lower than product cost price.
+     */
+    public function test_checkout_blocked_when_digiflazz_balance_insufficient()
+    {
+        Setting::set('digiflazz_username', 'testuser');
+        Setting::set('digiflazz_api_key', 'testkey');
+
+        $category = Category::create([
+            'name' => 'Mobile Legends',
+            'slug' => 'mobile-legends',
+            'type' => 'game',
+            'status' => true,
+        ]);
+
+        $product = Product::create([
+            'category_id' => $category->id,
+            'name' => '500 Diamonds',
+            'sku' => 'ml500',
+            'price_cost' => 120000.00,
+            'price_sell' => 135000.00,
+            'status' => 1,
+            'digiflazz_status' => 1,
+        ]);
+
+        // Mock Digiflazz balance = Rp 50.000 (lower than price_cost 120.000)
+        Http::fake([
+            'https://api.digiflazz.com/v1/cek-saldo' => Http::response([
+                'data' => [
+                    'rc' => '00',
+                    'deposit' => 50000.00,
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->post('/checkout', [
+            'category_id' => $category->id,
+            'product_id' => $product->id,
+            'payment_method' => 'QRIS',
+            'target_id' => '12345678',
+            'zone_id' => '1234',
+            'customer_phone' => '081234567890',
+        ]);
+
+        $response->assertSessionHasErrors('error');
+        $this->assertDatabaseMissing('transactions', [
+            'product_name' => $product->name,
+        ]);
     }
 }

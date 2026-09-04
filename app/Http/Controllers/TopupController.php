@@ -9,6 +9,7 @@ use App\Models\Review;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\DigiflazzService;
 use App\Services\PaymentGatewayManager;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
@@ -74,7 +75,7 @@ class TopupController extends Controller
     /**
      * Handle topup form checkout and request Payment Gateway billing
      */
-    public function checkout(Request $request, PaymentGatewayManager $paymentManager)
+    public function checkout(Request $request, PaymentGatewayManager $paymentManager, DigiflazzService $digiflazz)
     {
         $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -95,6 +96,14 @@ class TopupController extends Controller
         // Check if product is active in store and available in Digiflazz
         if (! $product->status || ! $product->digiflazz_status) {
             return back()->withErrors(['error' => 'Produk ini sedang tidak aktif / tidak tersedia di Digiflazz.']);
+        }
+
+        // Validate Digiflazz deposit balance before proceeding to payment gateway
+        $balanceCheck = $digiflazz->checkBalanceForProduct($product);
+        if (! $balanceCheck['sufficient']) {
+            return back()->withErrors([
+                'error' => 'Mohon maaf, nominal ini sementara tidak dapat diproses karena saldo provider tidak mencukupi. Silakan pilih nominal lain atau hubungi Customer Service.',
+            ]);
         }
 
         // Calculate dynamic fee from payment methods

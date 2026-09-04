@@ -60,6 +60,72 @@ class DigiflazzService
     }
 
     /**
+     * Check if Digiflazz credentials are set and configured
+     */
+    public function isConfigured(): bool
+    {
+        if (empty($this->username) || empty($this->apiKey)) {
+            return false;
+        }
+
+        if ($this->username === 'YOUR_DIGIFLAZZ_USERNAME' || $this->apiKey === 'YOUR_DIGIFLAZZ_API_KEY') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check whether Digiflazz deposit balance is sufficient for purchasing a product
+     *
+     * @return array{sufficient: bool, balance: float, cost: float, message: string|null}
+     */
+    public function checkBalanceForProduct(Product $product): array
+    {
+        if (! $this->isConfigured()) {
+            return [
+                'sufficient' => true,
+                'balance' => 0,
+                'cost' => (float) $product->price_cost,
+                'message' => null,
+            ];
+        }
+
+        $status = $this->getStatusDetails();
+
+        if (! $status['success']) {
+            return [
+                'sufficient' => true,
+                'balance' => 0,
+                'cost' => (float) $product->price_cost,
+                'message' => null,
+            ];
+        }
+
+        $balance = (float) $status['balance'];
+        $cost = (float) $product->price_cost;
+
+        if ($cost > 0 && $balance < $cost) {
+            $formattedBalance = 'Rp '.number_format($balance, 0, ',', '.');
+            $formattedCost = 'Rp '.number_format($cost, 0, ',', '.');
+
+            return [
+                'sufficient' => false,
+                'balance' => $balance,
+                'cost' => $cost,
+                'message' => "Saldo deposit Digiflazz saat ini ({$formattedBalance}) tidak mencukupi untuk memproses nominal produk \"{$product->name}\" (Harga Modal: {$formattedCost}).",
+            ];
+        }
+
+        return [
+            'sufficient' => true,
+            'balance' => $balance,
+            'cost' => $cost,
+            'message' => null,
+        ];
+    }
+
+    /**
      * Get detailed connection status and balance for testing
      */
     public function getStatusDetails(): array
