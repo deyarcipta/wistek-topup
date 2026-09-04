@@ -77,6 +77,12 @@ class MidtransService
                 'email' => 'customer@wistektopup.com',
                 'phone' => $customerPhone ?: '081234567890',
             ],
+            'callbacks' => [
+                'finish' => url('/transaction/'.$invoice),
+            ],
+            'override_notification_urls' => [
+                url('/callback/midtrans'),
+            ],
         ];
 
         try {
