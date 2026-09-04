@@ -40,10 +40,10 @@ class PaymentGatewayManager
     public function getDriver(): object
     {
         return match ($this->activeGateway) {
-            'midtrans' => new MidtransService,
-            'xendit' => new XenditService,
-            'tripay' => new TripayService,
-            default => new DuitkuService,
+            'midtrans' => app(MidtransService::class),
+            'xendit' => app(XenditService::class),
+            'tripay' => app(TripayService::class),
+            default => app(DuitkuService::class),
         };
     }
 

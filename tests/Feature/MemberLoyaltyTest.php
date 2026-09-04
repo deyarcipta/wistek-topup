@@ -431,6 +431,7 @@ class MemberLoyaltyTest extends TestCase
             'price_cost' => 45000,
             'price_sell' => 50000,
             'status' => true,
+            'digiflazz_status' => true,
         ]);
 
         $subCategory = SubCategory::create([
