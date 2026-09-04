@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\Setting;
 use App\Services\DigiflazzService;
 use App\Services\PaymentGatewayManager;
+use App\Services\SimupIntegrationService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
@@ -140,6 +141,14 @@ class ManageApiSettings extends Page implements HasForms
             'simup_enabled' => Setting::get('simup_enabled', '1'),
             'simup_webhook_url' => Setting::get('simup_webhook_url', config('services.simup.url')),
             'simup_webhook_secret' => Setting::get('simup_webhook_secret', config('services.simup.secret')),
+            'simup_connection_status' => (function () {
+                $simupService = new SimupIntegrationService;
+                $simupStatus = $simupService->checkConnection();
+
+                return ($simupStatus['success'] ?? false)
+                    ? '🟢 '.$simupStatus['message']
+                    : '🔴 '.$simupStatus['message'];
+            })(),
         ];
     }
 
@@ -370,7 +379,7 @@ class ManageApiSettings extends Page implements HasForms
                     ])->columns(2),
 
                 Section::make('Status Integrasi & Koneksi API')
-                    ->description('Ringkasan status koneksi real-time ke provider payment gateway dan top-up supplier.')
+                    ->description('Ringkasan status koneksi real-time ke provider payment gateway, top-up supplier, dan sistem keuangan.')
                     ->schema([
                         TextInput::make('active_gateway_status')
                             ->label('Status Gateway Aktif')
@@ -380,11 +389,15 @@ class ManageApiSettings extends Page implements HasForms
                             ->label('Status Koneksi Digiflazz')
                             ->disabled()
                             ->dehydrated(false),
+                        TextInput::make('simup_connection_status')
+                            ->label('Status Koneksi SIMUP Wistek')
+                            ->disabled()
+                            ->dehydrated(false),
                         TextInput::make('digiflazz_balance')
                             ->label('Saldo Digiflazz')
                             ->disabled()
                             ->dehydrated(false),
-                    ])->columns(3),
+                    ])->columns(2),
             ])
             ->statePath('data');
     }

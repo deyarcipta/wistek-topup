@@ -99,4 +99,64 @@ class SimupIntegrationService
             'failed' => $failedCount,
         ];
     }
+
+    /**
+     * Live test connection to simup_wistek server
+     */
+    public function checkConnection(): array
+    {
+        $enabled = Setting::get('simup_enabled', '1') === '1';
+        if (! $enabled) {
+            return [
+                'success' => false,
+                'message' => 'Status Fitur: Nonaktif (Silakan aktifkan terlebih dahulu)',
+            ];
+        }
+
+        $simupUrl = Setting::get('simup_webhook_url', config('services.simup.url'));
+        $simupSecret = Setting::get('simup_webhook_secret', config('services.simup.secret'));
+
+        if (empty($simupUrl) || empty($simupSecret)) {
+            return [
+                'success' => false,
+                'message' => 'URL Server atau Secret Key belum diisi',
+            ];
+        }
+
+        $endpoint = rtrim($simupUrl, '/').'/api/v1/webhook/topup-income';
+
+        try {
+            $response = Http::withHeaders([
+                'X-Wistek-Secret' => $simupSecret,
+                'Accept' => 'application/json',
+            ])->timeout(5)->post($endpoint, [
+                'kode_transaksi' => 'PING_CHECK',
+                'total' => 0,
+            ]);
+
+            if ($response->status() === 401) {
+                return [
+                    'success' => false,
+                    'message' => 'URL Server terhubung tetapi Secret Key Token tidak cocok (401 Unauthorized)',
+                ];
+            }
+
+            if ($response->successful()) {
+                return [
+                    'success' => true,
+                    'message' => 'Terhubung Ke Server SIMUP (OK)',
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Server SIMUP merespon status HTTP: '.$response->status(),
+            ];
+        } catch (\Throwable $e) {
+            return [
+                'success' => false,
+                'message' => 'Gagal terhubung ke server SIMUP: '.$e->getMessage(),
+            ];
+        }
+    }
 }
