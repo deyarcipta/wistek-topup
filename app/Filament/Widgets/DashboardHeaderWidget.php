@@ -11,7 +11,12 @@ class DashboardHeaderWidget extends Widget
 {
     protected string $view = 'filament.widgets.dashboard-header-widget';
 
-    protected int|string|array $columnSpan = 'full';
+    public int|string|array $columnSpan = 'full';
+
+    public function getColumnSpan(): int|string|array
+    {
+        return 'full';
+    }
 
     public function getViewData(): array
     {
