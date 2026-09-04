@@ -39,9 +39,10 @@
 
         .footer-grid {
             display: grid;
-            grid-template-columns: 2fr 1fr 1.5fr;
-            gap: 4rem;
+            grid-template-columns: 1.8fr 1fr 1.2fr 1.2fr;
+            gap: 2.5rem;
         }
+
         @media (max-width: 768px) {
             .menu-toggle {
                 display: block !important;
@@ -349,6 +350,20 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Column 3: Legal & Policy Documents -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
+                <h4 style="font-size: 1.1rem; font-weight: 700; color: #fff; position: relative; margin: 0; padding-bottom: 0.5rem;">
+                    Legalitas & Kebijakan
+                    <span style="position: absolute; bottom: 0; left: 0; width: 30px; height: 2px; background: #e28743; border-radius: 1px;"></span>
+                </h4>
+                <div class="footer-sitemap-links" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{{ url('/refund-policy') }}" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Kebijakan Refund</a>
+                    <a href="{{ url('/terms-and-conditions') }}" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Syarat & Ketentuan</a>
+                    <a href="{{ url('/privacy-policy') }}" style="font-size: 0.88rem; color: var(--text-secondary); transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.paddingLeft='4px';" onmouseout="this.style.color='var(--text-secondary)'; this.style.paddingLeft='0';"><i class="fa-solid fa-angle-right" style="font-size: 0.75rem; margin-right: 0.4rem; color: #e28743;"></i> Kebijakan Privasi</a>
+                </div>
+            </div>
+
 
             <!-- Column 3: Payment Partners Showcase -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CallbackController;
+use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TopupController;
 use App\Http\Controllers\ValidationController;
@@ -22,6 +23,11 @@ Route::post('/review/submit', [TopupController::class, 'submitReview']);
 // Check transaction status via search invoice
 Route::get('/history', [TopupController::class, 'showHistoryForm']);
 Route::post('/history', [TopupController::class, 'checkHistory']);
+
+// Legal & Policy pages for payment gateway compliance
+Route::get('/refund-policy', [LegalController::class, 'refund']);
+Route::get('/terms-and-conditions', [LegalController::class, 'terms']);
+Route::get('/privacy-policy', [LegalController::class, 'privacy']);
 
 // API status lookup for AJAX checkout page status updates
 Route::get('/api/transaction-status/{invoice}', [TopupController::class, 'apiStatus']);
