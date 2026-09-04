@@ -14,6 +14,7 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -152,13 +153,15 @@ class ManageApiSettings extends Page implements HasForms
                                 'xendit' => 'Xendit Payment Gateway (Invoice & QRIS API)',
                                 'tripay' => 'Tripay Payment Gateway (Multi Channel)',
                             ])
-                            ->required()
+                            ->live()
+                            ->placeholder('Pilih Payment Gateway yang Ingin Digunakan')
                             ->columnSpanFull()
-                            ->helperText('Sistem otomatis mengalihkan metode pembayaran dan kalkulasi fee di website ke provider gateway yang terpilih.'),
+                            ->helperText('Form konfigurasi di bawah hanya akan menampilkan pengaturan sesuai dengan Payment Gateway yang Anda pilih di atas.'),
                     ]),
 
                 Section::make('Duitku Payment Gateway')
                     ->description('Konfigurasi Duitku Payment Gateway')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'duitku')
                     ->schema([
                         TextInput::make('duitku_merchant_code')
                             ->label('Merchant Code')
@@ -183,6 +186,7 @@ class ManageApiSettings extends Page implements HasForms
 
                 Section::make('Midtrans Payment Gateway')
                     ->description('Konfigurasi Midtrans Payment Gateway')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'midtrans')
                     ->schema([
                         TextInput::make('midtrans_server_key')
                             ->label('Server Key')
@@ -207,6 +211,7 @@ class ManageApiSettings extends Page implements HasForms
 
                 Section::make('Xendit Payment Gateway')
                     ->description('Konfigurasi Xendit Payment Gateway')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'xendit')
                     ->schema([
                         TextInput::make('xendit_secret_key')
                             ->label('Secret API Key')
@@ -237,6 +242,7 @@ class ManageApiSettings extends Page implements HasForms
 
                 Section::make('Tripay Payment Gateway')
                     ->description('Konfigurasi Tripay Payment Gateway')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'tripay')
                     ->schema([
                         TextInput::make('tripay_merchant_code')
                             ->label('Merchant Code')
