@@ -108,4 +108,34 @@ class WhatsappService
 
         return $number;
     }
+
+    /**
+     * Get connection status details for Admin Panel / Dashboard
+     *
+     * @return array{enabled: bool, connected: bool, message: string}
+     */
+    public function getStatusDetails(): array
+    {
+        if (! $this->enabled) {
+            return [
+                'enabled' => false,
+                'connected' => false,
+                'message' => 'WhatsApp Off',
+            ];
+        }
+
+        if (empty($this->apiUrl)) {
+            return [
+                'enabled' => true,
+                'connected' => false,
+                'message' => 'URL Open-WA Kosong',
+            ];
+        }
+
+        return [
+            'enabled' => true,
+            'connected' => true,
+            'message' => 'Open-WA Aktif',
+        ];
+    }
 }

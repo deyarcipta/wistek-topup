@@ -65,9 +65,10 @@
                         Sistem Aktif
                     </span>
 
-                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: {{ $dfStatus['success'] ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)' }}; border: 1px solid {{ $dfStatus['success'] ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.25)' }}; font-size: 0.775rem; font-weight: 600; color: {{ $dfStatus['success'] ? '#4ade80' : '#f87171' }};">
-                        ⚡ Saldo Digiflazz: <strong>{{ $dfStatus['success'] ? 'Rp '.number_format($dfStatus['balance'], 0, ',', '.') : 'Offline' }}</strong>
+                    <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: {{ $waStatus['enabled'] ? 'rgba(34, 197, 94, 0.12)' : 'rgba(245, 158, 11, 0.12)' }}; border: 1px solid {{ $waStatus['enabled'] ? 'rgba(34, 197, 94, 0.25)' : 'rgba(245, 158, 11, 0.25)' }}; font-size: 0.775rem; font-weight: 600; color: {{ $waStatus['enabled'] ? '#4ade80' : '#fbbf24' }};">
+                        💬 Open-WA: <strong>{{ $waStatus['message'] }}</strong>
                     </span>
+
 
                     <span style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.75rem; border-radius: 0.5rem; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.25); font-size: 0.775rem; font-weight: 600; color: #818cf8;">
                         💳 Gateway: <strong>{{ $gatewayName }}</strong>
