@@ -167,13 +167,28 @@
 
             <!-- Delivery Note if Success -->
             @if($transaction->topup_status === 'success' && $transaction->note)
-                <div style="margin-top: 2rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1.5rem;">
+                <div style="margin-top: 2rem; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 12px; padding: 1.5rem; text-align: center;">
                     <h4 style="color: var(--success); margin-bottom: 0.5rem;"><i class="fa-solid fa-circle-check"></i> Pesanan Berhasil Dikirim</h4>
-                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Serial Number (SN) / Bukti Pengiriman:</p>
-                    <code style="display: block; font-family: monospace; font-size: 1.1rem; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 8px; color: var(--text-primary); text-align: center; border: 1px solid var(--border-color);">
-                        {{ $transaction->note }}
-                    </code>
+                    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Serial Number (SN) / Kode Token PLN / Bukti Pengiriman:</p>
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <code id="snCodeText" style="font-family: monospace; font-size: 1.15rem; font-weight: 700; background: rgba(0,0,0,0.3); padding: 0.6rem 1.25rem; border-radius: 8px; color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); letter-spacing: 0.05em;">
+                            {{ $transaction->note }}
+                        </code>
+                        <button type="button" onclick="copySnCode()" class="btn" style="background: rgba(34, 197, 94, 0.2); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; padding: 0.55rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem;">
+                            <i class="fa-regular fa-copy"></i> <span id="copySnBtnText">Salin Token / SN</span>
+                        </button>
+                    </div>
                 </div>
+                <script>
+                    function copySnCode() {
+                        const text = document.getElementById('snCodeText').innerText.trim();
+                        navigator.clipboard.writeText(text).then(() => {
+                            const btnText = document.getElementById('copySnBtnText');
+                            btnText.innerText = 'Tersalin!';
+                            setTimeout(() => { btnText.innerText = 'Salin Token / SN'; }, 2000);
+                        });
+                    }
+                </script>
             @endif
 
             <!-- Review Box if Paid / Success -->
