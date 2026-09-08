@@ -18,8 +18,8 @@ class DokuService
 
     public function __construct()
     {
-        $this->clientId = Setting::get('doku_client_id', env('DOKU_CLIENT_ID', ''));
-        $this->secretKey = Setting::get('doku_secret_key', env('DOKU_SECRET_KEY', ''));
+        $this->clientId = trim((string) Setting::get('doku_client_id', env('DOKU_CLIENT_ID', '')));
+        $this->secretKey = trim((string) Setting::get('doku_secret_key', env('DOKU_SECRET_KEY', '')));
         $this->mode = Setting::get('doku_mode', env('DOKU_MODE', 'sandbox'));
 
         $this->baseUrl = ($this->mode === 'production')
