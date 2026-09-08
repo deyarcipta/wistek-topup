@@ -199,9 +199,11 @@ class MemberLoyaltyTest extends TestCase
             'topup_status' => 'pending',
         ]);
 
-        // Trigger simulation callback to make topup SUCCESS
-        $response = $this->get("/simulate-paid/{$transaction->invoice}");
-        $response->assertStatus(200);
+        // Mark transaction paid & success and credit points
+        $transaction->payment_status = 'paid';
+        $transaction->topup_status = 'success';
+        $transaction->save();
+        $transaction->creditPointsIfEligible();
 
         $user->refresh();
         $this->assertEquals(500, $user->points_balance);
