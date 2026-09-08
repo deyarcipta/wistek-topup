@@ -173,6 +173,13 @@ class CallbackController extends Controller
      */
     public function dokuCallback(Request $request, DokuService $doku, DigiflazzService $digiflazz)
     {
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'DOKU Webhook Endpoint is Active.',
+            ]);
+        }
+
         $jsonPayload = $request->getContent();
         $signatureHeader = $request->header('Signature');
         $clientIdHeader = $request->header('Client-Id');
@@ -187,9 +194,12 @@ class CallbackController extends Controller
         $invoiceNumber = $data['order']['invoice_number'] ?? $data['order']['id'] ?? $requestIdHeader ?? '';
         $transactionStatus = strtoupper((string) ($data['transaction']['status'] ?? $data['order']['status'] ?? $data['status'] ?? ''));
 
+        // Always return 200 OK to DOKU, even if invoice is not found (for test/ping pings)
         $transaction = Transaction::where('invoice', $invoiceNumber)->first();
         if (! $transaction) {
-            return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
+            logger()->info('DOKU Webhook notice: Invoice not found or test ping: '.$invoiceNumber);
+
+            return response()->json(['success' => true, 'message' => 'Acknowledged'], 200);
         }
 
         // Fast-response optimization: Send 200 OK to DOKU immediately (<100ms) to avoid 5-second timeout
