@@ -860,6 +860,84 @@
         </div>
     </form>
 
+    <!-- Checkout Confirmation Modal -->
+    <div id="checkoutConfirmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 99999; align-items: center; justify-content: center; padding: 1rem; opacity: 0; transition: opacity 0.3s ease;">
+        <div style="background: #141418; border: 1px solid rgba(226, 135, 67, 0.35); border-radius: 16px; width: 100%; max-width: 480px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.8); transform: translateY(20px); transition: transform 0.3s ease;" id="confirmModalCard">
+            
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, rgba(226, 135, 67, 0.18), rgba(20, 20, 24, 0.95)); padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                    <i class="fa-solid fa-shield-halved" style="color: #e28743; font-size: 1.2rem;"></i>
+                    <h3 style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff; font-size: 1.1rem; margin: 0;">Konfirmasi Detail Pesanan</h3>
+                </div>
+                <button type="button" onclick="closeCheckoutModal()" style="background: none; border: none; color: var(--text-secondary); font-size: 1.2rem; cursor: pointer; padding: 0.2rem 0.5rem; transition: color 0.2s;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+                
+                <div style="background: rgba(226, 135, 67, 0.08); border: 1px solid rgba(226, 135, 67, 0.2); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.82rem; color: #e28743; display: flex; align-items: flex-start; gap: 0.6rem;">
+                    <i class="fa-solid fa-circle-info" style="margin-top: 2px; font-size: 0.95rem; min-width: 16px;"></i>
+                    <span>Mohon periksa kembali data tujuan &amp; pesanan Anda. Kesalahan input data bukan tanggung jawab kami.</span>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.85rem; font-family: 'Outfit', sans-serif; font-size: 0.9rem;">
+                    
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                        <span style="color: var(--text-secondary);">Kategori / Layanan:</span>
+                        <span style="font-weight: 700; color: #fff;">{{ $category->name }}</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                        <span style="color: var(--text-secondary);">Target / ID Akun:</span>
+                        <span id="confirmModalTarget" style="font-weight: 700; color: #3b82f6;">-</span>
+                    </div>
+
+                    <div id="confirmModalNicknameRow" style="display: none; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem; background: rgba(16, 185, 129, 0.05); padding: 0.6rem 0.75rem; border-radius: 6px;">
+                        <span style="color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem;"><i class="fa-solid fa-user-check" style="color: #10b981;"></i> Nickname Akun:</span>
+                        <span id="confirmModalNickname" style="font-weight: 800; color: #10b981;">-</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                        <span style="color: var(--text-secondary);">Item Nominal:</span>
+                        <span id="confirmModalItem" style="font-weight: 700; color: #fff;">-</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                        <span style="color: var(--text-secondary);">Metode Pembayaran:</span>
+                        <span id="confirmModalPayment" style="font-weight: 700; color: #f59e0b; text-transform: uppercase;">-</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255, 255, 255, 0.06); padding-bottom: 0.6rem;">
+                        <span style="color: var(--text-secondary);">No. WhatsApp:</span>
+                        <span id="confirmModalPhone" style="font-weight: 600; color: #fff;">-</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(0, 0, 0, 0.35); padding: 0.85rem 1rem; border-radius: 8px; border: 1px solid rgba(226, 135, 67, 0.25); margin-top: 0.25rem;">
+                        <span style="font-weight: 700; color: #fff;">Total Pembayaran:</span>
+                        <span id="confirmModalTotalPrice" style="font-weight: 800; font-size: 1.2rem; color: #e28743;">Rp 0</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Modal Footer Buttons -->
+            <div style="padding: 1.25rem 1.5rem; background: rgba(0, 0, 0, 0.4); border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" onclick="closeCheckoutModal()" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); padding: 0.7rem 1.25rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: 'Outfit', sans-serif;">
+                    Batal / Edit
+                </button>
+                <button type="button" id="btnSubmitFinalOrder" onclick="submitFinalOrder()" style="background: linear-gradient(135deg, #e28743, #d97706); border: none; color: #fff; padding: 0.7rem 1.5rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(226, 135, 67, 0.3); font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                    <span>Lanjutkan Pembayaran</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
 </div>
 @endsection
 
@@ -1235,10 +1313,102 @@
         }
     }
 
+    // Modal Confirmation Popup Logic
+    let isConfirmedByModal = false;
+
+    function openCheckoutModal() {
+        const modal = document.getElementById('checkoutConfirmModal');
+        const modalCard = document.getElementById('confirmModalCard');
+        
+        // Populate Target ID
+        const userId = document.getElementById('account_user_id') ? document.getElementById('account_user_id').value.trim() : '';
+        const zoneId = document.getElementById('account_zone_id') ? document.getElementById('account_zone_id').value.trim() : '';
+        let targetText = userId;
+        if (zoneId) {
+            targetText += ` (${zoneId})`;
+        }
+        document.getElementById('confirmModalTarget').innerText = targetText || '-';
+
+        // Populate Nickname if available
+        const nicknameResult = document.getElementById('nickname_check_result');
+        const nicknameRow = document.getElementById('confirmModalNicknameRow');
+        const nicknameEl = document.getElementById('confirmModalNickname');
+        
+        if (nicknameResult && nicknameResult.style.display !== 'none' && nicknameResult.querySelector('strong')) {
+            const nickText = nicknameResult.querySelector('strong').innerText;
+            nicknameEl.innerText = nickText;
+            nicknameRow.style.display = 'flex';
+        } else {
+            nicknameRow.style.display = 'none';
+        }
+
+        // Populate Item Nominal
+        const activeCard = document.querySelector('.nominal-card.active');
+        if (activeCard) {
+            const nameEl = activeCard.querySelector('.nominal-name');
+            document.getElementById('confirmModalItem').innerText = nameEl ? nameEl.innerText : '-';
+        }
+
+        // Populate Payment Method Name
+        const activePayment = document.querySelector('.payment-row-item.active');
+        if (activePayment) {
+            const payName = activePayment.querySelector('.payment-name-txt');
+            document.getElementById('confirmModalPayment').innerText = payName ? payName.innerText : '-';
+        }
+
+        // Populate Phone
+        const phoneInput = document.querySelector('input[name="customer_phone"]');
+        document.getElementById('confirmModalPhone').innerText = phoneInput ? phoneInput.value.trim() : '-';
+
+        // Populate Total Price
+        const totalSummary = document.getElementById('summaryTotalPrice');
+        document.getElementById('confirmModalTotalPrice').innerText = totalSummary ? totalSummary.innerText : 'Rp 0';
+
+        // Show Modal
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modalCard.style.transform = 'translateY(0)';
+        }, 10);
+    }
+
+    function closeCheckoutModal() {
+        const modal = document.getElementById('checkoutConfirmModal');
+        const modalCard = document.getElementById('confirmModalCard');
+        modal.style.opacity = '0';
+        modalCard.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+
+    function submitFinalOrder() {
+        const btn = document.getElementById('btnSubmitFinalOrder');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Memproses...`;
+        }
+        isConfirmedByModal = true;
+        document.getElementById('topupForm').submit();
+    }
+
     // Client-side validation before submit
     document.getElementById('topupForm').addEventListener('submit', function(e) {
+        if (isConfirmedByModal) {
+            return true;
+        }
+
         const productId = document.getElementById('selectedProductId').value;
         const paymentMethod = document.getElementById('selectedPaymentMethod').value;
+        const accountUserId = document.getElementById('account_user_id') ? document.getElementById('account_user_id').value.trim() : '';
+        const phoneInput = document.querySelector('input[name="customer_phone"]');
+        const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+
+        if (accountUserId === '') {
+            e.preventDefault();
+            alert('Silakan isi Data Akun / Target ID terlebih dahulu!');
+            return;
+        }
 
         if (!productId) {
             e.preventDefault();
@@ -1251,6 +1421,15 @@
             alert('Silakan pilih metode pembayaran terlebih dahulu!');
             return;
         }
+
+        if (!phoneVal) {
+            e.preventDefault();
+            alert('Silakan isi nomor WhatsApp untuk notifikasi transaksi!');
+            return;
+        }
+
+        e.preventDefault();
+        openCheckoutModal();
     });
 </script>
 @endsection
