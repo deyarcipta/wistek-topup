@@ -816,25 +816,60 @@
                     @endif
                 </div>
 
-                <!-- Step 4: Checkout Action -->
+                <!-- Step 4: Detail Kontak -->
                 <div class="form-step">
                     <div class="step-header">
                         <div class="step-number">4</div>
-                        <h3 class="step-title">Masukkan Kontak & Konfirmasi</h3>
+                        <h3 class="step-title">Detail Kontak</h3>
                     </div>
                     
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Miliki Kode Promo / Voucher?</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <input type="text" name="voucher_code" id="voucherCodeInput" class="form-control" placeholder="Masukkan kode voucher (Opsional)" style="flex-grow: 1;">
-                            <button type="button" id="btnApplyVoucher" onclick="applyVoucherCode()" style="background: rgba(226, 135, 67, 0.1); border: 1px solid #e28743; color: #e28743; padding: 0.5rem 1rem; border-radius: 6px; font-weight: 700; cursor: pointer; transition: all 0.2s;">Terapkan</button>
+                    <div style="margin-bottom: 1.25rem;">
+                        <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary); font-weight: 500;">Email (Opsional)</label>
+                        <input type="email" name="customer_email" class="form-control" value="{{ Auth::check() ? Auth::user()->email : '' }}" placeholder="example@gmail.com">
+                    </div>
+
+                    <div style="margin-bottom: 0.5rem;">
+                        <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary); font-weight: 500;">No. WhatsApp</label>
+                        <div style="display: flex; align-items: center;">
+                            <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; padding: 0.75rem 0.85rem; display: flex; align-items: center; gap: 0.4rem; color: #fff; font-weight: 700; font-size: 0.9rem; user-select: none;">
+                                <span style="font-size: 1.1rem; line-height: 1;">🇮🇩</span>
+                                <i class="fa-solid fa-angle-down" style="font-size: 0.7rem; color: var(--text-secondary);"></i>
+                                <span style="margin-left: 0.2rem;">+62</span>
+                            </div>
+                            <input type="text" name="customer_phone" class="form-control" value="{{ Auth::check() ? Auth::user()->phone : '' }}" placeholder="81234567890" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" required>
+                        </div>
+                        <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.4rem; font-style: italic;">
+                            **Nomor ini akan dihubungi jika terjadi masalah
+                        </p>
+                    </div>
+
+                    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 0.85rem 1rem; margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem; color: var(--text-secondary); font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle-info" style="font-size: 1.1rem; color: #e28743;"></i>
+                        <span>Jika ada kendala, kami akan menghubungi nomor WA kamu diatas</span>
+                    </div>
+                </div>
+
+                <!-- Step 5: Kode Promo -->
+                <div class="form-step">
+                    <div class="step-header">
+                        <div class="step-number">5</div>
+                        <h3 class="step-title">Kode Promo</h3>
+                    </div>
+                    
+                    <div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <input type="text" name="voucher_code" id="voucherCodeInput" class="form-control" placeholder="Ketik Kode Promo Kamu" style="flex-grow: 1;">
+                            <button type="button" id="btnApplyVoucher" onclick="applyVoucherCode()" style="background: #e28743; border: none; color: #fff; padding: 0.75rem 1.75rem; border-radius: 8px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap;">Gunakan</button>
                         </div>
                         <span id="voucherFeedback" style="display: block; font-size: 0.8rem; margin-top: 0.35rem; display: none;"></span>
                     </div>
+                </div>
 
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary);">Nomor WhatsApp (Untuk Notifikasi Transaksi)</label>
-                        <input type="text" name="customer_phone" class="form-control" value="{{ Auth::check() ? Auth::user()->phone : '' }}" placeholder="Contoh: 081234567890" required>
+                <!-- Step 6: Konfirmasi & Pembayaran -->
+                <div class="form-step">
+                    <div class="step-header">
+                        <div class="step-number">6</div>
+                        <h3 class="step-title">Konfirmasi & Pembayaran</h3>
                     </div>
 
                     @auth
