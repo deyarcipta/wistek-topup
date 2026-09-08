@@ -193,7 +193,12 @@ class CallbackController extends Controller
             logger()->warning('DOKU Webhook signature validation notice for Request-Id: '.$requestIdHeader);
         }
 
-        $data = json_decode($jsonPayload, true) ?? [];
+        $jsonPayload = $request->getContent() ?: json_encode($request->all());
+        $data = json_decode($jsonPayload, true);
+        if (! is_array($data) || empty($data)) {
+            $data = $request->json()->all() ?: $request->all();
+        }
+
         logger()->info('DOKU Webhook Received Raw Payload: '.json_encode($data));
 
         // Parse Invoice Number from SNAP (originalPartnerReferenceNo) or Jokul (order.invoice_number)
