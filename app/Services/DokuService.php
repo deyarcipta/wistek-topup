@@ -37,7 +37,16 @@ class DokuService
         }
 
         return [
-            // Virtual Accounts (Active)
+            // Instant QRIS Payment
+            [
+                'code' => 'QRIS',
+                'name' => 'QRIS (All E-Wallet & Mobile Banking)',
+                'fee_flat' => 0,
+                'fee_percent' => 0.7,
+                'icon_url' => url('/images/payments/qris.svg'),
+            ],
+
+            // Virtual Accounts (Active in DOKU)
             [
                 'code' => 'BCAVA',
                 'name' => 'BCA Virtual Account',
@@ -94,6 +103,41 @@ class DokuService
                 'fee_percent' => 0,
                 'icon_url' => url('/images/payments/maybank.svg'),
             ],
+            [
+                'code' => 'DANAMONVA',
+                'name' => 'Danamon Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => url('/images/payments/permata.svg'),
+            ],
+            [
+                'code' => 'BNCVA',
+                'name' => 'Bank Neo Commerce (BNC) VA',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => url('/images/payments/bni.svg'),
+            ],
+            [
+                'code' => 'BSSVA',
+                'name' => 'Bank Sahabat Sampoerna (BSS) VA',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => url('/images/payments/bri.svg'),
+            ],
+            [
+                'code' => 'BTNVA',
+                'name' => 'BTN Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => url('/images/payments/bni.svg'),
+            ],
+            [
+                'code' => 'BJBVA',
+                'name' => 'Bank BJB Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => url('/images/payments/bni.svg'),
+            ],
 
             // Convenience Stores (Active)
             [
@@ -139,6 +183,34 @@ class DokuService
     }
 
     /**
+     * Map Wistek payment channel code to official DOKU payment_method_types
+     */
+    public function mapToDokuPaymentMethodType(string $code): ?string
+    {
+        return match (strtoupper($code)) {
+            'QRIS' => 'QRIS',
+            'BCAVA' => 'VIRTUAL_ACCOUNT_BCA',
+            'MANDIRIVA' => 'VIRTUAL_ACCOUNT_BANK_MANDIRI',
+            'BNIVA' => 'VIRTUAL_ACCOUNT_BNI',
+            'BRIVA' => 'VIRTUAL_ACCOUNT_BRI',
+            'PERMATAVA' => 'VIRTUAL_ACCOUNT_PERMATA',
+            'CIMBVA' => 'VIRTUAL_ACCOUNT_CIMB',
+            'BSIVA' => 'VIRTUAL_ACCOUNT_BANK_SYARIAH_INDONESIA',
+            'MAYBANKVA' => 'VIRTUAL_ACCOUNT_MAYBANK',
+            'DANAMONVA' => 'VIRTUAL_ACCOUNT_DANAMON',
+            'BNCVA' => 'VIRTUAL_ACCOUNT_BNC',
+            'BSSVA' => 'VIRTUAL_ACCOUNT_BSS',
+            'BTNVA' => 'VIRTUAL_ACCOUNT_BTN',
+            'BJBVA' => 'VIRTUAL_ACCOUNT_BJB',
+            'ALFAMART', 'RETAIL' => 'ONLINE_TO_OFFLINE_ALFA',
+            'INDOMARET' => 'ONLINE_TO_OFFLINE_INDOMARET',
+            'DOKU_WALLET' => 'EMONEY_DOKU',
+            'AKULAKU' => 'PEER_TO_PEER_AKULAKU',
+            default => null,
+        };
+    }
+
+    /**
      * Generate DOKU Jokul Signature using HMAC-SHA256
      */
     public function generateSignature(string $requestId, string $requestTimestamp, string $requestTarget, string $jsonPayload): string
@@ -167,6 +239,17 @@ class DokuService
         $requestTimestamp = gmdate('Y-m-d\TH:i:s\Z');
         $requestId = $invoice;
 
+        $paymentData = [
+            'payment_due_date' => 1440, // 24 hours in minutes
+        ];
+
+        if (! empty($paymentMethod) && $paymentMethod !== 'DOKU_CHECKOUT') {
+            $dokuCode = $this->mapToDokuPaymentMethodType($paymentMethod);
+            if (! empty($dokuCode)) {
+                $paymentData['payment_method_types'] = [$dokuCode];
+            }
+        }
+
         $payload = [
             'order' => [
                 'invoice_number' => $invoice,
@@ -182,9 +265,7 @@ class DokuService
                 'notification_url' => url('/callback/doku'),
                 'auto_redirect' => true,
             ],
-            'payment' => [
-                'payment_due_date' => 1440, // 24 hours in minutes
-            ],
+            'payment' => $paymentData,
             'customer' => [
                 'name' => 'Pelanggan Wistek',
                 'phone' => $customerPhone ?: '081234567890',
