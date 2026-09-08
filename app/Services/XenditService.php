@@ -37,14 +37,13 @@ class XenditService
         }
 
         return [
-            ['code' => 'QRIS', 'name' => 'QRIS (GoPay, OVO, Dana, ShopeePay)', 'fee_flat' => 0, 'fee_percent' => 0.7, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg'],
-            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg'],
-            ['code' => 'MANDIRIVA', 'name' => 'Mandiri Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg'],
-            ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg'],
-            ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg'],
-            ['code' => 'PERMATAVA', 'name' => 'Permata Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Permata_Bank_logo.svg'],
-            ['code' => 'OVO', 'name' => 'OVO E-Wallet', 'fee_flat' => 0, 'fee_percent' => 1.5, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_blue.svg'],
-            ['code' => 'DANA', 'name' => 'DANA E-Wallet', 'fee_flat' => 0, 'fee_percent' => 1.5, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg'],
+            [
+                'code' => 'XENDIT_INVOICE',
+                'name' => 'Xendit Payment (QRIS, VA & E-Wallet)',
+                'fee_flat' => 0,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg',
+            ],
         ];
     }
 

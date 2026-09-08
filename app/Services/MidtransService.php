@@ -43,13 +43,13 @@ class MidtransService
         }
 
         return [
-            ['code' => 'QRIS', 'name' => 'QRIS (GoPay, OVO, Dana, ShopeePay)', 'fee_flat' => 0, 'fee_percent' => 0.7, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg'],
-            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg'],
-            ['code' => 'MANDIRIVA', 'name' => 'Mandiri Bill Payment', 'fee_flat' => 4000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg'],
-            ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg'],
-            ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg'],
-            ['code' => 'PERMATAVA', 'name' => 'Permata Virtual Account', 'fee_flat' => 4000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a6/Permata_Bank_logo.svg'],
-            ['code' => 'INDOMARET', 'name' => 'Indomaret / Ceriamart', 'fee_flat' => 5000, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Logo_Indomaret.png'],
+            [
+                'code' => 'MIDTRANS_SNAP',
+                'name' => 'Midtrans Snap (QRIS, VA, Credit Card & E-Wallet)',
+                'fee_flat' => 0,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg',
+            ],
         ];
     }
 
