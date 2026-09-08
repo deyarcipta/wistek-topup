@@ -555,13 +555,13 @@
                             // Filter only unique and clean payment channels (hide redundant QRIS codes)
                             $ewalletCodes = ['QRIS', 'SHOPEEPAY', 'OVO', 'DANA', 'LINKAJA', 'JENIUS_PAY'];
                             $vaCodes = ['BCAVA', 'MANDIRIVA', 'BNIVA', 'BRIVA', 'PERMATAVA', 'CIMBVA', 'ATM_BERSAMA_VA', 'MAYBANKVA', 'BSIVA', 'AGVA', 'SAMPOERNAVA', 'NOBUVA'];
-                            $retailCodes = ['RETAIL', 'INDOMARET'];
-                            $otherCodes = ['CREDIT_CARD', 'INDODANA_PAYLATER'];
+                            $retailCodes = ['RETAIL', 'INDOMARET', 'ALFAMART'];
+                            $knownCodes = array_merge($ewalletCodes, $vaCodes, $retailCodes);
 
                             $ewalletChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $ewalletCodes));
                             $vaChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $vaCodes));
                             $retailChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $retailCodes));
-                            $otherChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $otherCodes));
+                            $otherChannels = array_filter($paymentChannels, fn($c) => !in_array($c['code'], $knownCodes));
                         @endphp
 
                         <div class="payment-accordion-container">
@@ -737,7 +737,7 @@
                                 <div class="accordion-panel">
                                     <div class="accordion-header" onclick="togglePaymentAccordion(this)">
                                         <div class="accordion-title-area">
-                                            <span class="accordion-title">Kartu Kredit & Paylater</span>
+                                            <span class="accordion-title">Portal Pembayaran & Lainnya</span>
                                             <div class="accordion-header-logos">
                                                 @foreach($otherChannels as $channel)
                                                     @if(!empty($channel['icon_url']))
