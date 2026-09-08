@@ -235,6 +235,32 @@
         font-size: 1.1rem !important;
         font-weight: 800 !important;
     }
+
+    /* Custom Modal Sleek Scrollbar */
+    .modal-custom-scroll {
+        max-height: 75vh;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(226, 135, 67, 0.5) rgba(15, 15, 20, 0.6);
+    }
+
+    .modal-custom-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .modal-custom-scroll::-webkit-scrollbar-track {
+        background: rgba(15, 15, 20, 0.6);
+        border-radius: 4px;
+    }
+
+    .modal-custom-scroll::-webkit-scrollbar-thumb {
+        background: rgba(226, 135, 67, 0.4);
+        border-radius: 4px;
+    }
+
+    .modal-custom-scroll::-webkit-scrollbar-thumb:hover {
+        background: #e28743;
+    }
 </style>
 @endsection
 
@@ -876,7 +902,7 @@
             </div>
 
             <!-- Modal Body -->
-            <div style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+            <div class="modal-custom-scroll" style="padding: 1.25rem 1.5rem;">
                 
                 <div style="background: rgba(226, 135, 67, 0.08); border: 1px solid rgba(226, 135, 67, 0.2); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.82rem; color: #e28743; display: flex; align-items: flex-start; gap: 0.6rem;">
                     <i class="fa-solid fa-circle-info" style="margin-top: 2px; font-size: 0.95rem; min-width: 16px;"></i>
