@@ -769,34 +769,11 @@
                             @endif
                         </div>
                     @else
-                        <!-- Fallback / Sandbox default channels if API offline -->
-                        <div class="payment-accordion-container">
-                            <div class="accordion-panel active">
-                                <div class="accordion-header" onclick="togglePaymentAccordion(this)">
-                                    <span class="accordion-title">Metode Instan</span>
-                                    <i class="fa-solid fa-chevron-up accordion-arrow"></i>
-                                </div>
-                                <div class="accordion-content-panel">
-                                    <div class="payment-grid-layout">
-                                        <div class="payment-row-item" data-code="QRIS" data-fee-flat="0" data-fee-percent="0.7" onclick="selectPayment('QRIS')">
-                                            <div class="payment-left-side">
-                                                <span class="payment-name-txt">QRIS (Semua E-Wallet)</span>
-                                            </div>
-                                            <div class="payment-right-side">
-                                                <span class="payment-row-price">Rp 0</span>
-                                            </div>
-                                        </div>
-                                        <div class="payment-row-item" data-code="BCAVA" data-fee-flat="1500" data-fee-percent="0" onclick="selectPayment('BCAVA')">
-                                            <div class="payment-left-side">
-                                                <span class="payment-name-txt">BCA Virtual Account</span>
-                                            </div>
-                                            <div class="payment-right-side">
-                                                <span class="payment-row-price">Rp 0</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Message when payment channels are unconfigured or unavailable -->
+                        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 10px; padding: 1.5rem; text-align: center; color: var(--text-secondary);">
+                            <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.8rem; color: #f59e0b; margin-bottom: 0.5rem; display: block;"></i>
+                            <p style="font-weight: 700; color: #fff; margin-bottom: 0.25rem; font-size: 0.95rem;">Metode Pembayaran Belum Aktif</p>
+                            <p style="font-size: 0.85rem;">Metode pembayaran pada provider aktif belum dikonfigurasi di Admin Panel. Silakan hubungi Customer Service.</p>
                         </div>
                     @endif
                 </div>

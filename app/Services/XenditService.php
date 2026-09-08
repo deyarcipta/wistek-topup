@@ -32,6 +32,10 @@ class XenditService
      */
     public function getPaymentChannels(int $amount = 10000): array
     {
+        if (empty($this->secretKey)) {
+            return [];
+        }
+
         return [
             ['code' => 'QRIS', 'name' => 'QRIS (GoPay, OVO, Dana, ShopeePay)', 'fee_flat' => 0, 'fee_percent' => 0.7, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg'],
             ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg'],

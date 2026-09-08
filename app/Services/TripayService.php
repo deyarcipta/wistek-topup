@@ -51,8 +51,8 @@ class TripayService
      */
     public function getPaymentChannels(int $amount = 10000): array
     {
-        if (empty($this->apiKey)) {
-            return $this->getFallbackChannels();
+        if (empty($this->apiKey) || empty($this->privateKey) || empty($this->merchantCode)) {
+            return [];
         }
 
         try {

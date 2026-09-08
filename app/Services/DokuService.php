@@ -32,6 +32,10 @@ class DokuService
      */
     public function getPaymentChannels(int $amount = 10000): array
     {
+        if (empty($this->clientId) || empty($this->secretKey)) {
+            return [];
+        }
+
         return [
             [
                 'code' => 'QRIS',

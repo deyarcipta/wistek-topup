@@ -2,14 +2,10 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
-use App\Http\Controllers\CallbackController;
-use App\Services\DigiflazzService;
-use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -101,21 +97,6 @@ class TransactionsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
-                Action::make('simulatePaid')
-                    ->label('Simulasikan Lunas')
-                    ->action(function ($record) {
-                        $controller = new CallbackController;
-                        $response = $controller->simulatePaid($record->invoice, new DigiflazzService);
-
-                        Notification::make()
-                            ->title('Simulasi Lunas Sukses')
-                            ->body(strip_tags($response))
-                            ->success()
-                            ->send();
-                    })
-                    ->color('success')
-                    ->icon('heroicon-o-check-circle')
-                    ->visible(fn ($record) => $record->payment_status !== 'paid'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

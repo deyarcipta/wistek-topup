@@ -73,6 +73,10 @@ class DuitkuService
      */
     public function getPaymentChannels(int $amount = 10000): array
     {
+        if (empty($this->merchantCode) || empty($this->apiKey)) {
+            return [];
+        }
+
         try {
             $response = Api::getPaymentMethod($amount, $this->config);
             $data = json_decode($response, true);

@@ -42,9 +42,6 @@ Route::post('/callback/tripay', [CallbackController::class, 'tripayCallback']);
 Route::post('/callback/doku', [CallbackController::class, 'dokuCallback']);
 Route::match(['get', 'post'], '/callback/digiflazz', [CallbackController::class, 'digiflazzCallback']);
 
-// Local Simulation Route for Testing
-Route::get('/simulate-paid/{invoice}', [CallbackController::class, 'simulatePaid']);
-
 // Authentikasi Guest
 Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister']);
