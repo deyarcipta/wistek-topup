@@ -114,11 +114,11 @@
                     @if(isset($transaction->payment_details['payment_url']) && !empty($transaction->payment_details['payment_url']))
                         @php $hasContent = true; @endphp
                         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
-                            <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 600;">Klik tombol di bawah untuk membayar melalui portal Duitku:</p>
+                            <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 600;">Klik tombol di bawah untuk melanjutkan pembayaran:</p>
                             <a href="{{ $transaction->payment_details['payment_url'] }}" target="_blank" class="btn-checkout" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 0.75rem 2rem; background: #e28743; color: #fff; font-weight: 700; border-radius: 8px; font-size: 1rem; transition: background 0.2s;">
-                                <i class="fa-solid fa-external-link" style="margin-right: 0.5rem;"></i> Bayar Sekarang (Duitku)
+                                <i class="fa-solid fa-external-link" style="margin-right: 0.5rem;"></i> Bayar Sekarang
                             </a>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem;">Anda akan diarahkan ke halaman pembayaran aman Duitku.</p>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem;">Anda akan diarahkan ke halaman pembayaran resmi yang aman.</p>
                         </div>
                     @endif
 
