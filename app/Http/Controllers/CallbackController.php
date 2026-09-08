@@ -185,7 +185,7 @@ class CallbackController extends Controller
 
         $data = json_decode($jsonPayload, true) ?? [];
         $invoiceNumber = $data['order']['invoice_number'] ?? $data['order']['id'] ?? $requestIdHeader ?? '';
-        $transactionStatus = strtoupper((string) ($data['transaction']['status'] ?? $data['order']['status'] ?? ''));
+        $transactionStatus = strtoupper((string) ($data['transaction']['status'] ?? $data['order']['status'] ?? $data['status'] ?? ''));
 
         $transaction = Transaction::where('invoice', $invoiceNumber)->first();
         if (! $transaction) {
