@@ -116,7 +116,7 @@
                             <i class="fa-solid fa-star" style="font-size: 0.6rem;"></i> POPULER
                         </span>
                         
-                        <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail" style="border: 2px solid rgba(226, 135, 67, 0.2);">
+                        <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail" style="border: 2px solid rgba(226, 135, 67, 0.2);" onerror="this.onerror=null; this.src='https://placehold.co/150x150/1e293b/ffffff?text={{ urlencode($category->name) }}';">
                         <div class="category-info">
                             <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;">{{ $category->name }}</h3>
                             <span style="background: rgba(226, 135, 67, 0.1); color: #e28743; border: 1px solid rgba(226, 135, 67, 0.2);">{{ match($category->type) {
@@ -172,7 +172,7 @@
         <div class="categories-grid" id="allCategoriesGrid">
             @forelse($categories as $category)
                 <a href="{{ url('/category/' . $category->slug) }}" class="category-card" data-category-type="{{ $category->type }}">
-                    <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail">
+                    <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail" onerror="this.onerror=null; this.src='https://placehold.co/150x150/1e293b/ffffff?text={{ urlencode($category->name) }}';">
                     <div class="category-info">
                         <h3>{{ $category->name }}</h3>
                         <span>{{ match($category->type) {

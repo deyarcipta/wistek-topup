@@ -42,7 +42,7 @@ class XenditService
                 'name' => 'Xendit Payment (QRIS, VA & E-Wallet)',
                 'fee_flat' => 0,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg',
+                'icon_url' => url('/images/payments/qris.svg'),
             ],
         ];
     }

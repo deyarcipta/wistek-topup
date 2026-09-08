@@ -94,12 +94,12 @@ class TripayService
     protected function getFallbackChannels(): array
     {
         return [
-            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 750, 'fee_percent' => 0.7, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg'],
-            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg'],
-            ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg'],
-            ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg'],
-            ['code' => 'ALFAMART', 'name' => 'Alfamart', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/8/86/Alfamart_logo.svg'],
-            ['code' => 'INDOMARET', 'name' => 'Indomaret', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Logo_Indomaret.png'],
+            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 750, 'fee_percent' => 0.7, 'icon' => url('/images/payments/qris.svg')],
+            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bca.svg')],
+            ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bni.svg')],
+            ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bri.svg')],
+            ['code' => 'ALFAMART', 'name' => 'Alfamart', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => url('/images/payments/alfamart.svg')],
+            ['code' => 'INDOMARET', 'name' => 'Indomaret', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => url('/images/payments/indomaret.svg')],
         ];
     }
 

@@ -43,56 +43,56 @@ class DokuService
                 'name' => 'BCA Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/bca.png',
+                'icon_url' => url('/images/payments/bca.svg'),
             ],
             [
                 'code' => 'MANDIRIVA',
                 'name' => 'Mandiri Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/mandiri.png',
+                'icon_url' => url('/images/payments/mandiri.svg'),
             ],
             [
                 'code' => 'BNIVA',
                 'name' => 'BNI Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/bni.png',
+                'icon_url' => url('/images/payments/bni.svg'),
             ],
             [
                 'code' => 'BRIVA',
                 'name' => 'BRI Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/bri.png',
+                'icon_url' => url('/images/payments/bri.svg'),
             ],
             [
                 'code' => 'PERMATAVA',
                 'name' => 'Permata Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/permata.png',
+                'icon_url' => url('/images/payments/permata.svg'),
             ],
             [
                 'code' => 'CIMBVA',
                 'name' => 'CIMB Niaga Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/cimb.png',
+                'icon_url' => url('/images/payments/cimb.svg'),
             ],
             [
                 'code' => 'BSIVA',
                 'name' => 'BSI Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/bsi.png',
+                'icon_url' => url('/images/payments/bsi.svg'),
             ],
             [
                 'code' => 'MAYBANKVA',
                 'name' => 'Maybank Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/maybank.png',
+                'icon_url' => url('/images/payments/maybank.svg'),
             ],
 
             // Convenience Stores (Active)
@@ -101,14 +101,14 @@ class DokuService
                 'name' => 'Alfamart / Alfa Group',
                 'fee_flat' => 5000,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/FT.png',
+                'icon_url' => url('/images/payments/alfamart.svg'),
             ],
             [
                 'code' => 'INDOMARET',
                 'name' => 'Indomaret',
                 'fee_flat' => 5000,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/IR.png',
+                'icon_url' => url('/images/payments/indomaret.svg'),
             ],
 
             // E-Wallet & Paylater (Active)
@@ -117,14 +117,14 @@ class DokuService
                 'name' => 'DOKU e-Wallet',
                 'fee_flat' => 0,
                 'fee_percent' => 1.5,
-                'icon_url' => 'https://images.duitku.com/QD/LA.png',
+                'icon_url' => url('/images/payments/doku.svg'),
             ],
             [
                 'code' => 'AKULAKU',
                 'name' => 'Akulaku Paylater',
                 'fee_flat' => 0,
                 'fee_percent' => 1.5,
-                'icon_url' => 'https://images.duitku.com/QD/DN.png',
+                'icon_url' => url('/images/payments/akulaku.svg'),
             ],
 
             // All-in-One Portal
@@ -133,7 +133,7 @@ class DokuService
                 'name' => 'DOKU Checkout (Portal Semua Metode)',
                 'fee_flat' => 0,
                 'fee_percent' => 0,
-                'icon_url' => 'https://images.duitku.com/QD/qris.png',
+                'icon_url' => url('/images/payments/doku.svg'),
             ],
         ];
     }

@@ -251,7 +251,7 @@
             
             <!-- Left Column: Category Description Info -->
             <div class="sidebar-info">
-                <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}">
+                <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" onerror="this.onerror=null; this.src='https://placehold.co/150x150/1e293b/ffffff?text={{ urlencode($category->name) }}';">
                 <h2>{{ $category->name }}</h2>
                 <p style="margin-bottom: 1.5rem;">Top Up {{ $category->name }} otomatis dan aman 24 jam nonstop.</p>
                 <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem; font-size: 0.85rem; color: var(--text-secondary);">
@@ -576,7 +576,7 @@
                                             <div class="accordion-title-area">
                                                 <span class="accordion-title">QRIS</span>
                                                 <div class="accordion-header-logos">
-                                                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="header-logo-badge">
+                                                    <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="header-logo-badge" onerror="this.style.display='none'">
                                                 </div>
                                             </div>
                                             <i class="fa-solid fa-chevron-up accordion-arrow"></i>
@@ -585,7 +585,7 @@
                                             <div class="payment-grid-layout">
                                                 <div class="payment-row-item" data-code="{{ $qrisChannel['code'] }}" data-fee-flat="{{ $qrisChannel['fee_flat'] }}" data-fee-percent="{{ $qrisChannel['fee_percent'] }}" onclick="selectPayment('{{ $qrisChannel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="payment-icon-img">
+                                                        <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="payment-icon-img" onerror="this.style.display='none'">
                                                         <span class="payment-name-txt">QRIS</span>
                                                     </div>
                                                     <div class="payment-right-side">
