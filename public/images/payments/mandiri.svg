@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" width="300" height="100">
-  <rect width="300" height="100" rx="12" fill="#003D79"/>
-  <text x="150" y="68" font-family="'Outfit', 'Segoe UI', Arial, sans-serif" font-weight="900" font-size="44" fill="#FFFFFF" text-anchor="middle" letter-spacing="2">mandiri</text>
-  <path d="M220 20 L250 20 L240 40 Z" fill="#F2A900"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">
+  <rect width="120" height="40" rx="6" fill="#FFFFFF"/>
+  <text x="52" y="26" font-family="'Outfit', 'Segoe UI', Arial, sans-serif" font-weight="800" font-size="17" fill="#003B6D" text-anchor="middle">mandırı</text>
+  <path d="M 88,14 C 94,10 98,14 104,12 C 100,18 96,18 90,22 Z" fill="#F2A900"/>
 </svg>

@@ -78,11 +78,13 @@
     }
 
     .header-logo-badge {
-        height: 14px;
+        height: 18px;
+        width: auto;
         background: #fff;
-        padding: 2px 4px;
-        border-radius: 2px;
+        padding: 2px 6px;
+        border-radius: 4px;
         object-fit: contain;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
 
     .header-logo-plus {
@@ -148,13 +150,14 @@
     }
 
     .payment-icon-img {
-        height: 18px;
+        height: 22px;
         width: auto;
-        max-width: 55px;
+        max-width: 65px;
         background: #fff;
-        padding: 2px 4px;
-        border-radius: 2px;
+        padding: 2px 6px;
+        border-radius: 4px;
         object-fit: contain;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
     }
 
     .payment-name-txt {
@@ -599,13 +602,23 @@
                                 @if($qrisChannel)
                                     <div class="accordion-panel active">
                                         <div class="accordion-header" onclick="togglePaymentAccordion(this)">
-                                            <div class="accordion-title-area">
-                                                <span class="accordion-title">QRIS</span>
-                                                <div class="accordion-header-logos">
+                                            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                    <span class="accordion-title">QRIS</span>
+                                                    <i class="fa-solid fa-chevron-up accordion-arrow"></i>
+                                                </div>
+                                                <div style="background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.75rem; border-radius: 6px; display: flex; justify-content: flex-end; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
                                                     <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/bni.svg') }}" alt="BNI" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/gopay.svg') }}" alt="GoPay" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/mandiri.svg') }}" alt="Mandiri" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/bca.svg') }}" alt="BCA" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/shopeepay.svg') }}" alt="ShopeePay" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/linkaja.svg') }}" alt="LinkAja" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/ovo.svg') }}" alt="OVO" class="header-logo-badge" onerror="this.style.display='none'">
+                                                    <img src="{{ asset('images/payments/dana.svg') }}" alt="DANA" class="header-logo-badge" onerror="this.style.display='none'">
                                                 </div>
                                             </div>
-                                            <i class="fa-solid fa-chevron-up accordion-arrow"></i>
                                         </div>
                                         <div class="accordion-content-panel">
                                             <div class="payment-grid-layout">
@@ -659,7 +672,7 @@
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
-                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img">
+                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img" onerror="this.style.display='none'">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
@@ -677,21 +690,20 @@
                             @if(count($vaChannels) > 0)
                                 <div class="accordion-panel">
                                     <div class="accordion-header" onclick="togglePaymentAccordion(this)">
-                                        <div class="accordion-title-area">
-                                            <span class="accordion-title">Virtual Account</span>
-                                            <div class="accordion-header-logos">
-                                                @foreach(array_slice($vaChannels, 0, 4) as $channel)
+                                        <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                <span class="accordion-title">Virtual Account</span>
+                                                <i class="fa-solid fa-chevron-down accordion-arrow"></i>
+                                            </div>
+                                            <div style="background: rgba(255, 255, 255, 0.05); padding: 0.4rem 0.75rem; border-radius: 6px; display: flex; justify-content: flex-end; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+                                                @foreach($vaChannels as $channel)
                                                     @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
                                                     @if(!empty($imgUrl))
-                                                        <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge">
+                                                        <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge" onerror="this.style.display='none'">
                                                     @endif
                                                 @endforeach
-                                                @if(count($vaChannels) > 4)
-                                                    <span class="header-logo-plus">+{{ count($vaChannels) - 4 }} lainnya</span>
-                                                @endif
                                             </div>
                                         </div>
-                                        <i class="fa-solid fa-chevron-down accordion-arrow"></i>
                                     </div>
                                     <div class="accordion-content-panel">
                                         <div class="payment-grid-layout">
@@ -700,7 +712,7 @@
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
-                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img">
+                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
