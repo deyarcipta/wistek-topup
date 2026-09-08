@@ -170,15 +170,6 @@ class DokuService
                 'fee_percent' => 1.5,
                 'icon_url' => url('/images/payments/akulaku.svg'),
             ],
-
-            // All-in-One Portal
-            [
-                'code' => 'DOKU_CHECKOUT',
-                'name' => 'DOKU Checkout (Portal Semua Metode)',
-                'fee_flat' => 0,
-                'fee_percent' => 0,
-                'icon_url' => url('/images/payments/doku.svg'),
-            ],
         ];
     }
 
@@ -287,13 +278,14 @@ class DokuService
 
             if ($response->successful()) {
                 $data = $response->json();
-                $paymentUrl = $data['payment']['url'] ?? '';
+                $responseData = $data['response'] ?? $data;
+                $paymentUrl = $responseData['payment']['url'] ?? '';
 
                 return [
                     'success' => true,
                     'payment_url' => $paymentUrl,
-                    'reference' => $data['order']['invoice_number'] ?? $invoice,
-                    'pay_code' => $data['payment']['pay_code'] ?? null,
+                    'reference' => $responseData['order']['invoice_number'] ?? $invoice,
+                    'pay_code' => $responseData['payment']['pay_code'] ?? null,
                 ];
             }
 
