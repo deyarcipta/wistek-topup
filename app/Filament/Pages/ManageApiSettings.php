@@ -121,6 +121,12 @@ class ManageApiSettings extends Page implements HasForms
             'tripay_mode' => Setting::get('tripay_mode', 'sandbox'),
             'tripay_callback_url' => url('/callback/tripay'),
 
+            // DOKU Settings
+            'doku_client_id' => Setting::get('doku_client_id'),
+            'doku_secret_key' => Setting::get('doku_secret_key'),
+            'doku_mode' => Setting::get('doku_mode', 'sandbox'),
+            'doku_callback_url' => url('/callback/doku'),
+
             // Digiflazz Settings
             'digiflazz_username' => Setting::get('digiflazz_username'),
             'digiflazz_api_key' => Setting::get('digiflazz_api_key'),
@@ -166,6 +172,7 @@ class ManageApiSettings extends Page implements HasForms
                                 'midtrans' => 'Midtrans Payment Gateway (Snap API & Core)',
                                 'xendit' => 'Xendit Payment Gateway (Invoice & QRIS API)',
                                 'tripay' => 'Tripay Payment Gateway (Multi Channel)',
+                                'doku' => 'DOKU Payment Gateway (Jokul Checkout API)',
                             ])
                             ->live()
                             ->placeholder('Pilih Payment Gateway yang Ingin Digunakan')
@@ -283,6 +290,32 @@ class ManageApiSettings extends Page implements HasForms
                             ->dehydrated(false)
                             ->columnSpanFull()
                             ->helperText('Salin URL ini ke Merchant Tripay -> Pengaturan -> Callback URL.'),
+                    ])->columns(2),
+
+                Section::make('DOKU Payment Gateway')
+                    ->description('Konfigurasi DOKU Payment Gateway (Jokul API)')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'doku')
+                    ->schema([
+                        TextInput::make('doku_client_id')
+                            ->label('Client ID')
+                            ->placeholder('Masukkan DOKU Client ID (Contoh: MCH-1234)'),
+                        TextInput::make('doku_secret_key')
+                            ->label('Secret Key / Shared Key')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Masukkan Secret Key / Shared Key DOKU'),
+                        Select::make('doku_mode')
+                            ->label('Mode')
+                            ->options([
+                                'sandbox' => 'Sandbox (Testing)',
+                                'production' => 'Production (Live)',
+                            ]),
+                        TextInput::make('doku_callback_url')
+                            ->label('Callback / Webhook URL')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpanFull()
+                            ->helperText('Salin URL ini ke DOKU Dashboard / Jokul -> Webhook URL Configuration.'),
                     ])->columns(2),
 
                 Section::make('Digiflazz H2H Topup')
@@ -412,6 +445,7 @@ class ManageApiSettings extends Page implements HasForms
             'midtrans_server_key', 'midtrans_client_key', 'midtrans_mode',
             'xendit_secret_key', 'xendit_public_key', 'xendit_verification_token', 'xendit_mode',
             'tripay_merchant_code', 'tripay_api_key', 'tripay_private_key', 'tripay_mode',
+            'doku_client_id', 'doku_secret_key', 'doku_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',

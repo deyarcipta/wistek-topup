@@ -30,6 +30,7 @@ class PaymentGatewayManager
             'midtrans' => 'Midtrans Payment Gateway',
             'xendit' => 'Xendit Payment Gateway',
             'tripay' => 'Tripay Payment Gateway',
+            'doku' => 'DOKU Payment Gateway',
             default => 'Duitku Payment Gateway',
         };
     }
@@ -43,6 +44,7 @@ class PaymentGatewayManager
             'midtrans' => app(MidtransService::class),
             'xendit' => app(XenditService::class),
             'tripay' => app(TripayService::class),
+            'doku' => app(DokuService::class),
             default => app(DuitkuService::class),
         };
     }

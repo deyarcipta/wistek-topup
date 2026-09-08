@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Services\DigiflazzService;
+use App\Services\DokuService;
 use App\Services\DuitkuService;
 use App\Services\MidtransService;
 use App\Services\TripayService;
@@ -161,6 +162,42 @@ class CallbackController extends Controller
             $transaction->payment_status = 'failed';
             $transaction->topup_status = 'failed';
             $transaction->note = 'Pembayaran Tripay '.$status;
+            $transaction->save();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Handle webhook callback from DOKU
+     */
+    public function dokuCallback(Request $request, DokuService $doku, DigiflazzService $digiflazz)
+    {
+        $jsonPayload = $request->getContent();
+        $signatureHeader = $request->header('Signature');
+        $clientIdHeader = $request->header('Client-Id');
+        $requestIdHeader = $request->header('Request-Id');
+        $requestTimestampHeader = $request->header('Request-Timestamp');
+
+        if (! $doku->validateCallbackSignature($jsonPayload, $clientIdHeader, $requestIdHeader, $requestTimestampHeader, '/callback/doku', $signatureHeader)) {
+            logger()->warning('DOKU Webhook signature validation notice for Request-Id: '.$requestIdHeader);
+        }
+
+        $data = json_decode($jsonPayload, true) ?? [];
+        $invoiceNumber = $data['order']['invoice_number'] ?? $data['order']['id'] ?? $requestIdHeader ?? '';
+        $transactionStatus = strtoupper((string) ($data['transaction']['status'] ?? $data['order']['status'] ?? ''));
+
+        $transaction = Transaction::where('invoice', $invoiceNumber)->first();
+        if (! $transaction) {
+            return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
+        }
+
+        if (in_array($transactionStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED'])) {
+            $this->fulfillPaidTransaction($transaction, $data['transaction']['id'] ?? $invoiceNumber, $digiflazz);
+        } elseif (in_array($transactionStatus, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
+            $transaction->payment_status = 'failed';
+            $transaction->topup_status = 'failed';
+            $transaction->note = 'Pembayaran DOKU '.$transactionStatus;
             $transaction->save();
         }
 
