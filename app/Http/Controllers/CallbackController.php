@@ -199,11 +199,24 @@ class CallbackController extends Controller
         if (! $transaction) {
             logger()->info('DOKU Webhook notice: Invoice not found or test ping: '.$invoiceNumber);
 
-            return response()->json(['success' => true, 'message' => 'Acknowledged'], 200);
+            return response()->json([
+                'responseCode' => '2000000',
+                'responseMessage' => 'SUCCESS',
+                'status' => 'OK',
+                'success' => true,
+                'message' => 'PAGE ACCEPTED',
+            ], 200);
         }
 
-        // Fast-response optimization: Send 200 OK to DOKU immediately (<100ms) to avoid 5-second timeout
-        $response = response()->json(['success' => true]);
+        $responseData = [
+            'responseCode' => '2000000',
+            'responseMessage' => 'SUCCESS',
+            'status' => 'OK',
+            'success' => true,
+            'message' => 'PAGE ACCEPTED',
+        ];
+
+        $response = response()->json($responseData, 200);
 
         if (function_exists('fastcgi_finish_request')) {
             $response->send();
