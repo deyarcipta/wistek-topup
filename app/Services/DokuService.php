@@ -43,28 +43,28 @@ class DokuService
                 'name' => 'BCA Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg',
+                'icon_url' => 'https://images.duitku.com/QD/bca.png',
             ],
             [
                 'code' => 'MANDIRIVA',
                 'name' => 'Mandiri Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg',
+                'icon_url' => 'https://images.duitku.com/QD/mandiri.png',
             ],
             [
                 'code' => 'BNIVA',
                 'name' => 'BNI Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg',
+                'icon_url' => 'https://images.duitku.com/QD/bni.png',
             ],
             [
                 'code' => 'BRIVA',
                 'name' => 'BRI Virtual Account',
                 'fee_flat' => 4500,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg',
+                'icon_url' => 'https://images.duitku.com/QD/bri.png',
             ],
             [
                 'code' => 'PERMATAVA',
@@ -101,14 +101,14 @@ class DokuService
                 'name' => 'Alfamart / Alfa Group',
                 'fee_flat' => 5000,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/8/86/Alfamart_logo.svg',
+                'icon_url' => 'https://images.duitku.com/QD/FT.png',
             ],
             [
                 'code' => 'INDOMARET',
                 'name' => 'Indomaret',
                 'fee_flat' => 5000,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Logo_Indomaret.png',
+                'icon_url' => 'https://images.duitku.com/QD/IR.png',
             ],
 
             // E-Wallet & Paylater (Active)
@@ -117,14 +117,14 @@ class DokuService
                 'name' => 'DOKU e-Wallet',
                 'fee_flat' => 0,
                 'fee_percent' => 1.5,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DOKU_Logo.png/600px-DOKU_Logo.png',
+                'icon_url' => 'https://images.duitku.com/QD/LA.png',
             ],
             [
                 'code' => 'AKULAKU',
                 'name' => 'Akulaku Paylater',
                 'fee_flat' => 0,
                 'fee_percent' => 1.5,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/2/29/Logo_Akulaku.svg',
+                'icon_url' => 'https://images.duitku.com/QD/DN.png',
             ],
 
             // All-in-One Portal
@@ -133,7 +133,7 @@ class DokuService
                 'name' => 'DOKU Checkout (Portal Semua Metode)',
                 'fee_flat' => 0,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DOKU_Logo.png/600px-DOKU_Logo.png',
+                'icon_url' => 'https://images.duitku.com/QD/qris.png',
             ],
         ];
     }
