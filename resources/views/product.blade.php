@@ -828,16 +828,30 @@
                         <input type="email" name="customer_email" class="form-control" value="{{ Auth::check() ? Auth::user()->email : '' }}" placeholder="example@gmail.com">
                     </div>
 
-                    <div style="margin-bottom: 0.5rem;">
+                    <div style="margin-bottom: 0.5rem; position: relative;">
                         <label style="font-size: 0.9rem; margin-bottom: 0.5rem; display: block; color: var(--text-secondary); font-weight: 500;">No. WhatsApp</label>
                         <div style="display: flex; align-items: center;">
-                            <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; padding: 0.75rem 0.85rem; display: flex; align-items: center; gap: 0.4rem; color: #fff; font-weight: 700; font-size: 0.9rem; user-select: none;">
-                                <span style="font-size: 1.1rem; line-height: 1;">🇮🇩</span>
+                            <div id="countryDropdownBtn" onclick="toggleCountryDropdown(event)" style="background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border-color); border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; padding: 0.75rem 0.85rem; display: flex; align-items: center; gap: 0.4rem; color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer; user-select: none; transition: background 0.2s;">
+                                <span id="selectedCountryFlag" style="font-size: 1.1rem; line-height: 1;">🇮🇩</span>
                                 <i class="fa-solid fa-angle-down" style="font-size: 0.7rem; color: var(--text-secondary);"></i>
-                                <span style="margin-left: 0.2rem;">+62</span>
+                                <span id="selectedCountryDial" style="margin-left: 0.2rem;">+62</span>
                             </div>
+                            <input type="hidden" name="country_dial_code" id="countryDialCodeInput" value="+62">
                             <input type="text" name="customer_phone" class="form-control" value="{{ Auth::check() ? Auth::user()->phone : '' }}" placeholder="81234567890" style="border-top-left-radius: 0; border-bottom-left-radius: 0;" required>
                         </div>
+
+                        <!-- Country Dropdown Popup Menu -->
+                        <div id="countryDropdownMenu" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; background: #1f1f23; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; width: 280px; box-shadow: 0 15px 35px rgba(0,0,0,0.7); z-index: 9999; overflow: hidden; font-family: 'Outfit', sans-serif;">
+                            <!-- Search Bar -->
+                            <div style="padding: 0.65rem 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25);">
+                                <i class="fa-solid fa-magnifying-glass" style="color: var(--text-secondary); font-size: 0.85rem;"></i>
+                                <input type="text" id="countrySearchInput" onkeyup="filterCountryList()" placeholder="Cari negara..." style="background: none; border: none; outline: none; color: #fff; font-size: 0.85rem; width: 100%;">
+                            </div>
+                            <!-- Country Items List -->
+                            <div id="countryListContainer" class="modal-custom-scroll" style="max-height: 220px; overflow-y: auto; padding: 0.35rem;">
+                            </div>
+                        </div>
+
                         <p style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.4rem; font-style: italic;">
                             **Nomor ini akan dihubungi jika terjadi masalah
                         </p>
@@ -1503,6 +1517,104 @@
 
         e.preventDefault();
         openCheckoutModal();
+    });
+
+    // Country Code Dropdown Logic
+    const countriesList = [
+        { code: 'ID', name: 'Indonesia', flag: '🇮🇩', dial: '+62' },
+        { code: 'MY', name: 'Malaysia', flag: '🇲🇾', dial: '+60' },
+        { code: 'SG', name: 'Singapore', flag: '🇸🇬', dial: '+65' },
+        { code: 'BN', name: 'Brunei', flag: '🇧🇳', dial: '+673' },
+        { code: 'TH', name: 'Thailand', flag: '🇹🇭', dial: '+66' },
+        { code: 'PH', name: 'Philippines', flag: '🇵🇭', dial: '+63' },
+        { code: 'VN', name: 'Vietnam', flag: '🇻🇳', dial: '+84' },
+        { code: 'US', name: 'United States', flag: '🇺🇸', dial: '+1' },
+        { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', dial: '+44' },
+        { code: 'AU', name: 'Australia', flag: '🇦🇺', dial: '+61' },
+        { code: 'JP', name: 'Japan', flag: '🇯🇵', dial: '+81' },
+        { code: 'KR', name: 'South Korea', flag: '🇰🇷', dial: '+82' },
+        { code: 'CN', name: 'China', flag: '🇨🇳', dial: '+86' },
+        { code: 'IN', name: 'India', flag: '🇮🇳', dial: '+91' },
+        { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', dial: '+966' },
+        { code: 'TR', name: 'Turkey', flag: '🇹🇷', dial: '+90' },
+        { code: 'AF', name: 'Afghanistan', flag: '🇦🇫', dial: '+93' },
+        { code: 'AX', name: 'Åland Islands', flag: '🇦🇽', dial: '+358' },
+        { code: 'AL', name: 'Albania', flag: '🇦🇱', dial: '+355' },
+        { code: 'DZ', name: 'Algeria', flag: '🇩🇿', dial: '+213' },
+        { code: 'AS', name: 'American Samoa', flag: '🇦🇸', dial: '+1' },
+        { code: 'AD', name: 'Andorra', flag: '🇦🇩', dial: '+376' },
+        { code: 'AO', name: 'Angola', flag: '🇦🇴', dial: '+244' },
+        { code: 'AI', name: 'Anguilla', flag: '🇦🇮', dial: '+1' },
+        { code: 'AR', name: 'Argentina', flag: '🇦🇷', dial: '+54' },
+        { code: 'BR', name: 'Brazil', flag: '🇧🇷', dial: '+55' },
+        { code: 'DE', name: 'Germany', flag: '🇩🇪', dial: '+49' },
+        { code: 'FR', name: 'France', flag: '🇫🇷', dial: '+33' },
+        { code: 'NL', name: 'Netherlands', flag: '🇳🇱', dial: '+31' },
+        { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪', dial: '+971' }
+    ];
+
+    function renderCountryList(filterText = '') {
+        const container = document.getElementById('countryListContainer');
+        if (!container) return;
+
+        const query = filterText.toLowerCase().trim();
+        const filtered = countriesList.filter(c => 
+            c.name.toLowerCase().includes(query) || c.dial.includes(query)
+        );
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div style="padding: 0.75rem; text-align: center; color: var(--text-secondary); font-size: 0.8rem;">Negara tidak ditemukan</div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.map(c => `
+            <div onclick="selectCountryCode('${c.flag}', '${c.dial}')" style="padding: 0.55rem 0.75rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 6px; transition: background 0.15s; font-size: 0.85rem;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'">
+                <div style="display: flex; align-items: center; gap: 0.6rem; color: #fff;">
+                    <span style="font-size: 1.1rem; line-height: 1;">${c.flag}</span>
+                    <span style="font-weight: 500;">${c.name}</span>
+                </div>
+                <span style="color: var(--text-secondary); font-weight: 600;">${c.dial}</span>
+            </div>
+        `).join('');
+    }
+
+    function toggleCountryDropdown(e) {
+        e.stopPropagation();
+        const menu = document.getElementById('countryDropdownMenu');
+        if (!menu) return;
+
+        const isHidden = menu.style.display === 'none';
+        menu.style.display = isHidden ? 'block' : 'none';
+
+        if (isHidden) {
+            renderCountryList('');
+            const searchInput = document.getElementById('countrySearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                setTimeout(() => searchInput.focus(), 50);
+            }
+        }
+    }
+
+    function filterCountryList() {
+        const query = document.getElementById('countrySearchInput').value;
+        renderCountryList(query);
+    }
+
+    function selectCountryCode(flag, dial) {
+        document.getElementById('selectedCountryFlag').innerText = flag;
+        document.getElementById('selectedCountryDial').innerText = dial;
+        document.getElementById('countryDialCodeInput').value = dial;
+        document.getElementById('countryDropdownMenu').style.display = 'none';
+    }
+
+    // Close dropdown on click outside
+    document.addEventListener('click', function(e) {
+        const menu = document.getElementById('countryDropdownMenu');
+        const btn = document.getElementById('countryDropdownBtn');
+        if (menu && menu.style.display !== 'none' && !menu.contains(e.target) && !btn.contains(e.target)) {
+            menu.style.display = 'none';
+        }
     });
 </script>
 @endsection
