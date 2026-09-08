@@ -609,8 +609,9 @@
                                             <span class="accordion-title">E-Wallet</span>
                                             <div class="accordion-header-logos">
                                                 @foreach($filteredEwallets as $channel)
-                                                    @if(!empty($channel['icon_url']))
-                                                        <img src="{{ $channel['icon_url'] }}" alt="logo" class="header-logo-badge">
+                                                    @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
+                                                    @if(!empty($imgUrl))
+                                                        <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge">
                                                     @endif
                                                 @endforeach
                                             </div>
@@ -627,11 +628,12 @@
                                                     } elseif ($channel['code'] === 'LINKAJA') {
                                                         $displayName = 'LinkAja';
                                                     }
+                                                    $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? '';
                                                 @endphp
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        @if(!empty($channel['icon_url']))
-                                                            <img src="{{ $channel['icon_url'] }}" alt="{{ $displayName }}" class="payment-icon-img">
+                                                        @if(!empty($imgUrl))
+                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
@@ -653,8 +655,9 @@
                                             <span class="accordion-title">Virtual Account</span>
                                             <div class="accordion-header-logos">
                                                 @foreach(array_slice($vaChannels, 0, 4) as $channel)
-                                                    @if(!empty($channel['icon_url']))
-                                                        <img src="{{ $channel['icon_url'] }}" alt="logo" class="header-logo-badge">
+                                                    @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
+                                                    @if(!empty($imgUrl))
+                                                        <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge">
                                                     @endif
                                                 @endforeach
                                                 @if(count($vaChannels) > 4)
@@ -667,10 +670,11 @@
                                     <div class="accordion-content-panel">
                                         <div class="payment-grid-layout">
                                             @foreach($vaChannels as $channel)
+                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        @if(!empty($channel['icon_url']))
-                                                            <img src="{{ $channel['icon_url'] }}" alt="{{ $channel['name'] }}" class="payment-icon-img">
+                                                        @if(!empty($imgUrl))
+                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
@@ -692,8 +696,9 @@
                                             <span class="accordion-title">Convenience Store</span>
                                             <div class="accordion-header-logos">
                                                 @foreach($retailChannels as $channel)
-                                                    @if(!empty($channel['icon_url']))
-                                                        <img src="{{ $channel['icon_url'] }}" alt="logo" class="header-logo-badge">
+                                                    @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
+                                                    @if(!empty($imgUrl))
+                                                        <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge">
                                                     @endif
                                                 @endforeach
                                             </div>
@@ -708,11 +713,12 @@
                                                     if ($channel['code'] === 'RETAIL') {
                                                         $displayName = 'Alfamart';
                                                     }
+                                                    $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? '';
                                                 @endphp
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        @if(!empty($channel['icon_url']))
-                                                            <img src="{{ $channel['icon_url'] }}" alt="{{ $displayName }}" class="payment-icon-img">
+                                                        @if(!empty($imgUrl))
+                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
