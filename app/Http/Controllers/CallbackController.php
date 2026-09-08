@@ -192,6 +192,14 @@ class CallbackController extends Controller
             return response()->json(['success' => false, 'message' => 'Transaction not found'], 404);
         }
 
+        // Fast-response optimization: Send 200 OK to DOKU immediately (<100ms) to avoid 5-second timeout
+        $response = response()->json(['success' => true]);
+
+        if (function_exists('fastcgi_finish_request')) {
+            $response->send();
+            fastcgi_finish_request();
+        }
+
         if (in_array($transactionStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED'])) {
             $this->fulfillPaidTransaction($transaction, $data['transaction']['id'] ?? $invoiceNumber, $digiflazz);
         } elseif (in_array($transactionStatus, ['FAILED', 'EXPIRED', 'CANCELLED'])) {
@@ -201,7 +209,7 @@ class CallbackController extends Controller
             $transaction->save();
         }
 
-        return response()->json(['success' => true]);
+        return $response;
     }
 
     /**
