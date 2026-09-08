@@ -311,11 +311,11 @@ class ManageApiSettings extends Page implements HasForms
                                 'production' => 'Production (Live)',
                             ]),
                         TextInput::make('doku_callback_url')
-                            ->label('Callback / Webhook URL')
+                            ->label('Callback / Notification URL')
                             ->disabled()
                             ->dehydrated(false)
                             ->columnSpanFull()
-                            ->helperText('Salin URL ini ke DOKU Dashboard / Jokul -> Webhook URL Configuration.'),
+                            ->helperText('URL ini dikirimkan otomatis oleh sistem pada skrip API Laravel (pada parameter notification_url di setiap transaksi DOKU), sehingga tidak perlu diatur manual pada Dashboard DOKU.'),
                     ])->columns(2),
 
                 Section::make('Digiflazz H2H Topup')

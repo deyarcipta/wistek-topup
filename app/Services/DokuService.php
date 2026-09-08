@@ -147,6 +147,7 @@ class DokuService
                     ],
                 ],
                 'callback_url' => url('/transaction/'.$invoice),
+                'notification_url' => url('/callback/doku'),
                 'auto_redirect' => true,
             ],
             'payment' => [
