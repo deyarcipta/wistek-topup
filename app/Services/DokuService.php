@@ -306,6 +306,47 @@ class DokuService
     }
 
     /**
+     * Check transaction status via DOKU Jokul API
+     */
+    public function checkTransactionStatus(string $invoice): array
+    {
+        if (empty($this->clientId) || empty($this->secretKey)) {
+            return ['success' => false, 'message' => 'Credentials missing'];
+        }
+
+        $requestTarget = '/orders/v1/status/'.$invoice;
+        $requestTimestamp = gmdate('Y-m-d\TH:i:s\Z');
+        $requestId = uniqid('REQ-');
+
+        $signature = $this->generateSignature($requestId, $requestTimestamp, $requestTarget, '');
+
+        try {
+            $response = Http::withHeaders([
+                'Client-Id' => $this->clientId,
+                'Request-Id' => $requestId,
+                'Request-Timestamp' => $requestTimestamp,
+                'Signature' => $signature,
+            ])->timeout(10)->get($this->baseUrl.$requestTarget);
+
+            if ($response->successful()) {
+                $data = $response->json();
+
+                return [
+                    'success' => true,
+                    'data' => $data,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'message' => 'HTTP '.$response->status().' - '.$response->body(),
+            ];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Validate DOKU Webhook Callback Signature
      */
     public function validateCallbackSignature(

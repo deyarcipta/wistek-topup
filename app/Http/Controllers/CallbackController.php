@@ -255,7 +255,7 @@ class CallbackController extends Controller
     /**
      * Fulfill a paid transaction and trigger automatic Digiflazz topup
      */
-    private function fulfillPaidTransaction(Transaction $transaction, ?string $reference, DigiflazzService $digiflazz): void
+    public function fulfillPaidTransaction(Transaction $transaction, ?string $reference, DigiflazzService $digiflazz): void
     {
         if ($transaction->payment_status === 'paid') {
             return;
