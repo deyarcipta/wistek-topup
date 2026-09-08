@@ -553,7 +553,7 @@
                     @if(count($paymentChannels) > 0)
                         @php
                             // Filter only unique and clean payment channels (hide redundant QRIS codes)
-                            $ewalletCodes = ['QRIS', 'SHOPEEPAY', 'OVO', 'DANA', 'LINKAJA', 'JENIUS_PAY'];
+                            $ewalletCodes = ['QRIS', 'SHOPEEPAY', 'OVO', 'DANA', 'LINKAJA', 'JENIUS_PAY', 'DOKU_WALLET', 'AKULAKU'];
                             $vaCodes = ['BCAVA', 'MANDIRIVA', 'BNIVA', 'BRIVA', 'PERMATAVA', 'CIMBVA', 'ATM_BERSAMA_VA', 'MAYBANKVA', 'BSIVA', 'AGVA', 'SAMPOERNAVA', 'NOBUVA'];
                             $retailCodes = ['RETAIL', 'INDOMARET', 'ALFAMART'];
                             $knownCodes = array_merge($ewalletCodes, $vaCodes, $retailCodes);

@@ -37,12 +37,103 @@ class DokuService
         }
 
         return [
+            // Virtual Accounts (Active)
+            [
+                'code' => 'BCAVA',
+                'name' => 'BCA Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia_logo.svg',
+            ],
+            [
+                'code' => 'MANDIRIVA',
+                'name' => 'Mandiri Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg',
+            ],
+            [
+                'code' => 'BNIVA',
+                'name' => 'BNI Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/id/5/55/BNI_logo.svg',
+            ],
+            [
+                'code' => 'BRIVA',
+                'name' => 'BRI Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/2/2e/BRI_2020.svg',
+            ],
+            [
+                'code' => 'PERMATAVA',
+                'name' => 'Permata Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://images.duitku.com/QD/permata.png',
+            ],
+            [
+                'code' => 'CIMBVA',
+                'name' => 'CIMB Niaga Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://images.duitku.com/QD/cimb.png',
+            ],
+            [
+                'code' => 'BSIVA',
+                'name' => 'BSI Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://images.duitku.com/QD/bsi.png',
+            ],
+            [
+                'code' => 'MAYBANKVA',
+                'name' => 'Maybank Virtual Account',
+                'fee_flat' => 4500,
+                'fee_percent' => 0,
+                'icon_url' => 'https://images.duitku.com/QD/maybank.png',
+            ],
+
+            // Convenience Stores (Active)
+            [
+                'code' => 'ALFAMART',
+                'name' => 'Alfamart / Alfa Group',
+                'fee_flat' => 5000,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/8/86/Alfamart_logo.svg',
+            ],
+            [
+                'code' => 'INDOMARET',
+                'name' => 'Indomaret',
+                'fee_flat' => 5000,
+                'fee_percent' => 0,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Logo_Indomaret.png',
+            ],
+
+            // E-Wallet & Paylater (Active)
+            [
+                'code' => 'DOKU_WALLET',
+                'name' => 'DOKU e-Wallet',
+                'fee_flat' => 0,
+                'fee_percent' => 1.5,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DOKU_Logo.png/600px-DOKU_Logo.png',
+            ],
+            [
+                'code' => 'AKULAKU',
+                'name' => 'Akulaku Paylater',
+                'fee_flat' => 0,
+                'fee_percent' => 1.5,
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/2/29/Logo_Akulaku.svg',
+            ],
+
+            // All-in-One Portal
             [
                 'code' => 'DOKU_CHECKOUT',
-                'name' => 'DOKU Checkout (QRIS, VA, E-Wallet & Minimarket)',
+                'name' => 'DOKU Checkout (Portal Semua Metode)',
                 'fee_flat' => 0,
                 'fee_percent' => 0,
-                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg',
+                'icon_url' => 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/DOKU_Logo.png/600px-DOKU_Logo.png',
             ],
         ];
     }
