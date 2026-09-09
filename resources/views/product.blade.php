@@ -582,63 +582,155 @@
 
                     @if(count($paymentChannels) > 0)
                         @php
-                            // Filter only unique and clean payment channels (hide redundant QRIS codes)
-                            $ewalletCodes = ['QRIS', 'SHOPEEPAY', 'OVO', 'DANA', 'LINKAJA', 'JENIUS_PAY', 'DOKU_WALLET', 'AKULAKU'];
-                            $vaCodes = ['BCAVA', 'MANDIRIVA', 'BNIVA', 'BRIVA', 'PERMATAVA', 'CIMBVA', 'ATM_BERSAMA_VA', 'MAYBANKVA', 'BSIVA', 'AGVA', 'SAMPOERNAVA', 'NOBUVA', 'DANAMONVA', 'BNCVA', 'BSSVA', 'BTNVA', 'BJBVA'];
-                            $retailCodes = ['RETAIL', 'INDOMARET', 'ALFAMART'];
-                            $knownCodes = array_merge($ewalletCodes, $vaCodes, $retailCodes);
+                            $qrisChannels = [];
+                            $vaChannels = [];
+                            $ewalletChannels = [];
+                            $retailChannels = [];
+                            $otherChannels = [];
 
-                            $ewalletChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $ewalletCodes));
-                            $vaChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $vaCodes));
-                            $retailChannels = array_filter($paymentChannels, fn($c) => in_array($c['code'], $retailCodes));
-                            $otherChannels = array_filter($paymentChannels, fn($c) => !in_array($c['code'], $knownCodes));
+                            foreach ($paymentChannels as $c) {
+                                $code = strtoupper((string)($c['code'] ?? ''));
+                                $name = strtoupper((string)($c['name'] ?? ''));
+
+                                // 1. QRIS Check: code or name contains QRIS
+                                if ($code === 'QRIS' || str_contains($code, 'QRIS') || str_contains($name, 'QRIS')) {
+                                    $qrisChannels[] = $c;
+                                    continue;
+                                }
+
+                                // 2. Virtual Account Check:
+                                $isKnownVaCode = in_array($code, [
+                                    'BCAVA', 'MANDIRIVA', 'BNIVA', 'BRIVA', 'PERMATAVA', 'CIMBVA', 'ATM_BERSAMA_VA', 
+                                    'MAYBANKVA', 'BSIVA', 'AGVA', 'SAMPOERNAVA', 'NOBUVA', 'DANAMONVA', 'BNCVA', 
+                                    'BSSVA', 'BTNVA', 'BJBVA', 'OTHER_VA', 'OTHER_BANK_VA', 'ATM_BERSAMA', 'BC', 'M2', 
+                                    'I1', 'BR', 'BT', 'B1', 'A1', 'VA', 'BV', 'AG', 'S1', 'NC'
+                                ]);
+                                
+                                $isVaByNameOrCode = str_contains($code, 'VA') || 
+                                                    str_contains($name, 'VIRTUAL ACCOUNT') || 
+                                                    str_contains($name, 'VIRTUAL') || 
+                                                    str_contains($name, 'VA ') || 
+                                                    str_contains($name, ' VA') || 
+                                                    str_contains($name, 'OTHER BANK') || 
+                                                    str_contains($name, 'BANK LAIN') || 
+                                                    str_contains($name, 'ATM BERSAMA');
+
+                                if ($isKnownVaCode || $isVaByNameOrCode) {
+                                    $vaChannels[] = $c;
+                                    continue;
+                                }
+
+                                // 3. Convenience Store / Retail Check:
+                                $isRetail = in_array($code, ['RETAIL', 'INDOMARET', 'ALFAMART', 'FT', 'IR', 'ALFA']) ||
+                                            str_contains($code, 'ALFA') || str_contains($code, 'INDOMARET') || str_contains($code, 'RETAIL') ||
+                                            str_contains($name, 'ALFAMART') || str_contains($name, 'INDOMARET') || str_contains($name, 'ALFA GROUP') || str_contains($name, 'RETAIL');
+
+                                if ($isRetail) {
+                                    $retailChannels[] = $c;
+                                    continue;
+                                }
+
+                                // 4. E-Wallet Check:
+                                $isEwallet = in_array($code, ['SHOPEEPAY', 'SHOPEEPAY_APP', 'OVO', 'DANA', 'LINKAJA', 'LINKAJA_QRIS', 'JENIUS_PAY', 'DOKU_WALLET', 'AKULAKU', 'SP', 'SA', 'OV', 'DA', 'LA', 'JP']) ||
+                                             str_contains($code, 'SHOPEE') || str_contains($code, 'OVO') || str_contains($code, 'DANA') || str_contains($code, 'LINKAJA') || str_contains($code, 'WALLET') || str_contains($code, 'PAYLATER') ||
+                                             str_contains($name, 'SHOPEE') || str_contains($name, 'OVO') || str_contains($name, 'DANA') || str_contains($name, 'LINKAJA') || str_contains($name, 'E-WALLET') || str_contains($name, 'PAYLATER');
+
+                                if ($isEwallet) {
+                                    $ewalletChannels[] = $c;
+                                    continue;
+                                }
+
+                                // 5. Leftovers: Portal Pembayaran & Lainnya
+                                $otherChannels[] = $c;
+                            }
                         @endphp
 
                         <div class="payment-accordion-container">
-                            <!-- 1. QRIS Accordion (Only 1 item: QRIS) -->
-                            @if(count($ewalletChannels) > 0)
-                                @php
-                                    $qrisChannel = collect($ewalletChannels)->firstWhere('code', 'QRIS');
-                                @endphp
-                                @if($qrisChannel)
-                                    <div class="accordion-panel active">
-                                        <div class="accordion-header" onclick="togglePaymentAccordion(this)">
-                                            <span class="accordion-title">QRIS</span>
-                                            <div class="accordion-header-logos">
-                                                <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="header-logo-badge" onerror="this.style.display='none'">
-                                            </div>
-                                            <i class="fa-solid fa-chevron-up accordion-arrow"></i>
+                            <!-- 1. QRIS Accordion (Paling Atas & Active by default) -->
+                            @if(count($qrisChannels) > 0)
+                                <div class="accordion-panel active">
+                                    <div class="accordion-header" onclick="togglePaymentAccordion(this)">
+                                        <span class="accordion-title">QRIS</span>
+                                        <div class="accordion-header-logos">
+                                            <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="header-logo-badge" onerror="this.style.display='none'">
                                         </div>
-                                        <div class="accordion-content-panel">
-                                            <div class="payment-grid-layout">
-                                                <div class="payment-row-item" data-code="{{ $qrisChannel['code'] }}" data-fee-flat="{{ $qrisChannel['fee_flat'] }}" data-fee-percent="{{ $qrisChannel['fee_percent'] }}" onclick="selectPayment('{{ $qrisChannel['code'] }}')">
+                                        <i class="fa-solid fa-chevron-up accordion-arrow"></i>
+                                    </div>
+                                    <div class="accordion-content-panel">
+                                        <div class="payment-grid-layout">
+                                            @foreach($qrisChannels as $channel)
+                                                @php
+                                                    $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? asset('images/payments/qris.svg');
+                                                @endphp
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        <img src="{{ asset('images/payments/qris.svg') }}" alt="QRIS" class="payment-icon-img" onerror="this.style.display='none'">
-                                                        <span class="payment-name-txt">QRIS</span>
+                                                        <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.src='{{ asset('images/payments/qris.svg') }}'">
+                                                        <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
                                                         <span class="payment-row-price" data-base-price="0">Rp 0</span>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            @endforeach
                                         </div>
                                     </div>
-                                @endif
+                                </div>
                             @endif
 
-                            <!-- 2. E-Wallet Accordion (Exclude QRIS) -->
-                            @php
-                                $filteredEwallets = array_values(array_filter($ewalletChannels, fn($c) => $c['code'] !== 'QRIS'));
-                            @endphp
-                            @if(count($filteredEwallets) > 0)
+                            <!-- 2. Virtual Account Accordion (Includes Other Bank VA) -->
+                            @if(count($vaChannels) > 0)
+                                <div class="accordion-panel {{ count($qrisChannels) === 0 ? 'active' : '' }}">
+                                    <div class="accordion-header" onclick="togglePaymentAccordion(this)">
+                                        <span class="accordion-title">Virtual Account</span>
+                                        <div class="accordion-header-logos">
+                                            @php
+                                                $maxLogos = 4;
+                                                $sliceLogos = array_slice($vaChannels, 0, $maxLogos);
+                                                $remLogos = count($vaChannels) - count($sliceLogos);
+                                            @endphp
+                                            @foreach($sliceLogos as $channel)
+                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
+                                                @if(!empty($imgUrl))
+                                                    <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge" onerror="this.style.display='none'">
+                                                @endif
+                                            @endforeach
+                                            @if($remLogos > 0)
+                                                <span class="header-logo-plus">+{{ $remLogos }}</span>
+                                            @endif
+                                        </div>
+                                        <i class="fa-solid {{ count($qrisChannels) === 0 ? 'fa-chevron-up' : 'fa-chevron-down' }} accordion-arrow"></i>
+                                    </div>
+                                    <div class="accordion-content-panel">
+                                        <div class="payment-grid-layout">
+                                            @foreach($vaChannels as $channel)
+                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                    <div class="payment-left-side">
+                                                        @if(!empty($imgUrl))
+                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
+                                                        @endif
+                                                        <span class="payment-name-txt">{{ $channel['name'] }}</span>
+                                                    </div>
+                                                    <div class="payment-right-side">
+                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- 3. E-Wallet Accordion -->
+                            @if(count($ewalletChannels) > 0)
                                 <div class="accordion-panel">
                                     <div class="accordion-header" onclick="togglePaymentAccordion(this)">
                                         <span class="accordion-title">E-Wallet</span>
                                         <div class="accordion-header-logos">
                                             @php
                                                 $maxLogos = 4;
-                                                $sliceLogos = array_slice($filteredEwallets, 0, $maxLogos);
-                                                $remLogos = count($filteredEwallets) - count($sliceLogos);
+                                                $sliceLogos = array_slice($ewalletChannels, 0, $maxLogos);
+                                                $remLogos = count($ewalletChannels) - count($sliceLogos);
                                             @endphp
                                             @foreach($sliceLogos as $channel)
                                                 @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
@@ -654,7 +746,7 @@
                                     </div>
                                     <div class="accordion-content-panel">
                                         <div class="payment-grid-layout">
-                                            @foreach($filteredEwallets as $channel)
+                                            @foreach($ewalletChannels as $channel)
                                                 @php
                                                     $displayName = $channel['name'];
                                                     if ($channel['code'] === 'SHOPEEPAY') {
@@ -681,62 +773,16 @@
                                 </div>
                             @endif
 
-                            <!-- 3. Virtual Account Accordion -->
-                            @php $vaList = array_values($vaChannels); @endphp
-                            @if(count($vaList) > 0)
-                                <div class="accordion-panel">
-                                    <div class="accordion-header" onclick="togglePaymentAccordion(this)">
-                                        <span class="accordion-title">Virtual Account</span>
-                                        <div class="accordion-header-logos">
-                                            @php
-                                                $maxLogos = 4;
-                                                $sliceLogos = array_slice($vaList, 0, $maxLogos);
-                                                $remLogos = count($vaList) - count($sliceLogos);
-                                            @endphp
-                                            @foreach($sliceLogos as $channel)
-                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
-                                                @if(!empty($imgUrl))
-                                                    <img src="{{ $imgUrl }}" alt="logo" class="header-logo-badge" onerror="this.style.display='none'">
-                                                @endif
-                                            @endforeach
-                                            @if($remLogos > 0)
-                                                <span class="header-logo-plus">+{{ $remLogos }}</span>
-                                            @endif
-                                        </div>
-                                        <i class="fa-solid fa-chevron-down accordion-arrow"></i>
-                                    </div>
-                                    <div class="accordion-content-panel">
-                                        <div class="payment-grid-layout">
-                                            @foreach($vaList as $channel)
-                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
-                                                    <div class="payment-left-side">
-                                                        @if(!empty($imgUrl))
-                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
-                                                        @endif
-                                                        <span class="payment-name-txt">{{ $channel['name'] }}</span>
-                                                    </div>
-                                                    <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                </div>
-                            @endif
-
                             <!-- 4. Convenience Store Accordion -->
-                            @php $retailList = array_values($retailChannels); @endphp
-                            @if(count($retailList) > 0)
+                            @if(count($retailChannels) > 0)
                                 <div class="accordion-panel">
                                     <div class="accordion-header" onclick="togglePaymentAccordion(this)">
                                         <span class="accordion-title">Convenience Store</span>
                                         <div class="accordion-header-logos">
                                             @php
                                                 $maxLogos = 4;
-                                                $sliceLogos = array_slice($retailList, 0, $maxLogos);
-                                                $remLogos = count($retailList) - count($sliceLogos);
+                                                $sliceLogos = array_slice($retailChannels, 0, $maxLogos);
+                                                $remLogos = count($retailChannels) - count($sliceLogos);
                                             @endphp
                                             @foreach($sliceLogos as $channel)
                                                 @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
@@ -752,7 +798,7 @@
                                     </div>
                                     <div class="accordion-content-panel">
                                         <div class="payment-grid-layout">
-                                            @foreach($retailList as $channel)
+                                            @foreach($retailChannels as $channel)
                                                 @php
                                                     $displayName = $channel['name'];
                                                     if ($channel['code'] === 'RETAIL') {
@@ -763,7 +809,7 @@
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
-                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img">
+                                                            <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img" onerror="this.style.display='none'">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
@@ -777,17 +823,16 @@
                                 </div>
                             @endif
 
-                            <!-- 5. Credit Card & Paylater Accordion -->
-                            @php $otherList = array_values($otherChannels); @endphp
-                            @if(count($otherList) > 0)
+                            <!-- 5. Portal Pembayaran & Lainnya Accordion -->
+                            @if(count($otherChannels) > 0)
                                 <div class="accordion-panel">
                                     <div class="accordion-header" onclick="togglePaymentAccordion(this)">
                                         <span class="accordion-title">Portal Pembayaran & Lainnya</span>
                                         <div class="accordion-header-logos">
                                             @php
                                                 $maxLogos = 4;
-                                                $sliceLogos = array_slice($otherList, 0, $maxLogos);
-                                                $remLogos = count($otherList) - count($sliceLogos);
+                                                $sliceLogos = array_slice($otherChannels, 0, $maxLogos);
+                                                $remLogos = count($otherChannels) - count($sliceLogos);
                                             @endphp
                                             @foreach($sliceLogos as $channel)
                                                 @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
@@ -803,11 +848,12 @@
                                     </div>
                                     <div class="accordion-content-panel">
                                         <div class="payment-grid-layout">
-                                            @foreach($otherList as $channel)
+                                            @foreach($otherChannels as $channel)
+                                                @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
                                                 <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
-                                                        @if(!empty($channel['icon_url']))
-                                                            <img src="{{ $channel['icon_url'] }}" alt="{{ $channel['name'] }}" class="payment-icon-img">
+                                                        @if(!empty($imgUrl))
+                                                            <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
                                                         @endif
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>

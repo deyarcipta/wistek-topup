@@ -85,17 +85,22 @@
                         $hasContent = false;
                     @endphp
 
-                    <!-- 1. Display QR Code if qr_url or qr_string is present -->
-                    @if(isset($transaction->payment_details['qr_url']) && !empty($transaction->payment_details['qr_url']))
+                    <!-- 1. Display QR Code if qr_url, qr_content, or qr_string is present -->
+                    @php
+                        $qrContent = $transaction->payment_details['qr_url'] ?? null;
+                        $qrRawString = $transaction->payment_details['qr_content'] ?? $transaction->payment_details['qr_string'] ?? null;
+                    @endphp
+
+                    @if(!empty($qrContent))
                         @php $hasContent = true; @endphp
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
-                        <img src="{{ $transaction->payment_details['qr_url'] }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay & M-Banking</p>
-                    @elseif(isset($transaction->payment_details['qr_string']) && !empty($transaction->payment_details['qr_string']))
+                        <img src="{{ $qrContent }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
+                    @elseif(!empty($qrRawString))
                         @php $hasContent = true; @endphp
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($transaction->payment_details['qr_string']) }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
-                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay & M-Banking</p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($qrRawString) }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
+                        <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
                     @endif
 
                     <!-- 2. Display Virtual Account / Payment Code if present -->
