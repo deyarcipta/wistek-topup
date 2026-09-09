@@ -69,6 +69,11 @@ class TripayService
                     if (! ($ch['active'] ?? false)) {
                         continue;
                     }
+                    $code = $ch['code'] ?? '';
+                    if (empty($code)) {
+                        continue;
+                    }
+
                     // Respect TriPay merchant dashboard settings (fee_customer vs fee_merchant)
                     $feeCustomer = $ch['fee_customer'] ?? $ch['total_fee'] ?? [];
                     $feeFlat = (int) ($feeCustomer['flat'] ?? 0);
@@ -80,6 +85,7 @@ class TripayService
                         'fee_flat' => $feeFlat,
                         'fee_percent' => $feePercent,
                         'icon' => $ch['icon_url'] ?? '',
+                        'icon_url' => $ch['icon_url'] ?? '',
                     ];
                 }
 
@@ -96,9 +102,17 @@ class TripayService
     {
         return [
             ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 750, 'fee_percent' => 0.7, 'icon' => url('/images/payments/qris.svg')],
-            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bca.svg')],
+            ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 5500, 'fee_percent' => 0, 'icon' => url('/images/payments/bca.svg')],
             ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bni.svg')],
             ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bri.svg')],
+            ['code' => 'MANDIRIVA', 'name' => 'Mandiri Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/T9Z012UE331583531536.png'],
+            ['code' => 'CIMBVA', 'name' => 'CIMB Niaga Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/WtEJwfuphn1614003973.png'],
+            ['code' => 'BSIVA', 'name' => 'BSI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/tEclz5Assb1643375216.png'],
+            ['code' => 'DANAMONVA', 'name' => 'Danamon Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/F3pGzDOLUz1644245546.png'],
+            ['code' => 'OTHERBANKVA', 'name' => 'Other Bank Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/qQYo61sIDa1702995837.png'],
+            ['code' => 'OVO', 'name' => 'OVO', 'fee_flat' => 0, 'fee_percent' => 3.0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/fH6Y7wDT171586199243.png'],
+            ['code' => 'DANA', 'name' => 'DANA', 'fee_flat' => 0, 'fee_percent' => 3.0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/sj3UHLu8Tu1655719621.png'],
+            ['code' => 'SHOPEEPAY', 'name' => 'ShopeePay', 'fee_flat' => 0, 'fee_percent' => 3.0, 'icon' => 'https://assets.tripay.co.id/upload/payment-icon/d204uajhlS1655719774.png'],
             ['code' => 'ALFAMART', 'name' => 'Alfamart', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => url('/images/payments/alfamart.svg')],
             ['code' => 'INDOMARET', 'name' => 'Indomaret', 'fee_flat' => 3500, 'fee_percent' => 0, 'icon' => url('/images/payments/indomaret.svg')],
         ];
