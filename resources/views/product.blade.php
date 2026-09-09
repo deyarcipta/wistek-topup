@@ -662,7 +662,7 @@
                                                 @php
                                                     $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? asset('images/payments/qris.svg');
                                                 @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" data-free-min-amount="{{ $channel['free_min_amount'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.src='{{ asset('images/payments/qris.svg') }}'">
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
@@ -704,7 +704,7 @@
                                         <div class="payment-grid-layout">
                                             @foreach($vaChannels as $channel)
                                                 @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" data-free-min-amount="{{ $channel['free_min_amount'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
                                                             <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
@@ -756,7 +756,7 @@
                                                     }
                                                     $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? '';
                                                 @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" data-free-min-amount="{{ $channel['free_min_amount'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
                                                             <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img" onerror="this.style.display='none'">
@@ -806,7 +806,7 @@
                                                     }
                                                     $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? '';
                                                 @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" data-free-min-amount="{{ $channel['free_min_amount'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
                                                             <img src="{{ $imgUrl }}" alt="{{ $displayName }}" class="payment-icon-img" onerror="this.style.display='none'">
@@ -850,7 +850,7 @@
                                         <div class="payment-grid-layout">
                                             @foreach($otherChannels as $channel)
                                                 @php $imgUrl = $channel['icon_url'] ?? $channel['icon'] ?? ''; @endphp
-                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
+                                                <div class="payment-row-item" data-code="{{ $channel['code'] }}" data-fee-flat="{{ $channel['fee_flat'] }}" data-fee-percent="{{ $channel['fee_percent'] }}" data-min-fee="{{ $channel['min_fee'] ?? 0 }}" data-max-fee="{{ $channel['max_fee'] ?? 0 }}" data-free-min-amount="{{ $channel['free_min_amount'] ?? 0 }}" onclick="selectPayment('{{ $channel['code'] }}')">
                                                     <div class="payment-left-side">
                                                         @if(!empty($imgUrl))
                                                             <img src="{{ $imgUrl }}" alt="{{ $channel['name'] }}" class="payment-icon-img" onerror="this.style.display='none'">
@@ -1096,6 +1096,7 @@
     let selectedFeePercent = 0;
     let selectedMinFee = 0;
     let selectedMaxFee = 0;
+    let selectedFreeMinAmount = 0;
     let appliedDiscount = 0;
     let appliedVoucherCode = '';
 
@@ -1137,6 +1138,7 @@
             selectedFeePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             selectedMinFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             selectedMaxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
+            selectedFreeMinAmount = parseFloat(item.getAttribute('data-free-min-amount') || 0);
         }
 
         // Set hidden input value
@@ -1150,10 +1152,13 @@
         const formatRupiah = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
 
         document.querySelectorAll('.payment-row-item').forEach(item => {
+            const code = item.getAttribute('data-code') || '';
+            const isQris = (code === 'QRIS' || code.includes('QRIS'));
             const feeFlat = parseFloat(item.getAttribute('data-fee-flat') || 0);
             const feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             const minFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             const maxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
+            const freeMinAmount = parseFloat(item.getAttribute('data-free-min-amount') || 0);
             
             // Calculate base price after discount
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
@@ -1167,6 +1172,9 @@
             }
             if (maxFee > 0 && fee > maxFee) {
                 fee = maxFee;
+            }
+            if (isQris && freeMinAmount > 0 && discountedPrice >= freeMinAmount) {
+                fee = 0;
             }
             const total = discountedPrice + fee;
 
@@ -1232,6 +1240,10 @@
             }
             if (selectedMaxFee > 0 && fee > selectedMaxFee) {
                 fee = selectedMaxFee;
+            }
+            const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
+            if (isQris && selectedFreeMinAmount > 0 && discountedPrice >= selectedFreeMinAmount) {
+                fee = 0;
             }
             let total = discountedPrice + fee;
 
