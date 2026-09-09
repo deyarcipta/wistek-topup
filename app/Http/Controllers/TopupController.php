@@ -142,9 +142,7 @@ class TopupController extends Controller
         }
 
         // Add fallback manual calculations for local fallback channels
-        if ($request->payment_method === 'QRIS' && count($paymentChannels) === 0) {
-            $feePercent = 0.7;
-        } elseif (in_array($request->payment_method, ['BCAVA', 'MANDIRIVA']) && count($paymentChannels) === 0) {
+        if (in_array($request->payment_method, ['BCAVA', 'MANDIRIVA']) && count($paymentChannels) === 0) {
             $feeFlat = 1500;
         }
 

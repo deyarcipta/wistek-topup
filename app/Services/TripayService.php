@@ -101,7 +101,7 @@ class TripayService
     protected function getFallbackChannels(): array
     {
         return [
-            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 750, 'fee_percent' => 0.7, 'icon' => url('/images/payments/qris.svg')],
+            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 0, 'fee_percent' => 0, 'icon' => url('/images/payments/qris.svg')],
             ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 5500, 'fee_percent' => 0, 'icon' => url('/images/payments/bca.svg')],
             ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bni.svg')],
             ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'icon' => url('/images/payments/bri.svg')],
