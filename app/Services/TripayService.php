@@ -145,12 +145,19 @@ class TripayService
             if ($response->successful()) {
                 $data = $response->json()['data'] ?? [];
 
+                $qrUrl = $data['qr_url'] ?? null;
+                $qrString = $data['qr_string'] ?? $data['qr_content'] ?? null;
+
                 return [
                     'success' => true,
-                    'payment_url' => $data['checkout_url'] ?? '',
+                    'payment_url' => $data['checkout_url'] ?? $data['pay_url'] ?? '',
                     'reference' => $data['reference'] ?? $invoice,
-                    'qr_content' => $data['qr_content'] ?? null,
+                    'qr_url' => $qrUrl,
+                    'qr_string' => $qrString,
+                    'qr_content' => $qrString ?: $qrUrl,
                     'pay_code' => $data['pay_code'] ?? null,
+                    'instructions' => $data['instructions'] ?? [],
+                    'expired_time' => $data['expired_time'] ?? (time() + (24 * 60 * 60)),
                 ];
             }
 

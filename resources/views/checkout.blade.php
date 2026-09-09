@@ -115,8 +115,8 @@
                         </button>
                     @endif
 
-                    <!-- 3. Display Payment URL redirect button if payment_url is present -->
-                    @if(isset($transaction->payment_details['payment_url']) && !empty($transaction->payment_details['payment_url']))
+                    <!-- 3. Fallback Payment URL redirect button (only shown if no native QR or VA code is available) -->
+                    @if(!$hasContent && isset($transaction->payment_details['payment_url']) && !empty($transaction->payment_details['payment_url']))
                         @php $hasContent = true; @endphp
                         <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
                             <p style="font-size: 0.95rem; color: var(--text-primary); margin-bottom: 1rem; font-weight: 600;">Klik tombol di bawah untuk melanjutkan pembayaran:</p>
