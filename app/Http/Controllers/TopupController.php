@@ -20,8 +20,30 @@ class TopupController extends Controller
     /**
      * Display landing page with categories
      */
-    public function index()
+    public function index(Request $request, PaymentGatewayManager $paymentManager, CallbackController $callbackController, DigiflazzService $digiflazz)
     {
+        // Handle redirect from Payment Gateways (e.g. TriPay return_url ?tripay_merchant_ref=INV-...)
+        $merchantRef = $request->query('tripay_merchant_ref') ?? $request->query('merchant_ref') ?? $request->query('invoice');
+        $tripayRef = $request->query('tripay_reference') ?? $request->query('reference');
+
+        if (! empty($merchantRef) || ! empty($tripayRef)) {
+            $tx = Transaction::where('invoice', $merchantRef)->orWhere('reference', $tripayRef)->first();
+            if ($tx) {
+                if ($tx->payment_status === 'unpaid') {
+                    try {
+                        $statusCheck = $paymentManager->checkTransactionStatus($tx->invoice, $tx->reference);
+                        if (($statusCheck['success'] ?? false) && ($statusCheck['is_paid'] ?? false)) {
+                            $callbackController->fulfillPaidTransaction($tx, $statusCheck['reference'] ?? $tx->reference, $digiflazz);
+                        }
+                    } catch (\Exception $e) {
+                        logger()->error('Index redirect payment status sync error: '.$e->getMessage());
+                    }
+                }
+
+                return redirect('/transaction/'.$tx->invoice);
+            }
+        }
+
         $banners = Banner::where('is_active', true)->orderBy('sort_order', 'asc')->get();
 
         // Calculate popular categories based on transaction count
@@ -284,12 +306,25 @@ Terima kasih!";
     /**
      * Display a specific transaction status / details
      */
-    public function showTransaction($invoice)
+    public function showTransaction($invoice, PaymentGatewayManager $paymentManager, CallbackController $callbackController, DigiflazzService $digiflazz)
     {
         $transaction = Transaction::where('invoice', $invoice)->first();
 
         if (! $transaction) {
             return redirect('/history')->with('error', 'Kode invoice tidak ditemukan! Silakan periksa kembali.');
+        }
+
+        // Real-time status sync with Payment Gateway if status is still unpaid
+        if ($transaction->payment_status === 'unpaid') {
+            try {
+                $statusCheck = $paymentManager->checkTransactionStatus($transaction->invoice, $transaction->reference);
+                if (($statusCheck['success'] ?? false) && ($statusCheck['is_paid'] ?? false)) {
+                    $callbackController->fulfillPaidTransaction($transaction, $statusCheck['reference'] ?? $transaction->reference, $digiflazz);
+                    $transaction->refresh();
+                }
+            } catch (\Exception $e) {
+                logger()->error('Auto sync status error for '.$invoice.': '.$e->getMessage());
+            }
         }
 
         return view('checkout', compact('transaction'));
@@ -298,12 +333,25 @@ Terima kasih!";
     /**
      * REST API for Frontend dynamic status polling
      */
-    public function apiStatus($invoice)
+    public function apiStatus($invoice, PaymentGatewayManager $paymentManager, CallbackController $callbackController, DigiflazzService $digiflazz)
     {
         $transaction = Transaction::where('invoice', $invoice)->first();
 
         if (! $transaction) {
             return response()->json(['error' => 'Transaction not found'], 404);
+        }
+
+        // Real-time status sync with Payment Gateway if status is still unpaid
+        if ($transaction->payment_status === 'unpaid') {
+            try {
+                $statusCheck = $paymentManager->checkTransactionStatus($transaction->invoice, $transaction->reference);
+                if (($statusCheck['success'] ?? false) && ($statusCheck['is_paid'] ?? false)) {
+                    $callbackController->fulfillPaidTransaction($transaction, $statusCheck['reference'] ?? $transaction->reference, $digiflazz);
+                    $transaction->refresh();
+                }
+            } catch (\Exception $e) {
+                logger()->error('API status auto sync error for '.$invoice.': '.$e->getMessage());
+            }
         }
 
         return response()->json([

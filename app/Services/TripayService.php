@@ -131,7 +131,7 @@ class TripayService
                 ],
             ],
             'callback_url' => url('/callback/tripay'),
-            'return_url' => url('/'),
+            'return_url' => url('/transaction/'.$invoice),
             'expired_time' => (time() + (24 * 60 * 60)), // 24 hours
             'signature' => $signature,
         ];
@@ -167,6 +167,45 @@ class TripayService
             logger()->error('Tripay createTransaction failed: '.$e->getMessage());
 
             throw $e;
+        }
+    }
+
+    /**
+     * Check transaction status directly via Tripay API
+     */
+    public function checkTransactionStatus(string $reference): array
+    {
+        if (empty($this->apiKey)) {
+            return ['success' => false, 'message' => 'API Key missing'];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->timeout(5)->get($this->baseUrl.'transaction/detail', [
+                'reference' => $reference,
+            ]);
+
+            if ($response->successful()) {
+                $data = $response->json()['data'] ?? [];
+                $status = strtoupper((string) ($data['status'] ?? ''));
+
+                return [
+                    'success' => true,
+                    'status' => $status,
+                    'is_paid' => $status === 'PAID',
+                    'is_failed' => in_array($status, ['EXPIRED', 'FAILED', 'REFUND']),
+                    'reference' => $data['reference'] ?? $reference,
+                    'paid_at' => $data['paid_at'] ?? null,
+                    'raw' => $data,
+                ];
+            }
+
+            return ['success' => false, 'message' => 'HTTP '.$response->status().' - '.$response->body()];
+        } catch (Exception $e) {
+            logger()->error('Tripay checkTransactionStatus error: '.$e->getMessage());
+
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 

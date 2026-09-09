@@ -78,4 +78,17 @@ class PaymentGatewayManager
 
         return $driver->getStatusDetails();
     }
+
+    /**
+     * Check transaction status directly via active driver API
+     */
+    public function checkTransactionStatus(string $invoice, ?string $reference = null): array
+    {
+        $driver = $this->getDriver();
+        if (method_exists($driver, 'checkTransactionStatus')) {
+            return $driver->checkTransactionStatus($reference ?: $invoice);
+        }
+
+        return ['success' => false, 'message' => 'Driver status check not supported'];
+    }
 }
