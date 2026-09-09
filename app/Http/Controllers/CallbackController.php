@@ -251,6 +251,31 @@ class CallbackController extends Controller
             $isSuccess = ($latestStatus === '00') || in_array($rawStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED', 'SUCCESS_COMPLETED'], true);
             $isFailed = in_array($latestStatus, ['04', '05', '06'], true) || in_array($rawStatus, ['FAILED', 'EXPIRED', 'CANCELLED', 'DENIED'], true);
 
+            // Handle DOKU / Mandiri SNAP Inquiry Request (DYNAMIC_BILL mode)
+            if (isset($data['virtualAccountNo']) || isset($data['customerNo']) || isset($data['inquiryRequestId'])) {
+                $vaNo = $data['virtualAccountNo'] ?? $data['customerNo'] ?? '';
+                $transaction = Transaction::where('invoice', $invoiceNumber)
+                    ->orWhere('reference', $vaNo)
+                    ->first();
+
+                if ($transaction) {
+                    return response()->json([
+                        'responseCode' => '2002600',
+                        'responseMessage' => 'Successful',
+                        'virtualAccountData' => [
+                            'partnerServiceId' => $data['partnerServiceId'] ?? '',
+                            'customerNo' => $data['customerNo'] ?? $vaNo,
+                            'virtualAccountNo' => $vaNo,
+                            'virtualAccountName' => 'Pelanggan Wistek',
+                            'totalAmount' => [
+                                'value' => sprintf('%.2f', $transaction->amount),
+                                'currency' => 'IDR',
+                            ],
+                        ],
+                    ], 200);
+                }
+            }
+
             // Always return 200 OK to DOKU, even if invoice is not found (for test/ping pings)
             $transaction = Transaction::where('invoice', $invoiceNumber)->first();
             if (! $transaction) {
