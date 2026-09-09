@@ -65,6 +65,8 @@ class TripayService
                 $channels = $data['data'] ?? [];
                 $mapped = [];
 
+                $qrisShare = (int) Setting::get('tripay_qris_fee_share', 50);
+
                 foreach ($channels as $ch) {
                     if (! ($ch['active'] ?? false)) {
                         continue;
@@ -74,10 +76,21 @@ class TripayService
                         continue;
                     }
 
-                    // Respect TriPay merchant dashboard settings (fee_customer vs fee_merchant)
-                    $feeCustomer = $ch['fee_customer'] ?? $ch['total_fee'] ?? [];
+                    // Respect TriPay merchant dashboard settings & tripay_qris_fee_share setting
+                    $feeCustomer = $ch['fee_customer'] ?? [];
+                    $totalFee = $ch['total_fee'] ?? $ch['fee_merchant'] ?? [];
+
                     $feeFlat = (int) ($feeCustomer['flat'] ?? 0);
                     $feePercent = (float) ($feeCustomer['percent'] ?? 0);
+
+                    if (($code === 'QRIS' || str_contains($code, 'QRIS')) && $feeFlat == 0 && $feePercent == 0) {
+                        $baseFlat = (int) ($totalFee['flat'] ?? 750);
+                        $basePercent = (float) ($totalFee['percent'] ?? 0.7);
+
+                        $feeFlat = (int) round($baseFlat * ($qrisShare / 100));
+                        $feePercent = round($basePercent * ($qrisShare / 100), 2);
+                    }
+
                     $minFee = isset($ch['minimum_fee']) ? (int) $ch['minimum_fee'] : 0;
                     $maxFee = isset($ch['maximum_fee']) ? (int) $ch['maximum_fee'] : 0;
 
@@ -104,8 +117,12 @@ class TripayService
 
     protected function getFallbackChannels(): array
     {
+        $qrisShare = (int) Setting::get('tripay_qris_fee_share', 50);
+        $qrisFeeFlat = (int) round(750 * ($qrisShare / 100));
+        $qrisFeePercent = round(0.7 * ($qrisShare / 100), 2);
+
         return [
-            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => 0, 'fee_percent' => 0, 'min_fee' => 0, 'max_fee' => 0, 'icon' => url('/images/payments/qris.svg')],
+            ['code' => 'QRIS', 'name' => 'QRIS (Instant)', 'fee_flat' => $qrisFeeFlat, 'fee_percent' => $qrisFeePercent, 'min_fee' => 0, 'max_fee' => 0, 'icon' => url('/images/payments/qris.svg')],
             ['code' => 'BCAVA', 'name' => 'BCA Virtual Account', 'fee_flat' => 5500, 'fee_percent' => 0, 'min_fee' => 0, 'max_fee' => 0, 'icon' => url('/images/payments/bca.svg')],
             ['code' => 'BNIVA', 'name' => 'BNI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'min_fee' => 0, 'max_fee' => 0, 'icon' => url('/images/payments/bni.svg')],
             ['code' => 'BRIVA', 'name' => 'BRI Virtual Account', 'fee_flat' => 4250, 'fee_percent' => 0, 'min_fee' => 0, 'max_fee' => 0, 'icon' => url('/images/payments/bri.svg')],

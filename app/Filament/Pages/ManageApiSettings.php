@@ -119,6 +119,7 @@ class ManageApiSettings extends Page implements HasForms
             'tripay_api_key' => Setting::get('tripay_api_key'),
             'tripay_private_key' => Setting::get('tripay_private_key'),
             'tripay_mode' => Setting::get('tripay_mode', 'sandbox'),
+            'tripay_qris_fee_share' => Setting::get('tripay_qris_fee_share', '50'),
             'tripay_callback_url' => url('/callback/tripay'),
 
             // DOKU Settings
@@ -284,6 +285,15 @@ class ManageApiSettings extends Page implements HasForms
                                 'sandbox' => 'Sandbox (Testing)',
                                 'production' => 'Production (Live)',
                             ]),
+                        Select::make('tripay_qris_fee_share')
+                            ->label('Skema Biaya QRIS (Biaya Layanan Customer)')
+                            ->options([
+                                '0' => 'Gratis / Rp 0 (100% Ditanggung Merchant)',
+                                '50' => 'Custom 50% (50% Merchant, 50% Customer)',
+                                '100' => '100% Ditanggung Customer (Rp 750 + 0.7%)',
+                            ])
+                            ->default('50')
+                            ->helperText('Pilih skema pembagian biaya QRIS yang dibebankan kepada pelanggan di halaman checkout.'),
                         TextInput::make('tripay_callback_url')
                             ->label('Callback URL')
                             ->disabled()
@@ -444,7 +454,7 @@ class ManageApiSettings extends Page implements HasForms
             'duitku_merchant_code', 'duitku_api_key', 'duitku_mode',
             'midtrans_server_key', 'midtrans_client_key', 'midtrans_mode',
             'xendit_secret_key', 'xendit_public_key', 'xendit_verification_token', 'xendit_mode',
-            'tripay_merchant_code', 'tripay_api_key', 'tripay_private_key', 'tripay_mode',
+            'tripay_merchant_code', 'tripay_api_key', 'tripay_private_key', 'tripay_mode', 'tripay_qris_fee_share',
             'doku_client_id', 'doku_secret_key', 'doku_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
             'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
