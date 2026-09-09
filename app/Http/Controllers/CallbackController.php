@@ -481,12 +481,13 @@ class CallbackController extends Controller
         }
 
         $refId = $data['ref_id'] ?? '';
+        $baseInvoice = explode('-R', $refId)[0];
         $status = strtolower($data['status'] ?? '');
         $sn = $data['sn'] ?? '';
         $message = $data['message'] ?? '';
 
         // 2. Find transaction
-        $transaction = Transaction::where('invoice', $refId)->first();
+        $transaction = Transaction::where('invoice', $refId)->orWhere('invoice', $baseInvoice)->first();
         if (! $transaction) {
             return response()->json([
                 'success' => false,

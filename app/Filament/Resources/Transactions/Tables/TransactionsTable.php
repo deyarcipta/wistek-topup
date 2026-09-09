@@ -112,7 +112,8 @@ class TransactionsTable
                         try {
                             $digiflazz = new DigiflazzService;
                             $targetNo = str_replace([' ', '(', ')', '-'], '', $record->target_no);
-                            $res = $digiflazz->orderTopup($record->invoice, $record->sku, $targetNo);
+                            $retryRefId = $record->invoice.'-R'.time();
+                            $res = $digiflazz->orderTopup($retryRefId, $record->sku, $targetNo);
 
                             if ($res['success']) {
                                 $status = strtolower($res['data']['status'] ?? 'pending');
