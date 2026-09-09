@@ -173,14 +173,6 @@ class CallbackController extends Controller
      */
     public function dokuCallback(Request $request, DokuService $doku, DigiflazzService $digiflazz)
     {
-        $snapResponse = [
-            'responseCode' => '2005600',
-            'responseMessage' => 'Successful',
-            'status' => 'OK',
-            'success' => true,
-            'message' => 'PAGE ACCEPTED',
-        ];
-
         if ($request->isMethod('get')) {
             return response()->json([
                 'success' => true,
@@ -188,9 +180,31 @@ class CallbackController extends Controller
             ]);
         }
 
+        // Helper untuk membangun response acknowledgment yang valid sesuai spesifikasi DOKU
+        $buildAckResponse = function (array $data, string $invoiceNumber, ?Transaction $transaction = null): array {
+            $vaInfo = $data['virtual_account_info'] ?? [];
+            $vaPayment = $data['virtual_account_payment'] ?? [];
+
+            return [
+                'responseCode' => '2002500', // FIX: sebelumnya '2005600' (salah, bukan kode VA)
+                'responseMessage' => 'Success',
+                'virtualAccountData' => [
+                    'partnerServiceId' => $vaInfo['virtual_account_number'] ?? '',
+                    'customerNo' => $vaInfo['virtual_account_number'] ?? '',
+                    'virtualAccountNo' => $vaInfo['virtual_account_number'] ?? '',
+                    'virtualAccountName' => 'Pelanggan Wistek',
+                    'trxId' => $vaPayment['reference_number'] ?? $invoiceNumber,
+                    'paymentRequestId' => $invoiceNumber,
+                    'paidAmount' => [
+                        'value' => $transaction ? sprintf('%.2f', $transaction->amount) : sprintf('%.2f', $data['order']['amount'] ?? 0),
+                        'currency' => 'IDR',
+                    ],
+                ],
+            ];
+        };
+
         try {
             $rawContent = $request->getContent() ?: '';
-            // Strip UTF-8 BOM if present
             $rawContent = preg_replace('/^\xEF\xBB\xBF/', '', $rawContent);
 
             $signatureHeader = $request->header('Signature') ?? $request->header('X-SIGNATURE') ?? $request->header('signature');
@@ -209,7 +223,6 @@ class CallbackController extends Controller
 
             logger()->info('DOKU Webhook Received Payload: '.json_encode($data));
 
-            // Safely parse Invoice Number from SNAP (originalPartnerReferenceNo) or Jokul (order.invoice_number / order.id) or flat fields
             $invoiceNumber = '';
             if (is_array($data)) {
                 $invoiceNumber = $data['originalPartnerReferenceNo'] ?? '';
@@ -236,7 +249,6 @@ class CallbackController extends Controller
                 $invoiceNumber = $requestIdHeader ?? '';
             }
 
-            // Parse Transaction Status from SNAP (00=Success) or Jokul (SUCCESS/PAID)
             $latestStatus = (string) ($data['latestTransactionStatus'] ?? '');
             $rawStatus = '';
             if (isset($data['transaction']) && is_array($data['transaction'])) {
@@ -251,7 +263,7 @@ class CallbackController extends Controller
             $isSuccess = ($latestStatus === '00') || in_array($rawStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED', 'SUCCESS_COMPLETED'], true);
             $isFailed = in_array($latestStatus, ['04', '05', '06'], true) || in_array($rawStatus, ['FAILED', 'EXPIRED', 'CANCELLED', 'DENIED'], true);
 
-            // Handle DOKU / Mandiri SNAP Inquiry Request (DYNAMIC_BILL mode)
+            // Handle Inquiry Request (dipanggil DOKU secara sinkron sebelum pembayaran)
             if (isset($data['virtualAccountNo']) || isset($data['customerNo']) || isset($data['inquiryRequestId'])) {
                 $vaNo = $data['virtualAccountNo'] ?? $data['customerNo'] ?? '';
                 $transaction = Transaction::where('invoice', $invoiceNumber)
@@ -260,7 +272,7 @@ class CallbackController extends Controller
 
                 if ($transaction) {
                     return response()->json([
-                        'responseCode' => '2002600',
+                        'responseCode' => '2002500',
                         'responseMessage' => 'Successful',
                         'virtualAccountData' => [
                             'partnerServiceId' => $data['partnerServiceId'] ?? '',
@@ -276,12 +288,11 @@ class CallbackController extends Controller
                 }
             }
 
-            // Always return 200 OK to DOKU, even if invoice is not found (for test/ping pings)
             $transaction = Transaction::where('invoice', $invoiceNumber)->first();
             if (! $transaction) {
                 logger()->info('DOKU Webhook notice: Invoice not found or test ping: '.$invoiceNumber);
 
-                return response()->json($snapResponse, 200);
+                return response()->json($buildAckResponse($data ?? [], $invoiceNumber), 200);
             }
 
             if ($isSuccess) {
@@ -293,13 +304,18 @@ class CallbackController extends Controller
                 $transaction->note = 'Pembayaran DOKU '.($data['transactionStatusDesc'] ?? $rawStatus ?: 'GAGAL');
                 $transaction->save();
             }
+
+            return response()->json($buildAckResponse($data, $invoiceNumber, $transaction), 200);
         } catch (Exception $e) {
             logger()->error('DOKU Webhook process exception: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
-        }
 
-        return response()->json($snapResponse, 200);
+            return response()->json([
+                'responseCode' => '2002500',
+                'responseMessage' => 'Success',
+            ], 200);
+        }
     }
 
     /**

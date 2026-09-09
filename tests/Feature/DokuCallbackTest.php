@@ -52,10 +52,8 @@ class DokuCallbackTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'responseCode' => '2005600',
-            'responseMessage' => 'Successful',
-            'status' => 'OK',
-            'success' => true,
+            'responseCode' => '2002500',
+            'responseMessage' => 'Success',
         ]);
 
         $transaction->refresh();
@@ -89,8 +87,8 @@ class DokuCallbackTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'responseCode' => '2005600',
-            'responseMessage' => 'Successful',
+            'responseCode' => '2002500',
+            'responseMessage' => 'Success',
         ]);
 
         $transaction->refresh();
