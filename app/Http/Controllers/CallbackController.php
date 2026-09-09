@@ -196,7 +196,7 @@ class CallbackController extends Controller
                     'trxId' => $vaPayment['reference_number'] ?? $invoiceNumber,
                     'paymentRequestId' => $invoiceNumber,
                     'paidAmount' => [
-                        'value' => $transaction ? sprintf('%.2f', $transaction->amount) : sprintf('%.2f', $data['order']['amount'] ?? 0),
+                        'value' => $transaction ? sprintf('%.2f', $transaction->price) : sprintf('%.2f', $data['order']['amount'] ?? 0),
                         'currency' => 'IDR',
                     ],
                 ],
@@ -280,7 +280,7 @@ class CallbackController extends Controller
                             'virtualAccountNo' => $vaNo,
                             'virtualAccountName' => 'Pelanggan Wistek',
                             'totalAmount' => [
-                                'value' => sprintf('%.2f', $transaction->amount),
+                                'value' => sprintf('%.2f', $transaction->price),
                                 'currency' => 'IDR',
                             ],
                         ],
