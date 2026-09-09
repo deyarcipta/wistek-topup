@@ -705,6 +705,7 @@ class DigiflazzService
     public static function calculateMargin(float $cost): float
     {
         return match (true) {
+            $cost <= 5000 => 600,
             $cost <= 10000 => 1000,
             $cost <= 50000 => 1500,
             $cost <= 100000 => 2200,
