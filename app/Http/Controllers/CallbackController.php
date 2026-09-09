@@ -297,7 +297,58 @@ class CallbackController extends Controller
 
             if ($isSuccess) {
                 $reference = $data['originalReferenceNo'] ?? (isset($data['transaction']) && is_array($data['transaction']) ? ($data['transaction']['id'] ?? null) : null) ?? $invoiceNumber;
-                $this->fulfillPaidTransaction($transaction, $reference, $digiflazz);
+
+                // Update payment status immediately so response returns instantly (< 20ms) to avoid DOKU connection timeout
+                if ($transaction->payment_status !== 'paid') {
+                    $transaction->payment_status = 'paid';
+                    $transaction->topup_status = 'processing';
+                    if ($reference) {
+                        $transaction->reference = $reference;
+                    }
+                    $transaction->save();
+
+                    // Register background task for Digiflazz topup & WA notification after HTTP response finishes
+                    register_shutdown_function(function () use ($transaction, $digiflazz) {
+                        try {
+                            $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
+                            $dfResponse = $digiflazz->orderTopup(
+                                $transaction->invoice,
+                                $transaction->sku,
+                                $targetNo
+                            );
+
+                            if ($dfResponse['success']) {
+                                $dfData = $dfResponse['data'];
+                                $dfStatus = strtolower($dfData['status'] ?? 'pending');
+
+                                if ($dfStatus === 'sukses') {
+                                    $transaction->topup_status = 'success';
+                                    $transaction->note = $dfData['sn'] ?? 'Top-up sukses';
+                                    $transaction->save();
+                                    $this->creditPointsForSuccessfulTransaction($transaction);
+
+                                    if ($transaction->customer_phone) {
+                                        try {
+                                            $whatsapp = new WhatsappService;
+                                            $whatsapp->sendMessage(
+                                                $transaction->customer_phone,
+                                                "Top-up BERHASIL dikirim! 🎉\n\n*Invoice*: {$transaction->invoice}\n*Produk*: {$transaction->category_name} - {$transaction->product_name}\n*Target*: {$transaction->target_no}\n*Serial Number (SN)*: {$transaction->note}\n\nTerima kasih telah berbelanja di Wistek Topup!"
+                                            );
+                                        } catch (\Throwable $ex) {
+                                            error_log('WhatsApp topup success notification failed: '.$ex->getMessage());
+                                        }
+                                    }
+                                } elseif ($dfStatus === 'gagal') {
+                                    $transaction->topup_status = 'failed';
+                                    $transaction->note = $dfData['catatan'] ?? 'Top-up gagal dari provider';
+                                    $transaction->save();
+                                }
+                            }
+                        } catch (\Throwable $e) {
+                            error_log('Async Digiflazz Topup Exception: '.$e->getMessage());
+                        }
+                    });
+                }
             } elseif ($isFailed) {
                 $transaction->payment_status = 'failed';
                 $transaction->topup_status = 'failed';
