@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\Transactions\Tables;
 
+use App\Services\DigiflazzService;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -97,6 +100,65 @@ class TransactionsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('retryDigiflazz')
+                    ->label('Retry Digiflazz')
+                    ->icon('heroicon-m-arrow-path')
+                    ->color('warning')
+                    ->visible(fn ($record) => $record->payment_status === 'paid' && in_array($record->topup_status, ['failed', 'processing', 'pending']))
+                    ->requiresConfirmation()
+                    ->modalHeading('Proses Ulang Pesanan ke Digiflazz')
+                    ->modalDescription('Apakah Anda yakin ingin mengulang pengiriman pesanan ini ke provider Digiflazz?')
+                    ->action(function ($record) {
+                        try {
+                            $digiflazz = new DigiflazzService;
+                            $targetNo = str_replace([' ', '(', ')', '-'], '', $record->target_no);
+                            $res = $digiflazz->orderTopup($record->invoice, $record->sku, $targetNo);
+
+                            if ($res['success']) {
+                                $status = strtolower($res['data']['status'] ?? 'pending');
+                                if ($status === 'sukses') {
+                                    $record->update([
+                                        'topup_status' => 'success',
+                                        'note' => $res['data']['sn'] ?? 'Top-up Berhasil',
+                                    ]);
+                                    $record->creditPointsIfEligible();
+                                    Notification::make()
+                                        ->title('Topup Berhasil Diproses!')
+                                        ->body('SN: '.($res['data']['sn'] ?? ''))
+                                        ->success()
+                                        ->send();
+                                } elseif ($status === 'gagal') {
+                                    $record->update([
+                                        'topup_status' => 'failed',
+                                        'note' => $res['data']['message'] ?? 'Gagal dari provider',
+                                    ]);
+                                    Notification::make()
+                                        ->title('Proses Ulang Gagal dari Provider')
+                                        ->body($res['data']['message'] ?? 'Gagal')
+                                        ->danger()
+                                        ->send();
+                                } else {
+                                    $record->update(['topup_status' => 'processing']);
+                                    Notification::make()
+                                        ->title('Pesanan Sedang Diproses Provider')
+                                        ->info()
+                                        ->send();
+                                }
+                            } else {
+                                Notification::make()
+                                    ->title('Gagal Mengirim ke Digiflazz')
+                                    ->body($res['message'] ?? 'Eror koneksi')
+                                    ->danger()
+                                    ->send();
+                            }
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Terjadi Kesalahan')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
