@@ -36,10 +36,10 @@ class TripayService
 
     public function __construct()
     {
-        $this->merchantCode = Setting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', ''));
-        $this->apiKey = Setting::get('tripay_api_key', env('TRIPAY_API_KEY', ''));
-        $this->privateKey = Setting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', ''));
-        $this->mode = Setting::get('tripay_mode', env('TRIPAY_MODE', 'sandbox'));
+        $this->merchantCode = trim((string) Setting::get('tripay_merchant_code', env('TRIPAY_MERCHANT_CODE', '')));
+        $this->apiKey = trim((string) Setting::get('tripay_api_key', env('TRIPAY_API_KEY', '')));
+        $this->privateKey = trim((string) Setting::get('tripay_private_key', env('TRIPAY_PRIVATE_KEY', '')));
+        $this->mode = trim((string) Setting::get('tripay_mode', env('TRIPAY_MODE', 'sandbox')));
 
         $this->baseUrl = ($this->mode === 'production')
             ? 'https://tripay.co.id/api/'
@@ -165,9 +165,10 @@ class TripayService
             throw new Exception('Tripay Merchant Code / API Key / Private Key belum diatur.');
         }
 
-        $method = $paymentMethod ?: 'QRIS';
+        $method = trim((string) ($paymentMethod ?: 'QRIS'));
+        $amountInt = (int) $amount;
         // Compute HMAC SHA256 Signature: merchant_code + merchant_ref + amount
-        $signature = hash_hmac('sha256', $this->merchantCode.$invoice.$amount, $this->privateKey);
+        $signature = hash_hmac('sha256', $this->merchantCode.$invoice.$amountInt, $this->privateKey);
 
         $payload = [
             'method' => $method,
