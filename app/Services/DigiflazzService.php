@@ -389,11 +389,17 @@ class DigiflazzService
                 $dfStatusChanged = (bool) $product->digiflazz_status !== $targetStatus;
 
                 if ($skuChanged || $costChanged || $dfStatusChanged) {
-                    $product->update([
+                    $updateData = [
                         'sku' => $targetSku,
                         'price_cost' => $targetCost,
                         'digiflazz_status' => $targetStatus,
-                    ]);
+                    ];
+
+                    if ($costChanged) {
+                        $updateData['price_sell'] = self::calculatePriceSell($targetCost);
+                    }
+
+                    $product->update($updateData);
 
                     if ($dfStatusChanged && ! $targetStatus) {
                         $deactivatedCount++;
@@ -436,13 +442,7 @@ class DigiflazzService
                     $optimalCost = $bestSeller['price_cost'];
                     $optimalStatus = $bestSeller['is_active'];
 
-                    $margin = match (true) {
-                        $optimalCost <= 5000 => 500,
-                        $optimalCost <= 20000 => 1000,
-                        $optimalCost <= 50000 => 2000,
-                        $optimalCost <= 100000 => 3500,
-                        default => ceil(($optimalCost * 0.05) / 100) * 100,
-                    };
+                    $margin = self::calculateMargin($optimalCost);
                     $priceSell = $optimalCost + $margin;
 
                     if ($category) {
@@ -700,5 +700,20 @@ class DigiflazzService
                 'message' => $e->getMessage(),
             ];
         }
+    }
+
+    public static function calculateMargin(float $cost): float
+    {
+        return match (true) {
+            $cost <= 10000 => 1000,
+            $cost <= 50000 => 1500,
+            $cost <= 100000 => 2200,
+            default => ceil(($cost * 0.035) / 100) * 100,
+        };
+    }
+
+    public static function calculatePriceSell(float $cost): float
+    {
+        return $cost + self::calculateMargin($cost);
     }
 }
