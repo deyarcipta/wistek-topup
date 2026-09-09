@@ -169,53 +169,10 @@ class CallbackController extends Controller
     }
 
     /**
-     * Handle webhook callback from DOKU
-     */
-    /**
      * Handle webhook callback from DOKU (Supports SNAP API & Jokul / Direct API formats)
      */
     public function dokuCallback(Request $request, DokuService $doku, DigiflazzService $digiflazz)
     {
-        if ($request->isMethod('get')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'DOKU Webhook Endpoint is Active.',
-            ]);
-        }
-
-        $jsonPayload = $request->getContent();
-        $signatureHeader = $request->header('Signature') ?? $request->header('X-SIGNATURE');
-        $clientIdHeader = $request->header('Client-Id') ?? $request->header('X-PARTNER-ID');
-        $requestIdHeader = $request->header('Request-Id') ?? $request->header('X-EXTERNAL-ID');
-        $requestTimestampHeader = $request->header('Request-Timestamp') ?? $request->header('X-TIMESTAMP');
-
-        if ($signatureHeader && ! $doku->validateCallbackSignature($jsonPayload, $clientIdHeader, $requestIdHeader, $requestTimestampHeader, '/callback/doku', $signatureHeader)) {
-            logger()->warning('DOKU Webhook signature validation notice for Request-Id: '.$requestIdHeader);
-        }
-
-        $jsonPayload = $request->getContent() ?: json_encode($request->all());
-        $data = json_decode($jsonPayload, true);
-        if (! is_array($data) || empty($data)) {
-            $data = $request->json()->all() ?: $request->all();
-        }
-
-        logger()->info('DOKU Webhook Received Raw Payload: '.json_encode($data));
-
-        // Parse Invoice Number from SNAP (originalPartnerReferenceNo) or Jokul (order.invoice_number)
-        $invoiceNumber = $data['originalPartnerReferenceNo']
-            ?? $data['order']['invoice_number']
-            ?? $data['order']['id']
-            ?? $data['originalExternalId']
-            ?? $requestIdHeader
-            ?? '';
-
-        // Parse Transaction Status from SNAP (00=Success) or Jokul (SUCCESS/PAID)
-        $latestStatus = (string) ($data['latestTransactionStatus'] ?? '');
-        $rawStatus = strtoupper((string) ($data['transaction']['status'] ?? $data['order']['status'] ?? $data['status'] ?? ''));
-
-        $isSuccess = ($latestStatus === '00') || in_array($rawStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED'], true);
-        $isFailed = in_array($latestStatus, ['04', '05', '06'], true) || in_array($rawStatus, ['FAILED', 'EXPIRED', 'CANCELLED'], true);
-
         $snapResponse = [
             'responseCode' => '2005600',
             'responseMessage' => 'Successful',
@@ -224,32 +181,100 @@ class CallbackController extends Controller
             'message' => 'PAGE ACCEPTED',
         ];
 
-        // Always return 200 OK to DOKU, even if invoice is not found (for test/ping pings)
-        $transaction = Transaction::where('invoice', $invoiceNumber)->first();
-        if (! $transaction) {
-            logger()->info('DOKU Webhook notice: Invoice not found or test ping: '.$invoiceNumber);
-
-            return response()->json($snapResponse, 200);
+        if ($request->isMethod('get')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'DOKU Webhook Endpoint is Active.',
+            ]);
         }
 
-        $response = response()->json($snapResponse, 200);
+        try {
+            $rawContent = $request->getContent() ?: '';
+            // Strip UTF-8 BOM if present
+            $rawContent = preg_replace('/^\xEF\xBB\xBF/', '', $rawContent);
 
-        if (function_exists('fastcgi_finish_request')) {
-            $response->send();
-            fastcgi_finish_request();
+            $signatureHeader = $request->header('Signature') ?? $request->header('X-SIGNATURE') ?? $request->header('signature');
+            $clientIdHeader = $request->header('Client-Id') ?? $request->header('X-PARTNER-ID') ?? $request->header('client-id');
+            $requestIdHeader = $request->header('Request-Id') ?? $request->header('X-EXTERNAL-ID') ?? $request->header('request-id');
+            $requestTimestampHeader = $request->header('Request-Timestamp') ?? $request->header('X-TIMESTAMP') ?? $request->header('request-timestamp');
+
+            if ($signatureHeader && ! $doku->validateCallbackSignature($rawContent, $clientIdHeader, $requestIdHeader, $requestTimestampHeader, '/callback/doku', $signatureHeader)) {
+                logger()->warning('DOKU Webhook signature validation notice for Request-Id: '.$requestIdHeader);
+            }
+
+            $data = ! empty($rawContent) ? json_decode($rawContent, true) : null;
+            if (! is_array($data)) {
+                $data = $request->all();
+            }
+
+            logger()->info('DOKU Webhook Received Payload: '.json_encode($data));
+
+            // Safely parse Invoice Number from SNAP (originalPartnerReferenceNo) or Jokul (order.invoice_number / order.id) or flat fields
+            $invoiceNumber = '';
+            if (is_array($data)) {
+                $invoiceNumber = $data['originalPartnerReferenceNo'] ?? '';
+
+                if (empty($invoiceNumber) && isset($data['order'])) {
+                    if (is_array($data['order'])) {
+                        $invoiceNumber = $data['order']['invoice_number'] ?? $data['order']['id'] ?? '';
+                    } elseif (is_string($data['order'])) {
+                        $invoiceNumber = $data['order'];
+                    }
+                }
+
+                if (empty($invoiceNumber)) {
+                    $invoiceNumber = $data['invoice_number']
+                        ?? $data['invoice']
+                        ?? $data['TRANSIDMERCHANT']
+                        ?? $data['originalExternalId']
+                        ?? $data['merchant_ref']
+                        ?? '';
+                }
+            }
+
+            if (empty($invoiceNumber)) {
+                $invoiceNumber = $requestIdHeader ?? '';
+            }
+
+            // Parse Transaction Status from SNAP (00=Success) or Jokul (SUCCESS/PAID)
+            $latestStatus = (string) ($data['latestTransactionStatus'] ?? '');
+            $rawStatus = '';
+            if (isset($data['transaction']) && is_array($data['transaction'])) {
+                $rawStatus = (string) ($data['transaction']['status'] ?? '');
+            } elseif (isset($data['order']) && is_array($data['order'])) {
+                $rawStatus = (string) ($data['order']['status'] ?? '');
+            } else {
+                $rawStatus = (string) ($data['status'] ?? $data['transaction_status'] ?? $data['RESULTMSG'] ?? '');
+            }
+            $rawStatus = strtoupper($rawStatus);
+
+            $isSuccess = ($latestStatus === '00') || in_array($rawStatus, ['SUCCESS', 'SUCCESSFUL', 'PAID', 'SETTLED', 'SUCCESS_COMPLETED'], true);
+            $isFailed = in_array($latestStatus, ['04', '05', '06'], true) || in_array($rawStatus, ['FAILED', 'EXPIRED', 'CANCELLED', 'DENIED'], true);
+
+            // Always return 200 OK to DOKU, even if invoice is not found (for test/ping pings)
+            $transaction = Transaction::where('invoice', $invoiceNumber)->first();
+            if (! $transaction) {
+                logger()->info('DOKU Webhook notice: Invoice not found or test ping: '.$invoiceNumber);
+
+                return response()->json($snapResponse, 200);
+            }
+
+            if ($isSuccess) {
+                $reference = $data['originalReferenceNo'] ?? (isset($data['transaction']) && is_array($data['transaction']) ? ($data['transaction']['id'] ?? null) : null) ?? $invoiceNumber;
+                $this->fulfillPaidTransaction($transaction, $reference, $digiflazz);
+            } elseif ($isFailed) {
+                $transaction->payment_status = 'failed';
+                $transaction->topup_status = 'failed';
+                $transaction->note = 'Pembayaran DOKU '.($data['transactionStatusDesc'] ?? $rawStatus ?: 'GAGAL');
+                $transaction->save();
+            }
+        } catch (Exception $e) {
+            logger()->error('DOKU Webhook process exception: '.$e->getMessage(), [
+                'exception' => $e,
+            ]);
         }
 
-        if ($isSuccess) {
-            $reference = $data['originalReferenceNo'] ?? $data['transaction']['id'] ?? $invoiceNumber;
-            $this->fulfillPaidTransaction($transaction, $reference, $digiflazz);
-        } elseif ($isFailed) {
-            $transaction->payment_status = 'failed';
-            $transaction->topup_status = 'failed';
-            $transaction->note = 'Pembayaran DOKU '.($data['transactionStatusDesc'] ?? $rawStatus ?: 'GAGAL');
-            $transaction->save();
-        }
-
-        return $response;
+        return response()->json($snapResponse, 200);
     }
 
     /**

@@ -19,12 +19,20 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn (Request $request) => ($request->is('w1st3k*') || $request->is('admin*')) ? '/w1st3k/login' : '/login');
 
         $middleware->validateCsrfTokens(except: [
+            'callback/*',
+            'callback/duitku',
+            'callback/midtrans',
+            'callback/xendit',
+            'callback/tripay',
+            'callback/digiflazz',
+            'callback/doku',
+            '/callback/*',
             '/callback/duitku',
             '/callback/midtrans',
             '/callback/xendit',
             '/callback/tripay',
             '/callback/digiflazz',
-            '/callback/*',
+            '/callback/doku',
         ]);
 
         $middleware->alias([
