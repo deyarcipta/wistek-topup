@@ -132,11 +132,15 @@ class TopupController extends Controller
         $paymentChannels = $paymentManager->getPaymentChannels();
         $feeFlat = 0;
         $feePercent = 0;
+        $minFee = 0;
+        $maxFee = 0;
 
         foreach ($paymentChannels as $channel) {
             if ($channel['code'] === $request->payment_method) {
                 $feeFlat = (int) ($channel['fee_flat'] ?? 0);
                 $feePercent = (float) ($channel['fee_percent'] ?? 0);
+                $minFee = (int) ($channel['min_fee'] ?? 0);
+                $maxFee = (int) ($channel['max_fee'] ?? 0);
                 break;
             }
         }
@@ -164,6 +168,12 @@ class TopupController extends Controller
         $calculatedFee = $feeFlat;
         if ($feePercent > 0) {
             $calculatedFee += (int) round((max(0, $basePrice - $discountAmount) * $feePercent) / 100);
+        }
+        if ($minFee > 0 && $calculatedFee < $minFee) {
+            $calculatedFee = $minFee;
+        }
+        if ($maxFee > 0 && $calculatedFee > $maxFee) {
+            $calculatedFee = $maxFee;
         }
 
         $totalPrice = max(0, $basePrice - $discountAmount) + $calculatedFee;
