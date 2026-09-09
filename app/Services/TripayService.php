@@ -69,9 +69,10 @@ class TripayService
                     if (! ($ch['active'] ?? false)) {
                         continue;
                     }
-                    $code = $ch['code'] ?? '';
-                    $feeFlat = (int) ($ch['total_fee']['flat'] ?? 0);
-                    $feePercent = (float) ($ch['total_fee']['percent'] ?? 0);
+                    // Respect TriPay merchant dashboard settings (fee_customer vs fee_merchant)
+                    $feeCustomer = $ch['fee_customer'] ?? $ch['total_fee'] ?? [];
+                    $feeFlat = (int) ($feeCustomer['flat'] ?? 0);
+                    $feePercent = (float) ($feeCustomer['percent'] ?? 0);
 
                     $mapped[] = [
                         'code' => $code,
