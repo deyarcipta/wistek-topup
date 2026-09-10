@@ -713,8 +713,40 @@ class DigiflazzService
         };
     }
 
+    public static function calculateCashMargin(float $cost): float
+    {
+        return match (true) {
+            $cost <= 5000 => 400,
+            $cost <= 10000 => 700,
+            $cost <= 50000 => 1000,
+            $cost <= 100000 => 1500,
+            default => ceil(($cost * 0.025) / 100) * 100,
+        };
+    }
+
+    public static function roundCashPrice(float $amount): float
+    {
+        $thousand = floor($amount / 1000) * 1000;
+        $remainder = $amount - $thousand;
+
+        if ($remainder < 250) {
+            return $thousand;
+        } elseif ($remainder < 650) {
+            return $thousand + 500;
+        } else {
+            return $thousand + 1000;
+        }
+    }
+
     public static function calculatePriceSell(float $cost): float
     {
         return $cost + self::calculateMargin($cost);
+    }
+
+    public static function calculateFinalPriceCash(float $cost): float
+    {
+        $rawCash = $cost + self::calculateCashMargin($cost);
+
+        return self::roundCashPrice($rawCash);
     }
 }

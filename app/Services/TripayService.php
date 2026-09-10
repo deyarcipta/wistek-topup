@@ -86,12 +86,9 @@ class TripayService
                     $feeFlat = (int) ($feeCustomer['flat'] ?? 0);
                     $feePercent = (float) ($feeCustomer['percent'] ?? 0);
 
-                    if ($isQris && $feeFlat == 0 && $feePercent == 0) {
-                        $baseFlat = (int) ($totalFee['flat'] ?? 750);
-                        $basePercent = (float) ($totalFee['percent'] ?? 0.7);
-
-                        $feeFlat = (int) round($baseFlat * ($qrisShare / 100));
-                        $feePercent = round($basePercent * ($qrisShare / 100), 2);
+                    if ($isQris) {
+                        $feeFlat = 0;
+                        $feePercent = self::getServiceFeePercent($amount);
                     }
 
                     // Free QRIS Service Fee threshold check
@@ -130,8 +127,8 @@ class TripayService
         $qrisShare = (int) Setting::get('tripay_qris_fee_share', 50);
         $freeMinAmount = (int) Setting::get('tripay_qris_free_min_amount', 100000);
 
-        $qrisFeeFlat = (int) round(750 * ($qrisShare / 100));
-        $qrisFeePercent = round(0.7 * ($qrisShare / 100), 2);
+        $qrisFeeFlat = 0;
+        $qrisFeePercent = self::getServiceFeePercent($amount);
 
         if ($freeMinAmount > 0 && $amount >= $freeMinAmount) {
             $qrisFeeFlat = 0;

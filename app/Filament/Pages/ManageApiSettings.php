@@ -71,6 +71,33 @@ class ManageApiSettings extends Page implements HasForms
                     // Refresh page state to show updated balance
                     $this->mount();
                 }),
+            Action::make('recalculatePrices')
+                ->label('Hitung & Sinkronkan Semua Harga (Cash & Online)')
+                ->icon('heroicon-o-calculator')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Hitung Ulang Semua Harga Produk')
+                ->modalDescription('Apakah Anda yakin ingin memproses ulang seluruh harga Online dan harga Cash (dengan pembulatan pintar) untuk 275+ produk?')
+                ->action(function () {
+                    $exitCode = Artisan::call('products:recalculate-prices');
+                    $output = Artisan::output();
+
+                    if ($exitCode === 0) {
+                        Notification::make()
+                            ->title('Harga Berhasil Diperbarui!')
+                            ->body('Seluruh harga Online dan Cash telah di-recalculate dengan sukses.')
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Gagal Rekalkulasi Harga')
+                            ->body($output)
+                            ->danger()
+                            ->send();
+                    }
+
+                    $this->mount();
+                }),
         ];
     }
 
