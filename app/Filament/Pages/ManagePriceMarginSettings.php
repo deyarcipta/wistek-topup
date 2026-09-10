@@ -147,7 +147,8 @@ class ManagePriceMarginSettings extends Page implements HasForms
                             ->addActionLabel('Tambah Tier Margin Baru')
                             ->columnSpanFull(),
                     ]),
-            ]);
+            ])
+            ->statePath('data');
     }
 
     public function save(): void
@@ -158,6 +159,10 @@ class ManagePriceMarginSettings extends Page implements HasForms
 
         // Auto recalculate prices after saving tier settings
         Artisan::call('products:recalculate-prices');
+
+        $this->form->fill([
+            'tiered_margin_rules' => self::getTierRules(),
+        ]);
 
         Notification::make()
             ->title('Pengaturan Margin Disimpan & Harga Diperbarui')
