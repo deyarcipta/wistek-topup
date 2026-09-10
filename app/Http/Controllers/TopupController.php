@@ -157,7 +157,7 @@ class TopupController extends Controller
 
         $methodUpper = strtoupper((string) $request->payment_method);
         $isQris = ($methodUpper === 'QRIS' || str_contains($methodUpper, 'QRIS'));
-        if ($isQris || $feePercent > 0) {
+        if ($isQris) {
             $feeFlat = 0;
             $feePercent = TripayService::getServiceFeePercent((float) $basePrice);
         }

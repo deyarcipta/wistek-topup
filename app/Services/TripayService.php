@@ -106,22 +106,26 @@ class TripayService
                     $feeCustomer = $ch['fee_customer'] ?? [];
                     $totalFee = $ch['total_fee'] ?? $ch['fee_merchant'] ?? [];
 
-                    $feeFlat = (int) ($feeCustomer['flat'] ?? 0);
-                    $feePercent = (float) ($feeCustomer['percent'] ?? 0);
+                    $feeFlat = (int) (($feeCustomer['flat'] ?? 0) ?: ($totalFee['flat'] ?? 0));
+                    $feePercent = (float) (($feeCustomer['percent'] ?? 0) ?: ($totalFee['percent'] ?? 0));
 
                     if ($isQris) {
                         $feeFlat = 0;
                         $feePercent = self::getServiceFeePercent($amount);
                     }
 
-                    // Free QRIS Service Fee threshold check
-                    if ($isQris && $freeMinAmount > 0 && $amount >= $freeMinAmount) {
-                        $feeFlat = 0;
-                        $feePercent = 0;
-                    }
-
                     $minFee = isset($ch['minimum_fee']) ? (int) $ch['minimum_fee'] : 0;
                     $maxFee = isset($ch['maximum_fee']) ? (int) $ch['maximum_fee'] : 0;
+
+                    $isEwallet = (in_array($code, ['OVO', 'DANA', 'SHOPEEPAY', 'SHOPEEPAY_APP', 'LINKAJA', 'LINKAJA_QRIS']) || str_contains($code, 'OVO') || str_contains($code, 'DANA') || str_contains($code, 'SHOPEE'));
+                    if ($isEwallet && ! $isQris) {
+                        if ($feePercent <= 0) {
+                            $feePercent = 3.0;
+                        }
+                        if ($minFee <= 0) {
+                            $minFee = 1000;
+                        }
+                    }
 
                     $mapped[] = [
                         'code' => $code,

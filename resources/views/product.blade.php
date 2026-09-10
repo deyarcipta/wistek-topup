@@ -1186,7 +1186,7 @@
             // Calculate base price after discount
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
-            if (isQris || feePercent > 0) {
+            if (isQris) {
                 feePercent = getServiceFeePercent(discountedPrice);
             }
 
@@ -1257,7 +1257,7 @@
 
             const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
             let feePercent = selectedFeePercent;
-            if (isQris || feePercent > 0) {
+            if (isQris) {
                 feePercent = getServiceFeePercent(discountedPrice);
             }
 
