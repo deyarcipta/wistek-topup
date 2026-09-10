@@ -313,20 +313,6 @@ class ManageApiSettings extends Page implements HasForms
                                 'sandbox' => 'Sandbox (Testing)',
                                 'production' => 'Production (Live)',
                             ]),
-                        Select::make('tripay_qris_fee_share')
-                            ->label('Skema Biaya QRIS (Biaya Layanan Customer)')
-                            ->options([
-                                '0' => 'Gratis / Rp 0 (100% Ditanggung Merchant)',
-                                '50' => 'Custom 50% (50% Merchant, 50% Customer)',
-                                '100' => '100% Ditanggung Customer (Rp 750 + 0.7%)',
-                            ])
-                            ->default('50')
-                            ->helperText('Pilih skema pembagian biaya QRIS yang dibebankan kepada pelanggan di halaman checkout.'),
-                        TextInput::make('tripay_qris_free_min_amount')
-                            ->label('Batas Minimal Gratis Biaya Layanan QRIS (Rp)')
-                            ->numeric()
-                            ->placeholder('100000')
-                            ->helperText('Jika total belanja mencapai atau melebihi nominal ini, biaya layanan QRIS menjadi Rp 0 (Gratis). Isi 0 atau kosongkan untuk menonaktifkan.'),
                         TextInput::make('tripay_callback_url')
                             ->label('Callback URL')
                             ->disabled()

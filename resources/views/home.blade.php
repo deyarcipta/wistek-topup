@@ -68,7 +68,7 @@
     <!-- Slider / Info Carousel -->
     @if(count($banners) > 0)
         <div class="slider-container" style="position: relative; margin-top: 2rem; border-radius: 20px; overflow: hidden; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-            <div class="slider-wrapper" style="display: flex; transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); width: 100%;">
+            <div class="slider-wrapper" style="display: flex; transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1); width: 100%;">
                 @foreach($banners as $index => $banner)
                     <div class="slide" style="min-width: 100%; box-sizing: border-box; position: relative;">
                         @if($banner->link_url)
@@ -389,14 +389,15 @@
 
     function startAutoplay() {
         if (totalSlides > 1) {
+            if (autoplayInterval) clearInterval(autoplayInterval);
             autoplayInterval = setInterval(() => {
                 showSlide(currentSlide + 1);
-            }, 5000);
+            }, 4500);
         }
     }
 
     function resetAutoplay() {
-        clearInterval(autoplayInterval);
+        if (autoplayInterval) clearInterval(autoplayInterval);
         startAutoplay();
     }
 

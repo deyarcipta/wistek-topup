@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Filament\Pages\ManagePriceMarginSettings;
 use App\Models\Setting;
 use Exception;
 use Illuminate\Support\Facades\Http;
@@ -44,6 +45,23 @@ class TripayService
         $this->baseUrl = ($this->mode === 'production')
             ? 'https://tripay.co.id/api/'
             : 'https://tripay.co.id/api-sandbox/';
+    }
+
+    public static function getServiceFeePercent(float $amount): float
+    {
+        $rules = ManagePriceMarginSettings::getTierRules();
+        usort($rules, fn ($a, $b) => ((float) ($a['max_amount'] ?? 0) ?: 999999999) <=> ((float) ($b['max_amount'] ?? 0) ?: 999999999));
+
+        foreach ($rules as $rule) {
+            $max = (float) ($rule['max_amount'] ?? 0);
+            if ($max > 0 && $amount <= $max) {
+                return (float) ($rule['service_fee_percent'] ?? 8.0);
+            }
+        }
+
+        $defaultRule = end($rules);
+
+        return (float) ($defaultRule['service_fee_percent'] ?? 2.0);
     }
 
     /**

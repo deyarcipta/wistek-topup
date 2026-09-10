@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Filament\Pages\ManagePriceMarginSettings;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
@@ -704,24 +705,44 @@ class DigiflazzService
 
     public static function calculateMargin(float $cost): float
     {
-        return match (true) {
-            $cost <= 5000 => 600,
-            $cost <= 10000 => 1000,
-            $cost <= 50000 => 1500,
-            $cost <= 100000 => 2200,
-            default => ceil(($cost * 0.035) / 100) * 100,
-        };
+        $rules = ManagePriceMarginSettings::getTierRules();
+        usort($rules, fn ($a, $b) => ((float) ($a['max_amount'] ?? 0) ?: 999999999) <=> ((float) ($b['max_amount'] ?? 0) ?: 999999999));
+
+        foreach ($rules as $rule) {
+            $max = (float) ($rule['max_amount'] ?? 0);
+            if ($max > 0 && $cost <= $max) {
+                return (float) ($rule['margin_online'] ?? 0);
+            }
+        }
+
+        $defaultRule = end($rules);
+        $val = (float) ($defaultRule['margin_online'] ?? 3.5);
+        if ($val <= 100) {
+            return ceil(($cost * ($val / 100)) / 100) * 100;
+        }
+
+        return $val;
     }
 
     public static function calculateCashMargin(float $cost): float
     {
-        return match (true) {
-            $cost <= 5000 => 400,
-            $cost <= 10000 => 700,
-            $cost <= 50000 => 1000,
-            $cost <= 100000 => 1500,
-            default => ceil(($cost * 0.025) / 100) * 100,
-        };
+        $rules = ManagePriceMarginSettings::getTierRules();
+        usort($rules, fn ($a, $b) => ((float) ($a['max_amount'] ?? 0) ?: 999999999) <=> ((float) ($b['max_amount'] ?? 0) ?: 999999999));
+
+        foreach ($rules as $rule) {
+            $max = (float) ($rule['max_amount'] ?? 0);
+            if ($max > 0 && $cost <= $max) {
+                return (float) ($rule['margin_cash'] ?? 0);
+            }
+        }
+
+        $defaultRule = end($rules);
+        $val = (float) ($defaultRule['margin_cash'] ?? 2.5);
+        if ($val <= 100) {
+            return ceil(($cost * ($val / 100)) / 100) * 100;
+        }
+
+        return $val;
     }
 
     public static function roundCashPrice(float $amount): float
