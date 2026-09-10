@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Voucher;
 use App\Services\DigiflazzService;
 use App\Services\PaymentGatewayManager;
+use App\Services\TripayService;
 use App\Services\WhatsappService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -90,7 +91,8 @@ class TopupController extends Controller
             ->orderBy('price_sell', 'asc')
             ->get();
 
-        $paymentChannels = $paymentManager->getPaymentChannels();
+        $minPrice = (int) ($products->min('price_sell') ?? 10000);
+        $paymentChannels = $paymentManager->getPaymentChannels($minPrice);
 
         return view('product', compact('category', 'products', 'paymentChannels'));
     }
@@ -129,8 +131,11 @@ class TopupController extends Controller
             ]);
         }
 
-        // Calculate dynamic fee from payment methods
-        $paymentChannels = $paymentManager->getPaymentChannels();
+        $isCashPayment = in_array(strtoupper((string) $request->payment_method), ['CASH', 'MANUAL']);
+        $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $product->price_sell);
+
+        // Calculate dynamic fee from payment methods based on actual product base price
+        $paymentChannels = $paymentManager->getPaymentChannels($basePrice);
         $feeFlat = 0;
         $feePercent = 0;
         $minFee = 0;
@@ -151,8 +156,12 @@ class TopupController extends Controller
             $feeFlat = 1500;
         }
 
-        $isCashPayment = in_array(strtoupper((string) $request->payment_method), ['CASH', 'MANUAL']);
-        $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $product->price_sell);
+        $methodUpper = strtoupper((string) $request->payment_method);
+        $isQris = ($methodUpper === 'QRIS' || str_contains($methodUpper, 'QRIS'));
+        if ($isQris) {
+            $feeFlat = 0;
+            $feePercent = TripayService::getServiceFeePercent((float) $basePrice);
+        }
 
         // Apply voucher discount if valid
         $discountAmount = 0;

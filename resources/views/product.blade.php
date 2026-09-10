@@ -1091,6 +1091,28 @@
 
 @section('scripts')
 <script>
+    window.tierRules = @json(\App\Filament\Pages\ManagePriceMarginSettings::getTierRules());
+
+    function getServiceFeePercent(amount) {
+        if (!window.tierRules || window.tierRules.length === 0) return 1.0;
+        
+        const sorted = [...window.tierRules].sort((a, b) => {
+            const maxA = (parseFloat(a.max_amount) || 0) === 0 ? 999999999 : (parseFloat(a.max_amount) || 0);
+            const maxB = (parseFloat(b.max_amount) || 0) === 0 ? 999999999 : (parseFloat(b.max_amount) || 0);
+            return maxA - maxB;
+        });
+
+        for (let rule of sorted) {
+            const max = parseFloat(rule.max_amount) || 0;
+            if (max > 0 && amount <= max) {
+                return parseFloat(rule.service_fee_percent) || 0;
+            }
+        }
+
+        const defaultRule = sorted[sorted.length - 1];
+        return parseFloat(defaultRule.service_fee_percent) || 0;
+    }
+
     let selectedPrice = 0;
     let selectedFeeFlat = 0;
     let selectedFeePercent = 0;
@@ -1155,13 +1177,17 @@
             const code = item.getAttribute('data-code') || '';
             const isQris = (code === 'QRIS' || code.includes('QRIS'));
             const feeFlat = parseFloat(item.getAttribute('data-fee-flat') || 0);
-            const feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
+            let feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             const minFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             const maxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
             const freeMinAmount = parseFloat(item.getAttribute('data-free-min-amount') || 0);
             
             // Calculate base price after discount
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
+
+            if (isQris) {
+                feePercent = getServiceFeePercent(discountedPrice);
+            }
 
             let fee = feeFlat;
             if (feePercent > 0) {
@@ -1231,9 +1257,15 @@
             // Calculate dynamic fee on discounted price
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
+            const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
+            let feePercent = selectedFeePercent;
+            if (isQris) {
+                feePercent = getServiceFeePercent(discountedPrice);
+            }
+
             let fee = selectedFeeFlat;
-            if (selectedFeePercent > 0) {
-                fee += Math.round((discountedPrice * selectedFeePercent) / 100);
+            if (feePercent > 0) {
+                fee += Math.round((discountedPrice * feePercent) / 100);
             }
             if (selectedMinFee > 0 && fee < selectedMinFee) {
                 fee = selectedMinFee;
@@ -1241,7 +1273,6 @@
             if (selectedMaxFee > 0 && fee > selectedMaxFee) {
                 fee = selectedMaxFee;
             }
-            const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
             if (isQris && selectedFreeMinAmount > 0 && discountedPrice >= selectedFreeMinAmount) {
                 fee = 0;
             }
