@@ -1182,12 +1182,11 @@
             let feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             const minFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             const maxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
-            const freeMinAmount = parseFloat(item.getAttribute('data-free-min-amount') || 0);
             
             // Calculate base price after discount
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
-            if (isQris) {
+            if (isQris || feePercent > 0) {
                 feePercent = getServiceFeePercent(discountedPrice);
             }
 
@@ -1200,9 +1199,6 @@
             }
             if (maxFee > 0 && fee > maxFee) {
                 fee = maxFee;
-            }
-            if (isQris && freeMinAmount > 0 && discountedPrice >= freeMinAmount) {
-                fee = 0;
             }
             const total = discountedPrice + fee;
 
@@ -1261,7 +1257,7 @@
 
             const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
             let feePercent = selectedFeePercent;
-            if (isQris) {
+            if (isQris || feePercent > 0) {
                 feePercent = getServiceFeePercent(discountedPrice);
             }
 
@@ -1274,9 +1270,6 @@
             }
             if (selectedMaxFee > 0 && fee > selectedMaxFee) {
                 fee = selectedMaxFee;
-            }
-            if (isQris && selectedFreeMinAmount > 0 && discountedPrice >= selectedFreeMinAmount) {
-                fee = 0;
             }
             let total = discountedPrice + fee;
 

@@ -6,7 +6,6 @@ use App\Models\Banner;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
-use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
@@ -158,7 +157,7 @@ class TopupController extends Controller
 
         $methodUpper = strtoupper((string) $request->payment_method);
         $isQris = ($methodUpper === 'QRIS' || str_contains($methodUpper, 'QRIS'));
-        if ($isQris) {
+        if ($isQris || $feePercent > 0) {
             $feeFlat = 0;
             $feePercent = TripayService::getServiceFeePercent((float) $basePrice);
         }
@@ -184,15 +183,6 @@ class TopupController extends Controller
         }
         if ($maxFee > 0 && $calculatedFee > $maxFee) {
             $calculatedFee = $maxFee;
-        }
-
-        // Free QRIS Service Fee threshold check
-        $freeMinAmount = (int) Setting::get('tripay_qris_free_min_amount', 0);
-        $methodUpper = strtoupper((string) $request->payment_method);
-        $isQris = ($methodUpper === 'QRIS' || str_contains($methodUpper, 'QRIS'));
-
-        if ($isQris && $freeMinAmount > 0 && max(0, $basePrice - $discountAmount) >= $freeMinAmount) {
-            $calculatedFee = 0;
         }
 
         $totalPrice = max(0, $basePrice - $discountAmount) + $calculatedFee;
