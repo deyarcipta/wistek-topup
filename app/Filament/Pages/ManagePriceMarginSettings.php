@@ -113,28 +113,23 @@ class ManagePriceMarginSettings extends Page implements HasForms
                             ->schema([
                                 TextInput::make('max_amount')
                                     ->label('Batas Nominal Maksimal (Rp)')
-                                    ->numeric()
                                     ->required()
                                     ->helperText('Isi 0 untuk tier sisa / default di atas nominal terbesar.'),
 
                                 TextInput::make('margin_online')
                                     ->label('Margin Online (Rp / %)')
-                                    ->numeric()
                                     ->required()
-                                    ->helperText('Nominal Rp (untuk <= 100k) atau Persen % (untuk > 100k).'),
+                                    ->helperText('Nominal Rp (untuk <= 100k) atau Persen % (untuk > 100k). Format desimal misal: 3.5 atau 3,5.'),
 
                                 TextInput::make('margin_cash')
                                     ->label('Margin Cash (Rp / %)')
-                                    ->numeric()
                                     ->required()
-                                    ->helperText('Nominal Rp (untuk <= 100k) atau Persen % (untuk > 100k).'),
+                                    ->helperText('Nominal Rp (untuk <= 100k) atau Persen % (untuk > 100k). Format desimal misal: 2.5 atau 2,5.'),
 
                                 TextInput::make('service_fee_percent')
                                     ->label('Persentase Biaya Layanan (%)')
-                                    ->numeric()
-                                    ->step('0.1')
                                     ->required()
-                                    ->helperText('Persentase biaya layanan checkout (misal: 8.0, 5.0, 3.5, 2.0).'),
+                                    ->helperText('Persentase biaya layanan checkout (misal: 8.0, 5.0, 1.2, 1,2, 2.0).'),
 
                                 TextInput::make('note')
                                     ->label('Catatan / Keterangan')
@@ -155,7 +150,16 @@ class ManagePriceMarginSettings extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        Setting::set('tiered_margin_rules', json_encode($data['tiered_margin_rules'] ?? []));
+        $rules = $data['tiered_margin_rules'] ?? [];
+        foreach ($rules as &$rule) {
+            $rule['max_amount'] = (float) str_replace(',', '.', (string) ($rule['max_amount'] ?? 0));
+            $rule['margin_online'] = (float) str_replace(',', '.', (string) ($rule['margin_online'] ?? 0));
+            $rule['margin_cash'] = (float) str_replace(',', '.', (string) ($rule['margin_cash'] ?? 0));
+            $rule['service_fee_percent'] = (float) str_replace(',', '.', (string) ($rule['service_fee_percent'] ?? 0));
+        }
+        unset($rule);
+
+        Setting::set('tiered_margin_rules', json_encode($rules));
 
         // Auto recalculate prices after saving tier settings
         Artisan::call('products:recalculate-prices');

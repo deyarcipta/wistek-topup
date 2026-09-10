@@ -187,7 +187,7 @@ class TopupController extends Controller
         }
 
         // Free QRIS Service Fee threshold check
-        $freeMinAmount = (int) Setting::get('tripay_qris_free_min_amount', 100000);
+        $freeMinAmount = (int) Setting::get('tripay_qris_free_min_amount', 0);
         $methodUpper = strtoupper((string) $request->payment_method);
         $isQris = ($methodUpper === 'QRIS' || str_contains($methodUpper, 'QRIS'));
 

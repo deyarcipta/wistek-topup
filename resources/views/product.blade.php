@@ -1096,21 +1096,23 @@
     function getServiceFeePercent(amount) {
         if (!window.tierRules || window.tierRules.length === 0) return 1.0;
         
+        const parseNum = (val) => parseFloat(String(val || 0).replace(',', '.')) || 0;
+
         const sorted = [...window.tierRules].sort((a, b) => {
-            const maxA = (parseFloat(a.max_amount) || 0) === 0 ? 999999999 : (parseFloat(a.max_amount) || 0);
-            const maxB = (parseFloat(b.max_amount) || 0) === 0 ? 999999999 : (parseFloat(b.max_amount) || 0);
+            const maxA = parseNum(a.max_amount) === 0 ? 999999999 : parseNum(a.max_amount);
+            const maxB = parseNum(b.max_amount) === 0 ? 999999999 : parseNum(b.max_amount);
             return maxA - maxB;
         });
 
         for (let rule of sorted) {
-            const max = parseFloat(rule.max_amount) || 0;
+            const max = parseNum(rule.max_amount);
             if (max > 0 && amount <= max) {
-                return parseFloat(rule.service_fee_percent) || 0;
+                return parseNum(rule.service_fee_percent);
             }
         }
 
         const defaultRule = sorted[sorted.length - 1];
-        return parseFloat(defaultRule.service_fee_percent) || 0;
+        return parseNum(defaultRule.service_fee_percent);
     }
 
     let selectedPrice = 0;
