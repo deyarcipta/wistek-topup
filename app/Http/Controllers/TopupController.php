@@ -240,6 +240,12 @@ class TopupController extends Controller
             $target .= ' ('.$request->zone_id.')';
         }
 
+        // Validate minimum amount for Virtual Account methods (Bank minimum is Rp 10.000)
+        $methodUpper = strtoupper((string) $request->payment_method);
+        if (str_contains($methodUpper, 'VA') && $totalPrice < 10000) {
+            return back()->withErrors(['error' => 'Metode Virtual Account memerlukan minimal transaksi Rp 10.000. Silakan gunakan QRIS untuk transaksi di bawah Rp 10.000.']);
+        }
+
         // Send payment request to Active Payment Gateway
         $productName = $category->name.' - '.$product->name;
 
