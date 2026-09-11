@@ -185,9 +185,25 @@ class MidtransService
 
         // 1. Direct Charge for QRIS / GOPAY / SHOPEEPAY
         if (in_array($method, ['QRIS', 'GOPAY', 'SHOPEEPAY']) || str_contains($method, 'QRIS')) {
-            $chargeType = str_contains($method, 'SHOPEE') ? 'shopeepay' : 'gopay';
+            $payloadsToTry = [];
 
-            $payload = [
+            if ($method === 'QRIS' || str_contains($method, 'QRIS')) {
+                $payloadsToTry[] = [
+                    'payment_type' => 'qris',
+                    'transaction_details' => [
+                        'order_id' => $invoice,
+                        'gross_amount' => $amount,
+                    ],
+                    'item_details' => $itemDetails,
+                    'customer_details' => $customerDetails,
+                    'qris' => [
+                        'acquirer' => 'gopay',
+                    ],
+                ];
+            }
+
+            $chargeType = str_contains($method, 'SHOPEE') ? 'shopeepay' : 'gopay';
+            $gopayPayload = [
                 'payment_type' => $chargeType,
                 'transaction_details' => [
                     'order_id' => $invoice,
@@ -198,54 +214,61 @@ class MidtransService
             ];
 
             if ($chargeType === 'gopay') {
-                $payload['gopay'] = [
+                $gopayPayload['gopay'] = [
                     'enable_callback' => true,
                     'callback_url' => url('/transaction/'.$invoice),
                 ];
             } else {
-                $payload['shopeepay'] = [
+                $gopayPayload['shopeepay'] = [
                     'callback_url' => url('/transaction/'.$invoice),
                 ];
             }
+            $payloadsToTry[] = $gopayPayload;
 
-            try {
-                $response = Http::withBasicAuth($this->serverKey, '')
-                    ->withHeaders([
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                    ])
-                    ->post($this->apiBaseUrl.'charge', $payload);
+            foreach ($payloadsToTry as $payload) {
+                try {
+                    $response = Http::withBasicAuth($this->serverKey, '')
+                        ->withHeaders([
+                            'Accept' => 'application/json',
+                            'Content-Type' => 'application/json',
+                        ])
+                        ->post($this->apiBaseUrl.'charge', $payload);
 
-                if ($response->successful()) {
-                    $resData = $response->json();
-                    $actions = $resData['actions'] ?? [];
-                    $qrUrl = null;
-                    $qrString = $resData['qr_string'] ?? null;
+                    if ($response->successful()) {
+                        $resData = $response->json();
+                        $actions = $resData['actions'] ?? [];
+                        $qrUrl = null;
+                        $qrString = $resData['qr_string'] ?? null;
+                        $deeplink = null;
 
-                    foreach ($actions as $action) {
-                        if (($action['name'] ?? '') === 'generate-qr-code') {
-                            $qrUrl = $action['url'] ?? null;
-                            break;
+                        foreach ($actions as $action) {
+                            $actionName = $action['name'] ?? '';
+                            if ($actionName === 'generate-qr-code') {
+                                $qrUrl = $action['url'] ?? null;
+                            } elseif ($actionName === 'deeplink-redirect') {
+                                $deeplink = $action['url'] ?? null;
+                            }
+                        }
+
+                        if (empty($qrUrl) && ! empty($actions[0]['url'])) {
+                            $qrUrl = $actions[0]['url'];
+                        }
+
+                        if (! empty($qrUrl) || ! empty($qrString)) {
+                            return [
+                                'success' => true,
+                                'reference' => $resData['transaction_id'] ?? $invoice,
+                                'qr_url' => $qrUrl,
+                                'qr_string' => $qrString ?: $qrUrl,
+                                'qr_content' => $qrUrl ?: $qrString,
+                                'payment_url' => $deeplink ?: $qrUrl,
+                                'expired_time' => (time() + (24 * 60 * 60)),
+                            ];
                         }
                     }
-
-                    if (empty($qrUrl) && ! empty($actions[0]['url'])) {
-                        $qrUrl = $actions[0]['url'];
-                    }
-
-                    if (! empty($qrUrl) || ! empty($qrString)) {
-                        return [
-                            'success' => true,
-                            'reference' => $resData['transaction_id'] ?? $invoice,
-                            'qr_url' => $qrUrl,
-                            'qr_string' => $qrString ?: $qrUrl,
-                            'qr_content' => $qrUrl ?: $qrString,
-                            'expired_time' => (time() + (24 * 60 * 60)),
-                        ];
-                    }
+                } catch (Exception $e) {
+                    logger()->error('Midtrans QRIS Charge error: '.$e->getMessage());
                 }
-            } catch (Exception $e) {
-                logger()->error('Midtrans QRIS Charge error: '.$e->getMessage());
             }
         }
 

@@ -85,10 +85,13 @@
                         $hasContent = false;
                     @endphp
 
-                    <!-- 1. Display QR Code if qr_url, qr_content, or qr_string is present -->
+                    <!-- 1. Display QR Code if qr_url, qr_content, qr_string is present OR generate QR from payment_url for QRIS method -->
                     @php
                         $qrContent = $transaction->payment_details['qr_url'] ?? null;
                         $qrRawString = $transaction->payment_details['qr_content'] ?? $transaction->payment_details['qr_string'] ?? null;
+                        $paymentUrl = $transaction->payment_details['payment_url'] ?? null;
+                        $methodUpper = strtoupper($transaction->payment_method ?? '');
+                        $isQrisMethod = str_contains($methodUpper, 'QR') || str_contains($methodUpper, 'GOPAY') || str_contains($methodUpper, 'SHOPEE');
                     @endphp
 
                     @if(!empty($qrContent))
@@ -101,6 +104,17 @@
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($qrRawString) }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
                         <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
+                    @elseif($isQrisMethod && !empty($paymentUrl))
+                        @php $hasContent = true; @endphp
+                        <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($paymentUrl) }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Atau klik tombol di bawah untuk membuka halaman pembayaran resmi:</p>
+                            <a href="{{ $paymentUrl }}" target="_blank" class="btn-checkout" style="display: inline-block; text-decoration: none; text-align: center; width: auto; padding: 0.6rem 1.5rem; background: #e28743; color: #fff; font-weight: 700; border-radius: 8px; font-size: 0.9rem;">
+                                <i class="fa-solid fa-external-link" style="margin-right: 0.5rem;"></i> Bayar Sekarang
+                            </a>
+                        </div>
                     @endif
 
                     <!-- 2. Display Virtual Account / Payment Code if present -->
