@@ -120,6 +120,30 @@
                         </button>
                     @endif
 
+                    <!-- 3. Embedded Midtrans Snap Popup Modal if token is present -->
+                    @if(!$hasContent && isset($transaction->payment_details['token']) && !empty($transaction->payment_details['token']))
+                        @php 
+                            $hasContent = true; 
+                            $snapToken = $transaction->payment_details['token'];
+                            $clientKey = $transaction->payment_details['client_key'] ?? \App\Models\Setting::get('midtrans_client_key', '');
+                            $snapJsUrl = $transaction->payment_details['snap_js'] ?? 'https://app.sandbox.midtrans.com/snap/snap.js';
+                        @endphp
+                        <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <p style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Klik tombol di bawah jika Pop-up pembayaran Midtrans tidak muncul otomatis:</p>
+                            <button type="button" id="pay-button" onclick="snap.pay('{{ $snapToken }}')" class="btn-checkout" style="display: inline-block; text-align: center; width: auto; padding: 0.75rem 2rem; background: #e28743; color: #fff; font-weight: 700; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
+                                <i class="fa-solid fa-credit-card" style="margin-right: 0.5rem;"></i> Bayar via Pop-up Midtrans
+                            </button>
+                        </div>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                if (typeof snap !== 'undefined') {
+                                    snap.pay('{{ $snapToken }}');
+                                }
+                            });
+                        </script>
+                    @endif
+
                     @if(!$hasContent)
                         <p style="color: var(--text-secondary);">Instruksi pembayaran tidak ditemukan atau pembayaran kadaluarsa.</p>
                     @endif

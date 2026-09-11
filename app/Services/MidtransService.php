@@ -264,6 +264,11 @@ class MidtransService
                 }
             }
 
+            $snapFallback = $this->createSnapFallback($invoice, $amount, $itemDetails, $customerDetails);
+            if ($snapFallback) {
+                return $snapFallback;
+            }
+
             throw new Exception('Midtrans Direct QRIS Error: '.($lastError ?: 'Payment channel is not activated on Midtrans Sandbox dashboard.'));
         }
 
@@ -340,6 +345,11 @@ class MidtransService
                         'expired_time' => (time() + (24 * 60 * 60)),
                     ];
                 }
+            }
+
+            $snapFallback = $this->createSnapFallback($invoice, $amount, $itemDetails, $customerDetails);
+            if ($snapFallback) {
+                return $snapFallback;
             }
 
             $errorMsg = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
@@ -476,6 +486,54 @@ class MidtransService
         $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$this->serverKey);
 
         return hash_equals($expectedSignature, $signatureKey);
+    }
+
+    /**
+     * Fallback to Snap Token creation if Direct Charge is not enabled on merchant account
+     */
+    protected function createSnapFallback(string $invoice, int $amount, array $itemDetails, array $customerDetails): ?array
+    {
+        try {
+            $snapPayload = [
+                'transaction_details' => [
+                    'order_id' => $invoice,
+                    'gross_amount' => $amount,
+                ],
+                'item_details' => $itemDetails,
+                'customer_details' => $customerDetails,
+                'callbacks' => [
+                    'finish' => url('/transaction/'.$invoice),
+                ],
+                'override_notification_urls' => [
+                    url('/callback/midtrans'),
+                ],
+            ];
+
+            $snapResponse = Http::withBasicAuth($this->serverKey, '')
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->snapBaseUrl.'transactions', $snapPayload);
+
+            if ($snapResponse->successful()) {
+                $snapData = $snapResponse->json();
+
+                return [
+                    'success' => true,
+                    'payment_url' => $snapData['redirect_url'] ?? '',
+                    'token' => $snapData['token'] ?? '',
+                    'client_key' => $this->clientKey,
+                    'snap_js' => $this->mode === 'production' ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js',
+                    'reference' => $invoice,
+                    'expired_time' => (time() + (24 * 60 * 60)),
+                ];
+            }
+        } catch (Exception $e) {
+            // Ignore snap fallback error
+        }
+
+        return null;
     }
 
     /**
