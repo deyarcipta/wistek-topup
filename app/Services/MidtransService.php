@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Setting;
 use Exception;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 class MidtransService
@@ -226,12 +227,7 @@ class MidtransService
             $lastError = null;
             foreach ($payloadsToTry as $payload) {
                 try {
-                    $response = Http::withBasicAuth($this->serverKey, '')
-                        ->withHeaders([
-                            'Accept' => 'application/json',
-                            'Content-Type' => 'application/json',
-                        ])
-                        ->post($this->apiBaseUrl.'charge', $payload);
+                    $response = $this->sendChargeRequest($payload);
 
                     if ($response->successful()) {
                         $resData = $response->json();
@@ -321,12 +317,7 @@ class MidtransService
                 ];
             }
 
-            $response = Http::withBasicAuth($this->serverKey, '')
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($this->apiBaseUrl.'charge', $payload);
+            $response = $this->sendChargeRequest($payload);
 
             if ($response->successful()) {
                 $resData = $response->json();
@@ -372,12 +363,7 @@ class MidtransService
                 ],
             ];
 
-            $response = Http::withBasicAuth($this->serverKey, '')
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($this->apiBaseUrl.'charge', $payload);
+            $response = $this->sendChargeRequest($payload);
 
             if ($response->successful()) {
                 $resData = $response->json();
@@ -490,6 +476,38 @@ class MidtransService
         $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$this->serverKey);
 
         return hash_equals($expectedSignature, $signatureKey);
+    }
+
+    /**
+     * Send charge request to Midtrans API with automatic environment fallback (Sandbox <-> Production)
+     */
+    protected function sendChargeRequest(array $payload): Response
+    {
+        $response = Http::withBasicAuth($this->serverKey, '')
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])
+            ->post($this->apiBaseUrl.'charge', $payload);
+
+        if (! $response->successful() && ($response->status() === 401 || str_contains($response->body(), 'Unknown Merchant'))) {
+            $altBaseUrl = str_contains($this->apiBaseUrl, 'sandbox')
+                ? 'https://api.midtrans.com/v2/'
+                : 'https://api.sandbox.midtrans.com/v2/';
+
+            $altResponse = Http::withBasicAuth($this->serverKey, '')
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($altBaseUrl.'charge', $payload);
+
+            if ($altResponse->successful()) {
+                return $altResponse;
+            }
+        }
+
+        return $response;
     }
 
     /**
