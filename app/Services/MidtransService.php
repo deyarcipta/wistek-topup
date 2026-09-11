@@ -162,7 +162,7 @@ class MidtransService
     public function createTransaction(string $invoice, string $productName, int $amount, ?string $customerPhone = null, ?string $paymentMethod = null): array
     {
         if (empty($this->serverKey)) {
-            throw new Exception('Midtrans Server Key belum diatur di Pengaturan API.');
+            throw new Exception('Midtrans Server Key belum diatur di Pengaturan API Admin.');
         }
 
         $method = strtoupper((string) ($paymentMethod ?: 'QRIS'));
@@ -183,96 +183,62 @@ class MidtransService
             ],
         ];
 
-        // 1. Direct Charge for QRIS / GOPAY / SHOPEEPAY
+        // 1. Direct Core Charge for QRIS / GOPAY / SHOPEEPAY
         if (in_array($method, ['QRIS', 'GOPAY', 'SHOPEEPAY']) || str_contains($method, 'QRIS')) {
-            $payloadsToTry = [];
-
-            if ($method === 'QRIS' || str_contains($method, 'QRIS')) {
-                $payloadsToTry[] = [
-                    'payment_type' => 'qris',
-                    'transaction_details' => [
-                        'order_id' => $invoice,
-                        'gross_amount' => $amount,
-                    ],
-                    'item_details' => $itemDetails,
-                    'customer_details' => $customerDetails,
-                    'qris' => [
-                        'acquirer' => 'gopay',
-                    ],
-                ];
-            }
-
-            $chargeType = str_contains($method, 'SHOPEE') ? 'shopeepay' : 'gopay';
-            $gopayPayload = [
-                'payment_type' => $chargeType,
+            $payload = [
+                'payment_type' => 'qris',
                 'transaction_details' => [
                     'order_id' => $invoice,
                     'gross_amount' => $amount,
                 ],
                 'item_details' => $itemDetails,
                 'customer_details' => $customerDetails,
+                'qris' => [
+                    'acquirer' => 'gopay',
+                ],
             ];
 
-            if ($chargeType === 'gopay') {
-                $gopayPayload['gopay'] = [
-                    'enable_callback' => true,
-                    'callback_url' => url('/transaction/'.$invoice),
-                ];
-            } else {
-                $gopayPayload['shopeepay'] = [
-                    'callback_url' => url('/transaction/'.$invoice),
-                ];
-            }
-            $payloadsToTry[] = $gopayPayload;
+            $response = Http::withBasicAuth($this->serverKey, '')
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->apiBaseUrl.'charge', $payload);
 
-            foreach ($payloadsToTry as $payload) {
-                try {
-                    $response = Http::withBasicAuth($this->serverKey, '')
-                        ->withHeaders([
-                            'Accept' => 'application/json',
-                            'Content-Type' => 'application/json',
-                        ])
-                        ->post($this->apiBaseUrl.'charge', $payload);
+            if ($response->successful()) {
+                $resData = $response->json();
+                $actions = $resData['actions'] ?? [];
+                $qrUrl = null;
+                $qrString = $resData['qr_string'] ?? null;
 
-                    if ($response->successful()) {
-                        $resData = $response->json();
-                        $actions = $resData['actions'] ?? [];
-                        $qrUrl = null;
-                        $qrString = $resData['qr_string'] ?? null;
-                        $deeplink = null;
-
-                        foreach ($actions as $action) {
-                            $actionName = $action['name'] ?? '';
-                            if ($actionName === 'generate-qr-code') {
-                                $qrUrl = $action['url'] ?? null;
-                            } elseif ($actionName === 'deeplink-redirect') {
-                                $deeplink = $action['url'] ?? null;
-                            }
-                        }
-
-                        if (empty($qrUrl) && ! empty($actions[0]['url'])) {
-                            $qrUrl = $actions[0]['url'];
-                        }
-
-                        if (! empty($qrUrl) || ! empty($qrString)) {
-                            return [
-                                'success' => true,
-                                'reference' => $resData['transaction_id'] ?? $invoice,
-                                'qr_url' => $qrUrl,
-                                'qr_string' => $qrString ?: $qrUrl,
-                                'qr_content' => $qrUrl ?: $qrString,
-                                'payment_url' => $deeplink ?: $qrUrl,
-                                'expired_time' => (time() + (24 * 60 * 60)),
-                            ];
-                        }
+                foreach ($actions as $action) {
+                    if (($action['name'] ?? '') === 'generate-qr-code') {
+                        $qrUrl = $action['url'] ?? null;
+                        break;
                     }
-                } catch (Exception $e) {
-                    logger()->error('Midtrans QRIS Charge error: '.$e->getMessage());
+                }
+
+                if (empty($qrUrl) && ! empty($actions[0]['url'])) {
+                    $qrUrl = $actions[0]['url'];
+                }
+
+                if (! empty($qrUrl) || ! empty($qrString)) {
+                    return [
+                        'success' => true,
+                        'reference' => $resData['transaction_id'] ?? $invoice,
+                        'qr_url' => $qrUrl,
+                        'qr_string' => $qrString,
+                        'qr_content' => $qrString ?: $qrUrl,
+                        'expired_time' => (time() + (24 * 60 * 60)),
+                    ];
                 }
             }
+
+            $errorMsg = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
+            throw new Exception('Midtrans Direct QRIS Error: '.$errorMsg);
         }
 
-        // 2. Direct Charge for Virtual Accounts (BCA, BNI, BRI, Mandiri, Permata, CIMB)
+        // 2. Direct Core Charge for Virtual Accounts (BCA, BNI, BRI, Mandiri, Permata, CIMB)
         $vaBankMap = [
             'BCAVA' => 'bca',
             'BNIVA' => 'bni',
@@ -282,141 +248,139 @@ class MidtransService
         ];
 
         if (array_key_exists($method, $vaBankMap) || $method === 'MANDIRIVA') {
-            try {
-                if ($method === 'MANDIRIVA') {
-                    $payload = [
-                        'payment_type' => 'echannel',
-                        'transaction_details' => [
-                            'order_id' => $invoice,
-                            'gross_amount' => $amount,
-                        ],
-                        'item_details' => $itemDetails,
-                        'customer_details' => $customerDetails,
-                        'echannel' => [
-                            'bill_info1' => 'Pembayaran:',
-                            'bill_info2' => 'Topup Wistek',
-                        ],
-                    ];
-                } elseif ($method === 'PERMATAVA') {
-                    $payload = [
-                        'payment_type' => 'permata',
-                        'transaction_details' => [
-                            'order_id' => $invoice,
-                            'gross_amount' => $amount,
-                        ],
-                        'item_details' => $itemDetails,
-                        'customer_details' => $customerDetails,
-                    ];
-                } else {
-                    $bank = $vaBankMap[$method];
-                    $payload = [
-                        'payment_type' => 'bank_transfer',
-                        'transaction_details' => [
-                            'order_id' => $invoice,
-                            'gross_amount' => $amount,
-                        ],
-                        'item_details' => $itemDetails,
-                        'customer_details' => $customerDetails,
-                        'bank_transfer' => [
-                            'bank' => $bank,
-                        ],
-                    ];
-                }
-
-                $response = Http::withBasicAuth($this->serverKey, '')
-                    ->withHeaders([
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                    ])
-                    ->post($this->apiBaseUrl.'charge', $payload);
-
-                if ($response->successful()) {
-                    $resData = $response->json();
-                    $payCode = null;
-
-                    if (isset($resData['va_numbers'][0]['va_number'])) {
-                        $payCode = $resData['va_numbers'][0]['va_number'];
-                    } elseif (isset($resData['permata_va_number'])) {
-                        $payCode = $resData['permata_va_number'];
-                    } elseif (isset($resData['bill_key'])) {
-                        $billerCode = $resData['biller_code'] ?? '70012';
-                        $payCode = 'Kode Perusahaan: '.$billerCode.' | Bill Key: '.$resData['bill_key'];
-                    }
-
-                    if (! empty($payCode)) {
-                        return [
-                            'success' => true,
-                            'reference' => $resData['transaction_id'] ?? $invoice,
-                            'pay_code' => $payCode,
-                            'expired_time' => (time() + (24 * 60 * 60)),
-                        ];
-                    }
-                }
-            } catch (Exception $e) {
-                logger()->error('Midtrans VA Charge error: '.$e->getMessage());
-            }
-        }
-
-        // 3. Direct Charge for Convenience Store (Alfamart / Indomaret)
-        if (in_array($method, ['ALFAMART', 'INDOMARET'])) {
-            try {
-                $store = strtolower($method);
+            if ($method === 'MANDIRIVA') {
                 $payload = [
-                    'payment_type' => 'cstore',
+                    'payment_type' => 'echannel',
                     'transaction_details' => [
                         'order_id' => $invoice,
                         'gross_amount' => $amount,
                     ],
                     'item_details' => $itemDetails,
                     'customer_details' => $customerDetails,
-                    'cstore' => [
-                        'store' => $store,
-                        'message' => 'Topup Wistek',
+                    'echannel' => [
+                        'bill_info1' => 'Pembayaran:',
+                        'bill_info2' => 'Topup Wistek',
                     ],
                 ];
-
-                $response = Http::withBasicAuth($this->serverKey, '')
-                    ->withHeaders([
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json',
-                    ])
-                    ->post($this->apiBaseUrl.'charge', $payload);
-
-                if ($response->successful()) {
-                    $resData = $response->json();
-                    $payCode = $resData['payment_code'] ?? null;
-
-                    if (! empty($payCode)) {
-                        return [
-                            'success' => true,
-                            'reference' => $resData['transaction_id'] ?? $invoice,
-                            'pay_code' => $payCode,
-                            'expired_time' => (time() + (24 * 60 * 60)),
-                        ];
-                    }
-                }
-            } catch (Exception $e) {
-                logger()->error('Midtrans CStore Charge error: '.$e->getMessage());
+            } elseif ($method === 'PERMATAVA') {
+                $payload = [
+                    'payment_type' => 'permata',
+                    'transaction_details' => [
+                        'order_id' => $invoice,
+                        'gross_amount' => $amount,
+                    ],
+                    'item_details' => $itemDetails,
+                    'customer_details' => $customerDetails,
+                ];
+            } else {
+                $bank = $vaBankMap[$method];
+                $payload = [
+                    'payment_type' => 'bank_transfer',
+                    'transaction_details' => [
+                        'order_id' => $invoice,
+                        'gross_amount' => $amount,
+                    ],
+                    'item_details' => $itemDetails,
+                    'customer_details' => $customerDetails,
+                    'bank_transfer' => [
+                        'bank' => $bank,
+                    ],
+                ];
             }
+
+            $response = Http::withBasicAuth($this->serverKey, '')
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->apiBaseUrl.'charge', $payload);
+
+            if ($response->successful()) {
+                $resData = $response->json();
+                $payCode = null;
+
+                if (isset($resData['va_numbers'][0]['va_number'])) {
+                    $payCode = $resData['va_numbers'][0]['va_number'];
+                } elseif (isset($resData['permata_va_number'])) {
+                    $payCode = $resData['permata_va_number'];
+                } elseif (isset($resData['bill_key'])) {
+                    $billerCode = $resData['biller_code'] ?? '70012';
+                    $payCode = 'Kode Perusahaan: '.$billerCode.' | Bill Key: '.$resData['bill_key'];
+                }
+
+                if (! empty($payCode)) {
+                    return [
+                        'success' => true,
+                        'reference' => $resData['transaction_id'] ?? $invoice,
+                        'pay_code' => $payCode,
+                        'expired_time' => (time() + (24 * 60 * 60)),
+                    ];
+                }
+            }
+
+            $errorMsg = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
+            throw new Exception('Midtrans Direct VA Error: '.$errorMsg);
         }
 
-        // 4. Snap Token API Fallback
-        $snapPayload = [
-            'transaction_details' => [
-                'order_id' => $invoice,
-                'gross_amount' => $amount,
-            ],
-            'item_details' => $itemDetails,
-            'customer_details' => $customerDetails,
-            'callbacks' => [
-                'finish' => url('/transaction/'.$invoice),
-            ],
-            'override_notification_urls' => [
-                url('/callback/midtrans'),
-            ],
-        ];
+        // 3. Direct Charge for Convenience Store (Alfamart / Indomaret)
+        if (in_array($method, ['ALFAMART', 'INDOMARET'])) {
+            $store = strtolower($method);
+            $payload = [
+                'payment_type' => 'cstore',
+                'transaction_details' => [
+                    'order_id' => $invoice,
+                    'gross_amount' => $amount,
+                ],
+                'item_details' => $itemDetails,
+                'customer_details' => $customerDetails,
+                'cstore' => [
+                    'store' => $store,
+                    'message' => 'Topup Wistek',
+                ],
+            ];
 
-        try {
+            $response = Http::withBasicAuth($this->serverKey, '')
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                ])
+                ->post($this->apiBaseUrl.'charge', $payload);
+
+            if ($response->successful()) {
+                $resData = $response->json();
+                $payCode = $resData['payment_code'] ?? null;
+
+                if (! empty($payCode)) {
+                    return [
+                        'success' => true,
+                        'reference' => $resData['transaction_id'] ?? $invoice,
+                        'pay_code' => $payCode,
+                        'expired_time' => (time() + (24 * 60 * 60)),
+                    ];
+                }
+            }
+
+            $errorMsg = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
+            throw new Exception('Midtrans CStore Error: '.$errorMsg);
+        }
+
+        // 4. Snap Token API only if method is explicitly MIDTRANS_SNAP
+        if ($method === 'MIDTRANS_SNAP') {
+            $snapPayload = [
+                'transaction_details' => [
+                    'order_id' => $invoice,
+                    'gross_amount' => $amount,
+                ],
+                'item_details' => $itemDetails,
+                'customer_details' => $customerDetails,
+                'callbacks' => [
+                    'finish' => url('/transaction/'.$invoice),
+                ],
+                'override_notification_urls' => [
+                    url('/callback/midtrans'),
+                ],
+            ];
+
             $snapResponse = Http::withBasicAuth($this->serverKey, '')
                 ->withHeaders([
                     'Accept' => 'application/json',
@@ -437,12 +401,10 @@ class MidtransService
             }
 
             $errorMsg = $snapResponse->json()['error_messages'][0] ?? $snapResponse->body();
-            throw new Exception('Midtrans Error: '.$errorMsg);
-        } catch (Exception $e) {
-            logger()->error('Midtrans createTransaction failed: '.$e->getMessage());
-
-            throw $e;
+            throw new Exception('Midtrans Snap Error: '.$errorMsg);
         }
+
+        throw new Exception('Metode pembayaran '.$method.' tidak didukung di Midtrans.');
     }
 
     /**
