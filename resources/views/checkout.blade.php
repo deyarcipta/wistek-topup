@@ -130,18 +130,11 @@
                         @endphp
                         <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
                         <div style="margin-top: 1rem; text-align: center;">
-                            <p style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Klik tombol di bawah jika Pop-up pembayaran Midtrans tidak muncul otomatis:</p>
-                            <button type="button" id="pay-button" onclick="snap.pay('{{ $snapToken }}')" class="btn-checkout" style="display: inline-block; text-align: center; width: auto; padding: 0.75rem 2rem; background: #e28743; color: #fff; font-weight: 700; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;">
-                                <i class="fa-solid fa-credit-card" style="margin-right: 0.5rem;"></i> Bayar via Pop-up Midtrans
+                            <p style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Silakan klik tombol di bawah untuk menampilkan instruksi &amp; modal pembayaran:</p>
+                            <button type="button" id="pay-button" onclick="snap.pay('{{ $snapToken }}')" class="btn-checkout" style="display: inline-block; text-align: center; width: auto; padding: 0.85rem 2.5rem; background: linear-gradient(135deg, #e28743, #d97706); color: #fff; font-weight: 700; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(226, 135, 67, 0.4); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                                <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i> Bayar Sekarang
                             </button>
                         </div>
-                        <script>
-                            document.addEventListener('DOMContentLoaded', function() {
-                                if (typeof snap !== 'undefined') {
-                                    snap.pay('{{ $snapToken }}');
-                                }
-                            });
-                        </script>
                     @endif
 
                     @if(!$hasContent)
