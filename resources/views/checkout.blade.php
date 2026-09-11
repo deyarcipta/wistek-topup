@@ -104,6 +104,13 @@
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ urlencode($qrRawString) }}" alt="QRIS Code" class="qr-code-img" style="margin: 1rem auto; max-width: 250px; border: 8px solid #fff; border-radius: 8px; display: block;">
                         <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
+                        @if(!str_starts_with($qrRawString, 'http'))
+                            <div style="margin-top: 0.75rem;">
+                                <button type="button" class="copy-btn" onclick="copyText('{{ $qrRawString }}')" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
+                                    <i class="fa-solid fa-copy"></i> Salin String QRIS (Sandbox Simulator)
+                                </button>
+                            </div>
+                        @endif
                     @elseif($isQrisMethod && !empty($paymentUrl))
                         @php $hasContent = true; @endphp
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
