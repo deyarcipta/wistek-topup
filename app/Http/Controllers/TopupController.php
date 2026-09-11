@@ -249,13 +249,17 @@ class TopupController extends Controller
         // Send payment request to Active Payment Gateway
         $productName = $category->name.' - '.$product->name;
 
-        $gatewayResponse = $paymentManager->createTransaction(
-            $invoice,
-            $productName,
-            $totalPrice,
-            $request->customer_phone,
-            $request->payment_method
-        );
+        try {
+            $gatewayResponse = $paymentManager->createTransaction(
+                $invoice,
+                $productName,
+                $totalPrice,
+                $request->customer_phone,
+                $request->payment_method
+            );
+        } catch (\Throwable $e) {
+            return back()->withErrors(['error' => $e->getMessage()]);
+        }
 
         if (! ($gatewayResponse['success'] ?? false)) {
             return back()->withErrors(['error' => $gatewayResponse['message'] ?? 'Gagal membuat transaksi pembayaran']);

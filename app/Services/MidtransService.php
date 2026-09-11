@@ -185,7 +185,25 @@ class MidtransService
 
         // 1. Direct Core Charge for QRIS / GOPAY / SHOPEEPAY
         if (in_array($method, ['QRIS', 'GOPAY', 'SHOPEEPAY']) || str_contains($method, 'QRIS')) {
-            $payload = [
+            $payloadsToTry = [];
+
+            // 1. Try GoPay Direct Charge (enabled by default on all Midtrans Sandbox/Production accounts)
+            $payloadsToTry[] = [
+                'payment_type' => 'gopay',
+                'transaction_details' => [
+                    'order_id' => $invoice,
+                    'gross_amount' => $amount,
+                ],
+                'item_details' => $itemDetails,
+                'customer_details' => $customerDetails,
+                'gopay' => [
+                    'enable_callback' => true,
+                    'callback_url' => url('/transaction/'.$invoice),
+                ],
+            ];
+
+            // 2. Try QRIS Direct Charge
+            $payloadsToTry[] = [
                 'payment_type' => 'qris',
                 'transaction_details' => [
                     'order_id' => $invoice,
@@ -198,44 +216,52 @@ class MidtransService
                 ],
             ];
 
-            $response = Http::withBasicAuth($this->serverKey, '')
-                ->withHeaders([
-                    'Accept' => 'application/json',
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($this->apiBaseUrl.'charge', $payload);
+            $lastError = null;
+            foreach ($payloadsToTry as $payload) {
+                try {
+                    $response = Http::withBasicAuth($this->serverKey, '')
+                        ->withHeaders([
+                            'Accept' => 'application/json',
+                            'Content-Type' => 'application/json',
+                        ])
+                        ->post($this->apiBaseUrl.'charge', $payload);
 
-            if ($response->successful()) {
-                $resData = $response->json();
-                $actions = $resData['actions'] ?? [];
-                $qrUrl = null;
-                $qrString = $resData['qr_string'] ?? null;
+                    if ($response->successful()) {
+                        $resData = $response->json();
+                        $actions = $resData['actions'] ?? [];
+                        $qrUrl = null;
+                        $qrString = $resData['qr_string'] ?? null;
 
-                foreach ($actions as $action) {
-                    if (($action['name'] ?? '') === 'generate-qr-code') {
-                        $qrUrl = $action['url'] ?? null;
-                        break;
+                        foreach ($actions as $action) {
+                            if (($action['name'] ?? '') === 'generate-qr-code') {
+                                $qrUrl = $action['url'] ?? null;
+                                break;
+                            }
+                        }
+
+                        if (empty($qrUrl) && ! empty($actions[0]['url'])) {
+                            $qrUrl = $actions[0]['url'];
+                        }
+
+                        if (! empty($qrUrl) || ! empty($qrString)) {
+                            return [
+                                'success' => true,
+                                'reference' => $resData['transaction_id'] ?? $invoice,
+                                'qr_url' => $qrUrl,
+                                'qr_string' => $qrString,
+                                'qr_content' => $qrString ?: $qrUrl,
+                                'expired_time' => (time() + (24 * 60 * 60)),
+                            ];
+                        }
+                    } else {
+                        $lastError = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
                     }
-                }
-
-                if (empty($qrUrl) && ! empty($actions[0]['url'])) {
-                    $qrUrl = $actions[0]['url'];
-                }
-
-                if (! empty($qrUrl) || ! empty($qrString)) {
-                    return [
-                        'success' => true,
-                        'reference' => $resData['transaction_id'] ?? $invoice,
-                        'qr_url' => $qrUrl,
-                        'qr_string' => $qrString,
-                        'qr_content' => $qrString ?: $qrUrl,
-                        'expired_time' => (time() + (24 * 60 * 60)),
-                    ];
+                } catch (Exception $e) {
+                    $lastError = $e->getMessage();
                 }
             }
 
-            $errorMsg = $response->json()['status_message'] ?? $response->json()['error_messages'][0] ?? $response->body();
-            throw new Exception('Midtrans Direct QRIS Error: '.$errorMsg);
+            throw new Exception('Midtrans Direct QRIS Error: '.($lastError ?: 'Payment channel is not activated on Midtrans Sandbox dashboard.'));
         }
 
         // 2. Direct Core Charge for Virtual Accounts (BCA, BNI, BRI, Mandiri, Permata, CIMB)
