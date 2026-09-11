@@ -20,9 +20,16 @@ class MidtransService
 
     public function __construct()
     {
-        $this->serverKey = Setting::get('midtrans_server_key', env('MIDTRANS_SERVER_KEY', ''));
-        $this->clientKey = Setting::get('midtrans_client_key', env('MIDTRANS_CLIENT_KEY', ''));
+        $this->serverKey = trim((string) Setting::get('midtrans_server_key', env('MIDTRANS_SERVER_KEY', '')));
+        $this->clientKey = trim((string) Setting::get('midtrans_client_key', env('MIDTRANS_CLIENT_KEY', '')));
         $this->mode = Setting::get('midtrans_mode', env('MIDTRANS_MODE', 'sandbox'));
+
+        // Auto detect mode if serverKey starts with Mid-server- (Production) or SB-Mid-server- (Sandbox)
+        if (str_starts_with($this->serverKey, 'Mid-server-')) {
+            $this->mode = 'production';
+        } elseif (str_starts_with($this->serverKey, 'SB-Mid-server-')) {
+            $this->mode = 'sandbox';
+        }
 
         if ($this->mode === 'production') {
             $this->apiBaseUrl = 'https://api.midtrans.com/v2/';
