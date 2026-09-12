@@ -102,8 +102,10 @@ class TopupController extends Controller
             ->where('is_active', true)
             ->where('start_at', '<=', now())
             ->where('end_at', '>', now())
+            ->whereColumn('stock_sold', '<', 'stock_total')
             ->whereIn('product_id', $products->pluck('id'))
             ->get()
+            ->filter(fn ($fs) => $fs->isRunning())
             ->keyBy('product_id');
 
         $minPrice = (int) ($products->min('price_sell') ?? 10000);
@@ -146,11 +148,12 @@ class TopupController extends Controller
             ]);
         }
 
-        // Check if product has an active Flash Sale promo
+        // Check if product has an active Flash Sale promo with available stock
         $activeFlashSale = FlashSale::where('product_id', $product->id)
             ->where('is_active', true)
             ->where('start_at', '<=', now())
             ->where('end_at', '>', now())
+            ->whereColumn('stock_sold', '<', 'stock_total')
             ->first();
 
         $effectiveSellPrice = ($activeFlashSale && (float) $activeFlashSale->discount_price > 0)

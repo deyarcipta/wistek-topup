@@ -37,14 +37,15 @@ class FlashSale extends Model
     }
 
     /**
-     * Check if flash sale is currently active and within start/end time
+     * Check if flash sale is currently active, within start/end time, and has stock remaining
      */
     public function isRunning(): bool
     {
         return $this->is_active &&
             $this->start_at &&
             $this->end_at &&
-            now()->between($this->start_at, $this->end_at);
+            now()->between($this->start_at, $this->end_at) &&
+            $this->stock_sold < $this->stock_total;
     }
 
     /**

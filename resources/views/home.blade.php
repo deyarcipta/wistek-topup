@@ -178,9 +178,15 @@
                                 </div>
                             </div>
 
-                            <a href="{{ url('/category/' . $category->slug) }}" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
-                                <span>Beli Sekarang</span> <i class="fa-solid fa-bolt" style="font-size: 0.75rem;"></i>
-                            </a>
+                            @if($remaining > 0)
+                                <a href="{{ url('/category/' . $category->slug) }}" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
+                                    <span>Beli Sekarang</span> <i class="fa-solid fa-bolt" style="font-size: 0.75rem;"></i>
+                                </a>
+                            @else
+                                <button type="button" disabled style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); cursor: not-allowed; opacity: 0.7;">
+                                    <span>Kuota Promo Habis</span> <i class="fa-solid fa-lock" style="font-size: 0.75rem;"></i>
+                                </button>
+                            @endif
                         </div>
                     @endif
                 @endforeach
