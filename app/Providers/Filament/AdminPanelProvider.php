@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('w1st3k')
+            ->brandName('Wistek Topup')
             ->brandLogo(fn () => new HtmlString('
                 <div style="display: flex; align-items: center; gap: 0.65rem; padding-left: 0.25rem;">
                     <img src="'.asset('logo.png').'" alt="Logo" style="height: 34px; width: 34px; object-fit: contain;">
