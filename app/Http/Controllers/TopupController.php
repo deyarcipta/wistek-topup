@@ -338,29 +338,36 @@ class TopupController extends Controller
             Voucher::where('code', $voucherCode)->increment('used_count');
         }
 
-        // Trigger WhatsApp Notification for Pending Payment
-        try {
-            $whatsapp = new WhatsappService;
-            $payCodeText = isset($paymentDetails['pay_code']) ? "\n*Kode VA / Bayar*: {$paymentDetails['pay_code']}" : '';
-            $transactionUrl = ! empty($paymentDetails['payment_url']) ? $paymentDetails['payment_url'] : url('/transaction/'.$invoice);
-            $paymentUrlText = "\n*Link Pembayaran*: {$transactionUrl}";
+        // Trigger WhatsApp Notification for Pending Payment asynchronously after HTTP response
+        $customerPhone = $request->customer_phone;
+        $paymentMethod = $request->payment_method;
+        $categoryName = $category->name;
+        $productName = $product->name;
 
-            $message = "Halo, terima kasih telah melakukan pemesanan di Wistek Topup.
+        dispatch(function () use ($invoice, $categoryName, $productName, $target, $totalPrice, $paymentMethod, $paymentDetails, $customerPhone) {
+            try {
+                $whatsapp = new WhatsappService;
+                $payCodeText = isset($paymentDetails['pay_code']) ? "\n*Kode VA / Bayar*: {$paymentDetails['pay_code']}" : '';
+                $transactionUrl = ! empty($paymentDetails['payment_url']) ? $paymentDetails['payment_url'] : url('/transaction/'.$invoice);
+                $paymentUrlText = "\n*Link Pembayaran*: {$transactionUrl}";
+
+                $message = "Halo, terima kasih telah melakukan pemesanan di Wistek Topup.
 
 *Detail Transaksi*:
 *Invoice*: {$invoice}
-*Produk*: {$category->name} - {$product->name}
+*Produk*: {$categoryName} - {$productName}
 *Target*: {$target}
 *Total Bayar*: Rp ".number_format($totalPrice, 0, ',', '.')."
-*Metode*: {$request->payment_method}{$payCodeText}{$paymentUrlText}
+*Metode*: {$paymentMethod}{$payCodeText}{$paymentUrlText}
 
 Silakan lakukan pembayaran sebelum waktu habis.
 Terima kasih!";
 
-            $whatsapp->sendMessage($request->customer_phone, $message);
-        } catch (\Exception $e) {
-            logger()->error('Failed to send WhatsApp pending notification: '.$e->getMessage());
-        }
+                $whatsapp->sendMessage($customerPhone, $message);
+            } catch (\Throwable $e) {
+                logger()->error('Failed to send WhatsApp pending notification: '.$e->getMessage());
+            }
+        })->afterResponse();
 
         return redirect('/transaction/'.$invoice);
     }
