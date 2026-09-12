@@ -31,14 +31,22 @@ class StatsOverview extends StatsOverviewWidget
             $dfDesc = 'Koneksi Provider: '.($dfStatus['message'] ?? 'Belum Konfigurasi');
         }
 
-        // 2. Payment Gateway Status & Revenue collected via Online Payment Gateway
+        // 2. Payment Gateway Status & Revenue collected via Online Payment Gateway (Net Settlement after Fees)
         $paymentManager = new PaymentGatewayManager;
         $gatewayName = $paymentManager->getActiveGatewayName();
         $activeGatewayKey = strtoupper($paymentManager->getActiveGateway());
 
         $gatewayRevenue = Transaction::where('payment_status', 'paid')
             ->where('payment_method', '!=', 'CASH')
-            ->sum('price');
+            ->get()
+            ->sum(function ($tx) {
+                $adminFee = 0;
+                if (is_array($tx->payment_details) && isset($tx->payment_details['admin_fee'])) {
+                    $adminFee = (float) $tx->payment_details['admin_fee'];
+                }
+
+                return max(0, $tx->price - $adminFee);
+            });
         $formattedGatewayRevenue = 'Rp '.number_format($gatewayRevenue, 0, ',', '.');
 
         // 3. General Transaction Metrics
@@ -56,7 +64,7 @@ class StatsOverview extends StatsOverviewWidget
                 ->color($dfColor),
 
             Stat::make('Payment Gateway ('.$activeGatewayKey.')', $formattedGatewayRevenue)
-                ->description($gatewayName.' - Omset Online')
+                ->description($gatewayName.' - Saldo Net Kliring')
                 ->descriptionIcon('heroicon-o-credit-card')
                 ->color('info'),
 

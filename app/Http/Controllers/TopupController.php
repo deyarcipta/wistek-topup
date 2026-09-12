@@ -354,6 +354,16 @@ Terima kasih!";
             }
         }
 
+        // Real-time status sync with Digiflazz provider if payment is paid but topup is still pending/processing
+        if ($transaction->payment_status === 'paid' && in_array($transaction->topup_status, ['processing', 'pending'])) {
+            try {
+                $digiflazz->checkTopupStatus($transaction);
+                $transaction->refresh();
+            } catch (\Exception $e) {
+                logger()->error('Auto sync Digiflazz topup status error for '.$invoice.': '.$e->getMessage());
+            }
+        }
+
         return view('checkout', compact('transaction'));
     }
 
@@ -378,6 +388,16 @@ Terima kasih!";
                 }
             } catch (\Exception $e) {
                 logger()->error('API status auto sync error for '.$invoice.': '.$e->getMessage());
+            }
+        }
+
+        // Real-time status sync with Digiflazz provider if payment is paid but topup is still pending/processing
+        if ($transaction->payment_status === 'paid' && in_array($transaction->topup_status, ['processing', 'pending'])) {
+            try {
+                $digiflazz->checkTopupStatus($transaction);
+                $transaction->refresh();
+            } catch (\Exception $e) {
+                logger()->error('API status Digiflazz auto sync error for '.$invoice.': '.$e->getMessage());
             }
         }
 

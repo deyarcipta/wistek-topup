@@ -100,6 +100,36 @@ class TransactionsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('syncDigiflazzStatus')
+                    ->label('Cek Status Provider')
+                    ->icon('heroicon-m-arrow-path-slash')
+                    ->color('info')
+                    ->visible(fn ($record) => $record->payment_status === 'paid' && in_array($record->topup_status, ['processing', 'pending']))
+                    ->action(function ($record) {
+                        try {
+                            $digiflazz = new DigiflazzService;
+                            $res = $digiflazz->checkTopupStatus($record);
+                            if ($res['success']) {
+                                Notification::make()
+                                    ->title('Status Digiflazz Disinkronkan!')
+                                    ->body('Status: '.strtoupper($res['status']).' | Catatan: '.($res['note'] ?? '-'))
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Gagal Sinkronisasi Status')
+                                    ->body($res['message'] ?? 'Eror koneksi')
+                                    ->warning()
+                                    ->send();
+                            }
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Terjadi Kesalahan')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Action::make('retryDigiflazz')
                     ->label('Retry Digiflazz')
                     ->icon('heroicon-m-arrow-path')

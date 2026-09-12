@@ -6,6 +6,7 @@ use App\Filament\Pages\ManagePriceMarginSettings;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Transaction;
 use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -532,6 +533,133 @@ class DigiflazzService
 
             return [
                 'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Check transaction status directly from Digiflazz API and sync DB status
+     *
+     * @return array{success: bool, status: string, note: string|null, message: string|null}
+     */
+    public function checkTopupStatus(Transaction $transaction): array
+    {
+        if (! $this->isConfigured()) {
+            return [
+                'success' => false,
+                'status' => $transaction->topup_status,
+                'note' => $transaction->note,
+                'message' => 'Digiflazz belum terkonfigurasi.',
+            ];
+        }
+
+        $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
+        $sign = md5($this->username.$this->apiKey.$transaction->invoice);
+
+        $payload = [
+            'username' => $this->username,
+            'buyer_sku_code' => $transaction->sku,
+            'customer_no' => $targetNo,
+            'ref_id' => $transaction->invoice,
+            'sign' => $sign,
+        ];
+
+        logger()->info('Digiflazz checkTopupStatus request for ref_id='.$transaction->invoice);
+
+        try {
+            $response = Http::post($this->baseUrl.'transaction', $payload);
+
+            logger()->info('Digiflazz checkTopupStatus response: Status='.$response->status().' Body='.$response->body());
+
+            if ($response->successful()) {
+                $body = $response->json();
+                $data = $body['data'] ?? [];
+
+                if (! empty($data)) {
+                    $rawStatus = strtolower($data['status'] ?? '');
+                    $sn = $data['sn'] ?? '';
+                    $message = $data['message'] ?? '';
+
+                    $statusBefore = $transaction->topup_status;
+
+                    if ($rawStatus === 'sukses') {
+                        $transaction->topup_status = 'success';
+                        $transaction->note = $sn ?: 'Sukses';
+                        $transaction->save();
+                        $transaction->creditPointsIfEligible();
+
+                        if ($statusBefore !== 'success' && $transaction->customer_phone) {
+                            try {
+                                $whatsapp = new WhatsappService;
+                                $whatsapp->sendMessage(
+                                    $transaction->customer_phone,
+                                    "Top-up BERHASIL dikirim! 🎉\n\n*Invoice*: {$transaction->invoice}\n*Produk*: {$transaction->category_name} - {$transaction->product_name}\n*Target*: {$transaction->target_no}\n*Serial Number (SN)*: {$transaction->note}\n\nTerima kasih telah berbelanja di Wistek Topup!"
+                                );
+                            } catch (\Throwable $ex) {
+                                logger()->error('WhatsApp topup success notification failed: '.$ex->getMessage());
+                            }
+                        }
+
+                        return [
+                            'success' => true,
+                            'status' => 'success',
+                            'note' => $transaction->note,
+                            'message' => 'Top-up Berhasil',
+                        ];
+                    } elseif ($rawStatus === 'gagal') {
+                        $transaction->topup_status = 'failed';
+                        $transaction->note = $message ?: 'Ditolak oleh provider';
+                        $transaction->save();
+
+                        if ($statusBefore !== 'failed' && $transaction->customer_phone) {
+                            try {
+                                $whatsapp = new WhatsappService;
+                                $whatsapp->sendMessage(
+                                    $transaction->customer_phone,
+                                    "Mohon maaf, transaksi top-up untuk Invoice *{$transaction->invoice}* GAGAL diproses oleh provider.\nDetail: {$transaction->note}\n\nSilakan hubungi Customer Service kami untuk bantuan pengembalian dana."
+                                );
+                            } catch (\Throwable $ex) {
+                                logger()->error('WhatsApp topup failed notification failed: '.$ex->getMessage());
+                            }
+                        }
+
+                        return [
+                            'success' => true,
+                            'status' => 'failed',
+                            'note' => $transaction->note,
+                            'message' => 'Top-up Gagal',
+                        ];
+                    } else {
+                        $transaction->topup_status = 'processing';
+                        if (empty($transaction->note)) {
+                            $transaction->note = 'Sedang diproses oleh provider';
+                            $transaction->save();
+                        }
+
+                        return [
+                            'success' => true,
+                            'status' => 'processing',
+                            'note' => $transaction->note,
+                            'message' => 'Masih Diproses oleh Provider',
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'success' => false,
+                'status' => $transaction->topup_status,
+                'note' => $transaction->note,
+                'message' => 'Gagal terhubung ke API Digiflazz',
+            ];
+        } catch (Exception $e) {
+            logger()->error('Digiflazz checkTopupStatus failed for '.$transaction->invoice.': '.$e->getMessage());
+
+            return [
+                'success' => false,
+                'status' => $transaction->topup_status,
+                'note' => $transaction->note,
                 'message' => $e->getMessage(),
             ];
         }

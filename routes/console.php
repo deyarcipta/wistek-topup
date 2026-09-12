@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('points:expire')->daily();
 Schedule::command('products:sync-digiflazz')->everySixHours();
 Schedule::command('doku:check-pending')->everyTwoMinutes()->withoutOverlapping();
+Schedule::command('digiflazz:check-pending')->everyTwoMinutes()->withoutOverlapping();
