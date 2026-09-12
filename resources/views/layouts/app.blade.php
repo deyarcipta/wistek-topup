@@ -269,7 +269,7 @@
             </a>
 
             @php
-                $navCategoriesRaw = \App\Models\Category::where('is_active', true)
+                $navCategoriesRaw = \App\Models\Category::where('status', true)
                     ->select('id', 'name', 'slug', 'thumbnail', 'type', 'is_maintenance')
                     ->orderBy('name', 'asc')
                     ->get();
