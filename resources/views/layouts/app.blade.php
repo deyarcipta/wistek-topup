@@ -268,17 +268,56 @@
                 Wistek<span>Topup</span>
             </a>
 
-            <!-- Navbar Live Search Bar -->
-            <div class="nav-search-container">
+            @php
+                $navCategoriesRaw = \App\Models\Category::where('is_active', true)
+                    ->select('id', 'name', 'slug', 'thumbnail', 'type', 'is_maintenance')
+                    ->orderBy('name', 'asc')
+                    ->get();
+                    
+                $navSearchCategories = $navCategoriesRaw->map(function ($cat) {
+                    $thumb = $cat->thumbnail;
+                    if ($thumb && !\Illuminate\Support\Str::startsWith($thumb, ['http://', 'https://'])) {
+                        $thumb = asset('storage/' . ltrim($thumb, '/'));
+                    }
+                    return [
+                        'id' => $cat->id,
+                        'name' => $cat->name,
+                        'slug' => $cat->slug,
+                        'thumbnail' => $thumb,
+                        'type' => match($cat->type) {
+                            'game' => 'Game',
+                            'pulsa' => 'Pulsa & Data',
+                            'emoney' => 'E-Money',
+                            'pln' => 'PLN Listrik',
+                            'tagihan' => 'Tagihan',
+                            'voucher' => 'Voucher',
+                            'streaming' => 'Streaming',
+                            default => ucfirst($cat->type ?? 'Game'),
+                        },
+                        'is_maintenance' => (bool) $cat->is_maintenance,
+                        'url' => url('/category/' . $cat->slug),
+                    ];
+                });
+            @endphp
+
+            <!-- Navbar Live Search Bar with Autocomplete Dropdown -->
+            <div class="nav-search-container" style="position: relative;">
                 <form action="{{ url('/') }}" method="GET" id="navSearchForm" onsubmit="handleNavSearchSubmit(event)">
                     <div style="position: relative; display: flex; align-items: center; width: 100%;">
-                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; color: #e28743; font-size: 0.88rem; pointer-events: none;"></i>
-                        <input type="text" id="navSearchInput" name="search" placeholder="Cari game atau layanan (misal: Mobile Legends, Free Fire)..." value="{{ request('search') }}" autocomplete="off" oninput="handleNavSearchInput(this.value)">
-                        <button type="button" id="navClearSearch" onclick="clearNavSearch()" style="display: {{ request('search') ? 'block' : 'none' }}; position: absolute; right: 0.85rem; background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; padding: 0.2rem; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--text-secondary)';">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; color: #e28743; font-size: 0.88rem; pointer-events: none; z-index: 2;"></i>
+                        <input type="text" id="navSearchInput" name="search" placeholder="Cari game atau layanan (misal: Mobile Legends, Free Fire)..." value="{{ request('search') }}" autocomplete="off" oninput="handleNavSearchInput(this.value)" onfocus="handleNavSearchFocus(this.value)" onkeydown="handleNavSearchKeyDown(event)">
+                        <button type="button" id="navClearSearch" onclick="clearNavSearch()" style="display: {{ request('search') ? 'block' : 'none' }}; position: absolute; right: 0.85rem; background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; padding: 0.2rem; transition: color 0.2s; z-index: 2;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--text-secondary)';">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
                 </form>
+
+                <!-- Instant Autocomplete Results Dropdown -->
+                <div id="navSearchDropdown" style="display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: rgba(18, 19, 26, 0.98); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(226, 135, 67, 0.35); border-radius: 16px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(226, 135, 67, 0.15); max-height: 380px; overflow-y: auto; z-index: 10000; padding: 0.5rem;">
+                    <div id="navSearchResultsList" style="display: flex; flex-direction: column; gap: 0.25rem;">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
             </div>
 
             <nav class="nav-links" id="navLinks" style="display: flex; align-items: center; gap: 1.25rem;">
@@ -615,8 +654,17 @@
         };
 
         // ----------------------------------------------------
-        // Navbar Search Functions
+        // Navbar Search Functions with Instant Autocomplete Dropdown
         // ----------------------------------------------------
+        const globalNavCategories = @json($navSearchCategories);
+        let activeNavSearchIndex = -1;
+
+        function highlightMatch(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<strong style="color: #e28743; font-weight: 800;">$1</strong>');
+        }
+
         function handleNavSearchInput(val) {
             const clearBtn = document.getElementById('navClearSearch');
             if (clearBtn) {
@@ -627,6 +675,110 @@
             if (typeof handleLiveSearch === 'function') {
                 handleLiveSearch(val);
             }
+
+            renderNavSearchDropdown(val);
+        }
+
+        function handleNavSearchFocus(val) {
+            if (val && val.trim().length > 0) {
+                renderNavSearchDropdown(val);
+            }
+        }
+
+        function renderNavSearchDropdown(val) {
+            const dropdown = document.getElementById('navSearchDropdown');
+            const list = document.getElementById('navSearchResultsList');
+            if (!dropdown || !list) return;
+
+            const query = val ? val.trim().toLowerCase() : '';
+            if (!query) {
+                dropdown.style.display = 'none';
+                activeNavSearchIndex = -1;
+                return;
+            }
+
+            const matches = globalNavCategories.filter(cat => {
+                const name = cat.name ? cat.name.toLowerCase() : '';
+                const type = cat.type ? cat.type.toLowerCase() : '';
+                const slug = cat.slug ? cat.slug.toLowerCase() : '';
+                return name.includes(query) || type.includes(query) || slug.includes(query);
+            });
+
+            if (matches.length === 0) {
+                list.innerHTML = `
+                    <div style="padding: 1.25rem; text-align: center; color: var(--text-secondary); font-size: 0.88rem;">
+                        <i class="fa-solid fa-magnifying-glass-minus" style="font-size: 1.4rem; color: #ef4444; margin-bottom: 0.4rem; display: block;"></i>
+                        Game atau layanan "<strong style="color: #e28743;">${val.trim()}</strong>" tidak ditemukan.
+                    </div>
+                `;
+            } else {
+                list.innerHTML = matches.map((cat, idx) => {
+                    const thumb = cat.thumbnail || `https://placehold.co/100x100/1e293b/ffffff?text=${encodeURIComponent(cat.name)}`;
+                    const maintenanceBadge = cat.is_maintenance ? `
+                        <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.6rem; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase; flex-shrink: 0; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);">
+                            <i class="fa-solid fa-wrench" style="font-size: 0.55rem; margin-right: 2px;"></i> Maintenance
+                        </span>
+                    ` : '';
+
+                    return `
+                        <a href="${cat.url}" class="nav-search-item" data-index="${idx}" style="display: flex; align-items: center; gap: 0.85rem; padding: 0.65rem 0.85rem; border-radius: 12px; text-decoration: none; transition: all 0.2s ease; background: transparent; border: 1px solid transparent;" onmouseover="this.style.background='rgba(226, 135, 67, 0.14)'; this.style.borderColor='rgba(226, 135, 67, 0.3)';" onmouseout="if(!this.classList.contains('active-search-item')){ this.style.background='transparent'; this.style.borderColor='transparent'; }">
+                            <img src="${thumb}" alt="${cat.name}" style="width: 44px; height: 44px; border-radius: 10px; object-fit: cover; border: 1.5px solid rgba(226, 135, 67, 0.25); flex-shrink: 0;" onerror="this.onerror=null; this.src='https://placehold.co/100x100/1e293b/ffffff?text=${encodeURIComponent(cat.name)}';">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                        ${highlightMatch(cat.name, val.trim())}
+                                    </h4>
+                                    ${maintenanceBadge}
+                                </div>
+                                <span style="font-size: 0.78rem; color: var(--text-secondary); display: block; margin-top: 2px;">${cat.type}</span>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+            }
+
+            dropdown.style.display = 'block';
+            activeNavSearchIndex = -1;
+        }
+
+        function handleNavSearchKeyDown(e) {
+            const dropdown = document.getElementById('navSearchDropdown');
+            if (!dropdown || dropdown.style.display === 'none') return;
+
+            const items = dropdown.querySelectorAll('.nav-search-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeNavSearchIndex = (activeNavSearchIndex + 1) % items.length;
+                updateNavSearchSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeNavSearchIndex = (activeNavSearchIndex - 1 + items.length) % items.length;
+                updateNavSearchSelection(items);
+            } else if (e.key === 'Enter') {
+                if (activeNavSearchIndex >= 0 && items[activeNavSearchIndex]) {
+                    e.preventDefault();
+                    window.location.href = items[activeNavSearchIndex].getAttribute('href');
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function updateNavSearchSelection(items) {
+            items.forEach((item, idx) => {
+                if (idx === activeNavSearchIndex) {
+                    item.classList.add('active-search-item');
+                    item.style.background = 'rgba(226, 135, 67, 0.2)';
+                    item.style.borderColor = '#e28743';
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('active-search-item');
+                    item.style.background = 'transparent';
+                    item.style.borderColor = 'transparent';
+                }
+            });
         }
 
         function clearNavSearch() {
@@ -639,6 +791,14 @@
         }
 
         function handleNavSearchSubmit(e) {
+            const dropdown = document.getElementById('navSearchDropdown');
+            const items = dropdown ? dropdown.querySelectorAll('.nav-search-item') : [];
+            if (activeNavSearchIndex >= 0 && items[activeNavSearchIndex]) {
+                e.preventDefault();
+                window.location.href = items[activeNavSearchIndex].getAttribute('href');
+                return;
+            }
+
             const input = document.getElementById('navSearchInput');
             if (!input) return;
             const query = input.value.trim();
@@ -650,6 +810,15 @@
                 }
             }
         }
+
+        // Close dropdown on click outside
+        document.addEventListener('click', (e) => {
+            const searchContainer = document.querySelector('.nav-search-container');
+            const dropdown = document.getElementById('navSearchDropdown');
+            if (searchContainer && dropdown && !searchContainer.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
