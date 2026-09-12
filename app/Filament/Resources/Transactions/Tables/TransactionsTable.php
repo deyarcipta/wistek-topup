@@ -102,7 +102,7 @@ class TransactionsTable
                 EditAction::make(),
                 Action::make('syncDigiflazzStatus')
                     ->label('Cek Status Provider')
-                    ->icon('heroicon-m-arrow-path-slash')
+                    ->icon('heroicon-m-arrow-path')
                     ->color('info')
                     ->visible(fn ($record) => $record->payment_status === 'paid' && in_array($record->topup_status, ['processing', 'pending']))
                     ->action(function ($record) {
