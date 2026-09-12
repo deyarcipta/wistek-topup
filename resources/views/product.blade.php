@@ -285,6 +285,23 @@
                 </p>
             </div>
         </div>
+    @if(isset($flashSalesMap) && $flashSalesMap->isNotEmpty())
+        <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(226, 135, 67, 0.12)); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 14px; padding: 1.15rem 1.5rem; margin-top: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);">
+            <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="background: linear-gradient(135deg, #ef4444, #e28743); width: 44px; height: 44px; min-width: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+                    <i class="fa-solid fa-bolt" style="font-size: 1.35rem; color: #fff; animation: pulse 1.5s infinite;"></i>
+                </div>
+                <div>
+                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0 0 3px 0; display: flex; align-items: center; gap: 0.4rem;">
+                        PROMO FLASH SALE AKTIF ⚡
+                    </h4>
+                    <span style="font-size: 0.83rem; color: var(--text-secondary);">Potongan harga promo spesial berlaku otomatis pada produk nominal bertanda diskon!</span>
+                </div>
+            </div>
+            <span style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; font-size: 0.75rem; font-weight: 800; padding: 0.4rem 0.85rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">
+                DISKON SPESIAL 🔥
+            </span>
+        </div>
     @endif
     
     <form action="{{ url('/checkout') }}" method="POST" id="topupForm">
@@ -553,33 +570,59 @@
                                         $iconBg = 'rgba(6, 182, 212, 0.12)';
                                     }
                                 @endphp
-                                <div class="nominal-card" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $product->price_sell }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid rgba(255, 255, 255, 0.08); transition: all 0.22s ease; cursor: pointer; position: relative;">
-                                    <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
-                                    
-                                    <!-- Upper Row: Title & Styled Icon Box -->
-                                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; width: 100%;">
-                                        <div style="display: flex; flex-direction: column; gap: 0.3rem;">
-                                            <span class="nominal-name" style="font-weight: 700; color: #fff; font-size: 0.95rem; line-height: 1.35; font-family: 'Outfit', sans-serif;">{{ $displayName }}</span>
-                                            @if($badgeText)
-                                                <span style="font-size: 0.65rem; background: {{ $iconBg }}; color: {{ $iconColor }}; padding: 1px 6px; border-radius: 4px; font-weight: 600; width: fit-content; border: 1px solid {{ $iconColor }}33;">
-                                                    {{ $badgeText }}
+                                    @php
+                                        $flashSaleItem = (isset($flashSalesMap) && $flashSalesMap->has($product->id)) ? $flashSalesMap->get($product->id) : null;
+                                        $hasFlashSale = $flashSaleItem && $flashSaleItem->isRunning();
+                                        $effectivePrice = $hasFlashSale ? (float) $flashSaleItem->discount_price : (float) $product->price_sell;
+                                        $discountPercent = $hasFlashSale ? $flashSaleItem->discount_percentage : 0;
+                                    @endphp
+                                    <div class="nominal-card {{ $hasFlashSale ? 'flash-sale-card' : '' }}" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $effectivePrice }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid {{ $hasFlashSale ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)' }}; transition: all 0.22s ease; cursor: pointer; position: relative; {{ $hasFlashSale ? 'box-shadow: 0 4px 15px rgba(239, 68, 68, 0.12);' : '' }}">
+                                        <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
+                                        
+                                        @if($hasFlashSale)
+                                            <span style="position: absolute; top: -10px; right: 10px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); z-index: 4; text-transform: uppercase;">
+                                                ⚡ PROMO -{{ $discountPercent }}%
+                                            </span>
+                                        @endif
+
+                                        <!-- Upper Row: Title & Styled Icon Box -->
+                                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; width: 100%;">
+                                            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+                                                <span class="nominal-name" style="font-weight: 700; color: #fff; font-size: 0.95rem; line-height: 1.35; font-family: 'Outfit', sans-serif;">{{ $displayName }}</span>
+                                                @if($badgeText)
+                                                    <span style="font-size: 0.65rem; background: {{ $iconBg }}; color: {{ $iconColor }}; padding: 1px 6px; border-radius: 4px; font-weight: 600; width: fit-content; border: 1px solid {{ $iconColor }}33;">
+                                                        {{ $badgeText }}
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            
+                                            <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: {{ $iconBg }}; display: flex; align-items: center; justify-content: center; border: 1px solid {{ $iconColor }}33;">
+                                                <i class="{{ $iconClass }}" style="color: {{ $iconColor }}; font-size: 1.1rem;"></i>
+                                            </div>
+                                        </div>
+
+                                        <!-- Bottom Row: Price & Instant Delivery Badge -->
+                                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.06);">
+                                            @if($hasFlashSale)
+                                                <div style="display: flex; flex-direction: column;">
+                                                    <span style="font-size: 0.72rem; color: var(--text-secondary); text-decoration: line-through; line-height: 1.1;">
+                                                        Rp {{ number_format($product->price_sell, 0, ',', '.') }}
+                                                    </span>
+                                                    <span class="nominal-price" style="font-weight: 800; color: #ef4444; font-size: 1.08rem; font-family: 'Outfit', sans-serif; line-height: 1.2;">
+                                                        Rp {{ number_format($effectivePrice, 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            @else
+                                                <span class="nominal-price" style="font-weight: 700; color: #3b82f6; font-size: 1.05rem; font-family: 'Outfit', sans-serif;">
+                                                    Rp {{ number_format($product->price_sell, 0, ',', '.') }}
                                                 </span>
                                             @endif
-                                        </div>
-                                        
-                                        <div style="width: 34px; height: 34px; min-width: 34px; border-radius: 8px; background: {{ $iconBg }}; display: flex; align-items: center; justify-content: center; border: 1px solid {{ $iconColor }}33;">
-                                            <i class="{{ $iconClass }}" style="color: {{ $iconColor }}; font-size: 1.1rem;"></i>
-                                        </div>
-                                    </div>
 
-                                    <!-- Bottom Row: Price & Instant Delivery Badge -->
-                                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 1rem; padding-top: 0.5rem; border-top: 1px dashed rgba(255, 255, 255, 0.06);">
-                                        <span class="nominal-price" style="font-weight: 700; color: #3b82f6; font-size: 1.05rem; font-family: 'Outfit', sans-serif;">Rp {{ number_format($product->price_sell, 0, ',', '.') }}</span>
-                                        <span style="font-size: 0.68rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px; font-weight: 600;">
-                                            <i class="fa-solid fa-bolt" style="font-size: 0.6rem; color: #eab308;"></i> Instan
-                                        </span>
+                                            <span style="font-size: 0.68rem; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px; font-weight: 600;">
+                                                <i class="fa-solid fa-bolt" style="font-size: 0.6rem; color: #eab308;"></i> Instan
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
                             @endforeach
                         </div>
                     @empty

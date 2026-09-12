@@ -97,10 +97,19 @@ class TopupController extends Controller
             ->orderBy('price_sell', 'asc')
             ->get();
 
+        // Fetch active flash sales for products in this category
+        $flashSalesMap = FlashSale::with('product')
+            ->where('is_active', true)
+            ->where('start_at', '<=', now())
+            ->where('end_at', '>', now())
+            ->whereIn('product_id', $products->pluck('id'))
+            ->get()
+            ->keyBy('product_id');
+
         $minPrice = (int) ($products->min('price_sell') ?? 10000);
         $paymentChannels = $paymentManager->getPaymentChannels($minPrice);
 
-        return view('product', compact('category', 'products', 'paymentChannels'));
+        return view('product', compact('category', 'products', 'paymentChannels', 'flashSalesMap'));
     }
 
     /**
@@ -137,8 +146,24 @@ class TopupController extends Controller
             ]);
         }
 
+        // Check if product has an active Flash Sale promo
+        $activeFlashSale = FlashSale::where('product_id', $product->id)
+            ->where('is_active', true)
+            ->where('start_at', '<=', now())
+            ->where('end_at', '>', now())
+            ->first();
+
+        $effectiveSellPrice = ($activeFlashSale && (float) $activeFlashSale->discount_price > 0)
+            ? (float) $activeFlashSale->discount_price
+            : (float) $product->price_sell;
+
         $isCashPayment = in_array(strtoupper((string) $request->payment_method), ['CASH', 'MANUAL']);
-        $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $product->price_sell);
+        $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $effectiveSellPrice);
+
+        // Increment flash sale stock sold if applicable
+        if ($activeFlashSale) {
+            $activeFlashSale->increment('stock_sold');
+        }
 
         // Calculate dynamic fee from payment methods based on actual product base price
         $paymentChannels = $paymentManager->getPaymentChannels($basePrice);
