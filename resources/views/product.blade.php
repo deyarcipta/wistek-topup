@@ -285,6 +285,8 @@
                 </p>
             </div>
         </div>
+    @endif
+
     @if(isset($flashSalesMap) && $flashSalesMap->isNotEmpty())
         <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(226, 135, 67, 0.12)); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 14px; padding: 1.15rem 1.5rem; margin-top: 1.5rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 8px 25px rgba(239, 68, 68, 0.15);">
             <div style="display: flex; align-items: center; gap: 0.85rem;">
