@@ -31,7 +31,7 @@ class StatsOverview extends StatsOverviewWidget
             $dfDesc = 'Koneksi Provider: '.($dfStatus['message'] ?? 'Belum Konfigurasi');
         }
 
-        // 2. Payment Gateway Status & Revenue collected via Online Payment Gateway (Net Settlement after Fees)
+        // 2. Payment Gateway Status & Revenue collected via Online Payment Gateway (Exact Net Kliring Settlement after TriPay MDR)
         $paymentManager = new PaymentGatewayManager;
         $gatewayName = $paymentManager->getActiveGatewayName();
         $activeGatewayKey = strtoupper($paymentManager->getActiveGateway());
@@ -40,12 +40,37 @@ class StatsOverview extends StatsOverviewWidget
             ->where('payment_method', '!=', 'CASH')
             ->get()
             ->sum(function ($tx) {
-                $adminFee = 0;
-                if (is_array($tx->payment_details) && isset($tx->payment_details['admin_fee'])) {
-                    $adminFee = (float) $tx->payment_details['admin_fee'];
+                $details = is_array($tx->payment_details) ? $tx->payment_details : [];
+
+                // 1. If TriPay webhook provided exact amount_received, use it directly
+                if (isset($details['amount_received']) && (float) $details['amount_received'] > 0) {
+                    return (float) $details['amount_received'];
                 }
 
-                return max(0, $tx->price - $adminFee);
+                // 2. Otherwise calculate exact TriPay MDR Net Settlement per payment channel
+                $method = strtoupper((string) $tx->payment_method);
+                $price = (float) $tx->price;
+                $adminFee = (float) ($details['admin_fee'] ?? 0);
+
+                if (str_contains($method, 'QRIS')) {
+                    // Standard TriPay QRIS MDR is 0.7%
+                    $tripayMdrFee = round(($price * 0.7) / 100);
+
+                    // Return net kliring amount received by merchant
+                    return max(0, $price - $tripayMdrFee - $adminFee);
+                } elseif (str_contains($method, 'BCA')) {
+                    return max(0, $price - 5500 - $adminFee);
+                } elseif (str_contains($method, 'VA') || str_contains($method, 'MYBVA')) {
+                    return max(0, $price - 4250 - $adminFee);
+                } elseif (in_array($method, ['ALFAMART', 'INDOMARET'])) {
+                    return max(0, $price - 3500 - $adminFee);
+                } elseif (in_array($method, ['OVO', 'DANA', 'SHOPEEPAY'])) {
+                    $fee = max(1000, round(($price * 3.0) / 100));
+
+                    return max(0, $price - $fee - $adminFee);
+                }
+
+                return max(0, $price - $adminFee);
             });
         $formattedGatewayRevenue = 'Rp '.number_format($gatewayRevenue, 0, ',', '.');
 

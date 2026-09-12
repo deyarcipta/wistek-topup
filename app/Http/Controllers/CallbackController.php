@@ -157,6 +157,13 @@ class CallbackController extends Controller
         }
 
         if ($status === 'PAID') {
+            if (isset($data['amount_received']) && (float) $data['amount_received'] > 0) {
+                $details = is_array($transaction->payment_details) ? $transaction->payment_details : [];
+                $details['amount_received'] = (float) $data['amount_received'];
+                $details['total_fee'] = (float) ($data['total_fee'] ?? 0);
+                $transaction->payment_details = $details;
+                $transaction->save();
+            }
             $this->fulfillPaidTransaction($transaction, $data['reference'] ?? null, $digiflazz);
         } elseif (in_array($status, ['EXPIRED', 'FAILED', 'REFUND'])) {
             $transaction->payment_status = 'failed';
