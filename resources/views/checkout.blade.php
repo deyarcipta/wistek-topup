@@ -304,7 +304,12 @@
     // Copy Text Helper
     function copyText(text) {
         navigator.clipboard.writeText(text).then(function() {
-            alert('Kode pembayaran berhasil disalin!');
+            showCustomModal({
+                title: 'Berhasil Disalin',
+                message: 'Kode pembayaran berhasil disalin ke clipboard!',
+                type: 'success',
+                btnText: 'Oke'
+            });
         }, function(err) {
             console.error('Could not copy text: ', err);
         });

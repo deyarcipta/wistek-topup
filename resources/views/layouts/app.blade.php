@@ -43,23 +43,64 @@
             gap: 2.5rem;
         }
 
+        .nav-search-container {
+            flex: 1;
+            max-width: 440px;
+            margin: 0 1.5rem;
+            position: relative;
+        }
+
+        .nav-search-container input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(226, 135, 67, 0.25);
+            border-radius: 30px;
+            padding: 0.55rem 2.4rem 0.55rem 2.4rem;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 500;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .nav-search-container input:focus {
+            border-color: #e28743;
+            background: rgba(18, 18, 22, 0.95);
+            box-shadow: 0 0 18px rgba(226, 135, 67, 0.35);
+        }
+
+        @media (max-width: 992px) {
+            .nav-search-container {
+                max-width: 280px;
+                margin: 0 0.75rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .menu-toggle {
                 display: block !important;
             }
             .navbar {
                 position: relative;
-                height: 70px !important;
-                flex-direction: row !important;
+                height: auto !important;
+                min-height: 70px !important;
+                flex-wrap: wrap !important;
                 justify-content: space-between !important;
                 align-items: center !important;
-                padding: 0 1.5rem !important;
-                gap: 0 !important;
+                padding: 0.75rem 1.25rem !important;
+                gap: 0.75rem !important;
+            }
+            .nav-search-container {
+                order: 3;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
             }
             .nav-links {
                 display: none !important;
                 position: absolute !important;
-                top: 70px !important;
+                top: 100% !important;
                 left: 0 !important;
                 width: 100% !important;
                 background: rgba(8, 9, 12, 0.98) !important;
@@ -222,10 +263,24 @@
     <!-- Header / Navbar -->
     <header>
         <div class="container navbar">
-            <a href="{{ url('/') }}" class="logo" style="display: flex; align-items: center; gap: 0.5rem;">
+            <a href="{{ url('/') }}" class="logo" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                 <img src="{{ asset('logo.png') }}" alt="Logo" style="height: 32px; object-fit: contain;">
                 Wistek<span>Topup</span>
             </a>
+
+            <!-- Navbar Live Search Bar -->
+            <div class="nav-search-container">
+                <form action="{{ url('/') }}" method="GET" id="navSearchForm" onsubmit="handleNavSearchSubmit(event)">
+                    <div style="position: relative; display: flex; align-items: center; width: 100%;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1rem; color: #e28743; font-size: 0.88rem; pointer-events: none;"></i>
+                        <input type="text" id="navSearchInput" name="search" placeholder="Cari game atau layanan (misal: Mobile Legends, Free Fire)..." value="{{ request('search') }}" autocomplete="off" oninput="handleNavSearchInput(this.value)">
+                        <button type="button" id="navClearSearch" onclick="clearNavSearch()" style="display: {{ request('search') ? 'block' : 'none' }}; position: absolute; right: 0.85rem; background: none; border: none; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; padding: 0.2rem; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--text-secondary)';">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             <nav class="nav-links" id="navLinks" style="display: flex; align-items: center; gap: 1.25rem;">
                 <a href="{{ url('/') }}" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
                 <a href="{{ url('/history') }}" class="nav-link"><i class="fa-solid fa-receipt"></i> Cek Transaksi</a>
@@ -304,7 +359,7 @@
 
             <!-- Column 1: Brand Info -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
-                <a href="{{ url('/') }}" class="logo" style="font-size: 1.75rem; width: fit-content; display: flex; align-items: center; gap: 0.5rem;">
+                <a href="{{ url('/') }}" class="logo" style="font-size: 1.75rem; width: fit-content; display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                     <img src="{{ asset('logo.png') }}" alt="Logo" style="height: 38px; object-fit: contain;">
                     Wistek<span style="color: var(--text-secondary); font-weight: 400;">Topup</span>
                 </a>
@@ -364,8 +419,7 @@
                 </div>
             </div>
 
-
-            <!-- Column 3: Payment Partners Showcase -->
+            <!-- Column 4: Payment Partners Showcase -->
             <div style="display: flex; flex-direction: column; gap: 1.5rem; text-align: left;">
                 <h4 style="font-size: 1.1rem; font-weight: 700; color: #fff; position: relative; margin: 0; padding-bottom: 0.5rem;">
                     Pembayaran Aman
@@ -394,6 +448,38 @@
         </div>
     </footer>
 
+    <!-- Global Custom Modal Component -->
+    <div id="customModalBackdrop" style="display: none; position: fixed; inset: 0; background: rgba(5, 6, 9, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 99999; align-items: center; justify-content: center; padding: 1.25rem; opacity: 0; transition: opacity 0.25s ease-in-out;">
+        <div id="customModalBox" style="background: rgba(18, 19, 26, 0.96); border: 1px solid rgba(226, 135, 67, 0.35); border-radius: 24px; width: 100%; max-width: 440px; padding: 2.25rem 1.75rem; text-align: center; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(226, 135, 67, 0.15); transform: scale(0.88); transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; overflow: hidden;">
+            
+            <!-- Background Glow Effect -->
+            <div id="customModalGlow" style="position: absolute; top: -60px; left: 50%; transform: translateX(-50%); width: 180px; height: 180px; background: rgba(226, 135, 67, 0.25); filter: blur(55px); border-radius: 50%; pointer-events: none;"></div>
+
+            <!-- Close Button (X) -->
+            <button type="button" onclick="closeCustomModal()" style="position: absolute; top: 1rem; right: 1rem; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-secondary); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.color='#fff'; this.style.background='rgba(255, 255, 255, 0.15)';" onmouseout="this.style.color='var(--text-secondary)'; this.style.background='rgba(255, 255, 255, 0.05)';">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Icon Header -->
+            <div id="customModalIconBg" style="width: 68px; height: 68px; border-radius: 50%; background: rgba(226, 135, 67, 0.12); border: 1px solid rgba(226, 135, 67, 0.3); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem auto; box-shadow: 0 8px 20px rgba(226, 135, 67, 0.2);">
+                <i id="customModalIcon" class="fa-solid fa-triangle-exclamation" style="font-size: 1.85rem; color: #e28743;"></i>
+            </div>
+
+            <!-- Title -->
+            <h3 id="customModalTitle" style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 0.75rem 0; line-height: 1.3;">Pemberitahuan</h3>
+
+            <!-- Message Body -->
+            <div id="customModalMessage" style="font-family: 'Outfit', sans-serif; font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1.75rem; white-space: pre-line;">
+                Pesan modal akan muncul di sini.
+            </div>
+
+            <!-- Action Button -->
+            <button type="button" id="customModalBtn" onclick="closeCustomModal()" style="width: 100%; background: linear-gradient(135deg, #e28743, #d97706); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 700; padding: 0.85rem 1.5rem; border-radius: 14px; border: none; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 6px 20px rgba(226, 135, 67, 0.35);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(226, 135, 67, 0.5)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 6px 20px rgba(226, 135, 67, 0.35)';">
+                <span id="customModalBtnText">Saya Mengerti</span>
+            </button>
+        </div>
+    </div>
+
     @yield('scripts')
     <script>
         document.getElementById('menuToggle').addEventListener('click', function() {
@@ -407,6 +493,163 @@
                 icon.classList.add('fa-bars');
             }
         });
+
+        // ----------------------------------------------------
+        // Global Professional Custom Modal System
+        // ----------------------------------------------------
+        let modalConfirmCallback = null;
+
+        function showCustomModal(options = {}) {
+            const title = options.title || 'Pemberitahuan';
+            const message = options.message || '';
+            const type = options.type || 'warning'; // warning, success, error, info
+            const btnText = options.btnText || 'Saya Mengerti';
+            modalConfirmCallback = options.onConfirm || null;
+
+            const backdrop = document.getElementById('customModalBackdrop');
+            const modalBox = document.getElementById('customModalBox');
+            const modalTitle = document.getElementById('customModalTitle');
+            const modalMessage = document.getElementById('customModalMessage');
+            const modalIcon = document.getElementById('customModalIcon');
+            const modalIconBg = document.getElementById('customModalIconBg');
+            const modalGlow = document.getElementById('customModalGlow');
+            const modalBtn = document.getElementById('customModalBtn');
+            const modalBtnText = document.getElementById('customModalBtnText');
+
+            if (!backdrop || !modalBox) return;
+
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalBtnText.textContent = btnText;
+
+            // Apply color theme according to type
+            if (type === 'success') {
+                modalIcon.className = 'fa-solid fa-circle-check';
+                modalIcon.style.color = '#10b981';
+                modalIconBg.style.background = 'rgba(16, 185, 129, 0.12)';
+                modalIconBg.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                modalIconBg.style.boxShadow = '0 8px 20px rgba(16, 185, 129, 0.2)';
+                modalGlow.style.background = 'rgba(16, 185, 129, 0.25)';
+                modalBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                modalBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                modalBtn.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.35)';
+            } else if (type === 'error' || type === 'danger') {
+                modalIcon.className = 'fa-solid fa-circle-xmark';
+                modalIcon.style.color = '#ef4444';
+                modalIconBg.style.background = 'rgba(239, 68, 68, 0.12)';
+                modalIconBg.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                modalIconBg.style.boxShadow = '0 8px 20px rgba(239, 68, 68, 0.2)';
+                modalGlow.style.background = 'rgba(239, 68, 68, 0.25)';
+                modalBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                modalBtn.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+                modalBtn.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.35)';
+            } else if (type === 'info') {
+                modalIcon.className = 'fa-solid fa-circle-info';
+                modalIcon.style.color = '#3b82f6';
+                modalIconBg.style.background = 'rgba(59, 130, 246, 0.12)';
+                modalIconBg.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                modalIconBg.style.boxShadow = '0 8px 20px rgba(59, 130, 246, 0.2)';
+                modalGlow.style.background = 'rgba(59, 130, 246, 0.25)';
+                modalBox.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                modalBtn.style.background = 'linear-gradient(135deg, #3b82f6, #2563eb)';
+                modalBtn.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.35)';
+            } else { // warning default
+                modalIcon.className = 'fa-solid fa-triangle-exclamation';
+                modalIcon.style.color = '#e28743';
+                modalIconBg.style.background = 'rgba(226, 135, 67, 0.12)';
+                modalIconBg.style.borderColor = 'rgba(226, 135, 67, 0.3)';
+                modalIconBg.style.boxShadow = '0 8px 20px rgba(226, 135, 67, 0.2)';
+                modalGlow.style.background = 'rgba(226, 135, 67, 0.25)';
+                modalBox.style.borderColor = 'rgba(226, 135, 67, 0.3)';
+                modalBtn.style.background = 'linear-gradient(135deg, #e28743, #d97706)';
+                modalBtn.style.boxShadow = '0 6px 20px rgba(226, 135, 67, 0.35)';
+            }
+
+            backdrop.style.display = 'flex';
+            requestAnimationFrame(() => {
+                backdrop.style.opacity = '1';
+                modalBox.style.transform = 'scale(1)';
+            });
+        }
+
+        function closeCustomModal() {
+            const backdrop = document.getElementById('customModalBackdrop');
+            const modalBox = document.getElementById('customModalBox');
+            if (!backdrop || !modalBox) return;
+
+            backdrop.style.opacity = '0';
+            modalBox.style.transform = 'scale(0.88)';
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+                if (typeof modalConfirmCallback === 'function') {
+                    const cb = modalConfirmCallback;
+                    modalConfirmCallback = null;
+                    cb();
+                }
+            }, 250);
+        }
+
+        // Close on ESC key or backdrop click
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const backdrop = document.getElementById('customModalBackdrop');
+                if (backdrop && backdrop.style.display !== 'none') {
+                    closeCustomModal();
+                }
+            }
+        });
+
+        document.getElementById('customModalBackdrop')?.addEventListener('click', (e) => {
+            if (e.target.id === 'customModalBackdrop') {
+                closeCustomModal();
+            }
+        });
+
+        // Override standard browser alert globally
+        window.alert = function(msg) {
+            showCustomModal({
+                title: 'Pemberitahuan',
+                message: msg,
+                type: 'warning'
+            });
+        };
+
+        // ----------------------------------------------------
+        // Navbar Search Functions
+        // ----------------------------------------------------
+        function handleNavSearchInput(val) {
+            const clearBtn = document.getElementById('navClearSearch');
+            if (clearBtn) {
+                clearBtn.style.display = val.trim() ? 'block' : 'none';
+            }
+            
+            // If on homepage, trigger instant live search on grid
+            if (typeof handleLiveSearch === 'function') {
+                handleLiveSearch(val);
+            }
+        }
+
+        function clearNavSearch() {
+            const input = document.getElementById('navSearchInput');
+            if (input) {
+                input.value = '';
+                handleNavSearchInput('');
+                input.focus();
+            }
+        }
+
+        function handleNavSearchSubmit(e) {
+            const input = document.getElementById('navSearchInput');
+            if (!input) return;
+            const query = input.value.trim();
+            // If already on homepage, prevent page reload and perform search in place
+            if (window.location.pathname === '/' || window.location.pathname === '') {
+                e.preventDefault();
+                if (typeof handleLiveSearch === 'function') {
+                    handleLiveSearch(query);
+                }
+            }
+        }
     </script>
 </body>
 </html>

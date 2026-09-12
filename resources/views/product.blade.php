@@ -1169,7 +1169,12 @@
         const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
         if (isVa && selectedPrice > 0 && discountedPrice < 10000) {
-            alert('Metode Virtual Account memerlukan minimal transaksi Rp 10.000.\n\nSilakan pilih QRIS atau E-Wallet untuk transaksi di bawah Rp 10.000.');
+            showCustomModal({
+                title: 'Minimal Transaksi Virtual Account',
+                message: 'Metode Virtual Account memerlukan minimal transaksi Rp 10.000.\n\nSilakan pilih QRIS atau E-Wallet untuk transaksi di bawah Rp 10.000.',
+                type: 'warning',
+                btnText: 'Pilih Metode Lain'
+            });
             const qrisItem = document.querySelector('.payment-row-item[data-code="QRIS"]');
             if (qrisItem) {
                 selectPayment('QRIS');
@@ -1399,13 +1404,21 @@
         const applyBtn = document.getElementById('btnApplyVoucher');
         
         if (!productId) {
-            alert('Silakan pilih nominal produk terlebih dahulu sebelum memasukkan voucher!');
+            showCustomModal({
+                title: 'Pilih Nominal Produk',
+                message: 'Silakan pilih nominal produk terlebih dahulu sebelum memasukkan voucher!',
+                type: 'warning'
+            });
             return;
         }
 
         const code = codeInput.value.trim();
         if (!code) {
-            alert('Silakan masukkan kode voucher!');
+            showCustomModal({
+                title: 'Kode Voucher Kosong',
+                message: 'Silakan masukkan kode voucher!',
+                type: 'warning'
+            });
             return;
         }
 
@@ -1654,25 +1667,41 @@
 
         if (accountUserId === '') {
             e.preventDefault();
-            alert('Silakan isi Data Akun / Target ID terlebih dahulu!');
+            showCustomModal({
+                title: 'Data Akun Belum Lengkap',
+                message: 'Silakan isi Data Akun / Target ID Anda terlebih dahulu!',
+                type: 'warning'
+            });
             return;
         }
 
         if (!productId) {
             e.preventDefault();
-            alert('Silakan pilih nominal top-up terlebih dahulu!');
+            showCustomModal({
+                title: 'Nominal Belum Dipilih',
+                message: 'Silakan pilih nominal top-up terlebih dahulu!',
+                type: 'warning'
+            });
             return;
         }
 
         if (!paymentMethod) {
             e.preventDefault();
-            alert('Silakan pilih metode pembayaran terlebih dahulu!');
+            showCustomModal({
+                title: 'Metode Pembayaran Belum Dipilih',
+                message: 'Silakan pilih metode pembayaran terlebih dahulu!',
+                type: 'warning'
+            });
             return;
         }
 
         if (!phoneVal) {
             e.preventDefault();
-            alert('Silakan isi nomor WhatsApp untuk notifikasi transaksi!');
+            showCustomModal({
+                title: 'Nomor WhatsApp Belum Diisi',
+                message: 'Silakan isi nomor WhatsApp untuk notifikasi transaksi!',
+                type: 'warning'
+            });
             return;
         }
 

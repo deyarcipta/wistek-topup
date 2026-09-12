@@ -102,16 +102,7 @@
         </section>
     @endif
 
-    <!-- Live Search Bar Section -->
-    <div style="margin-top: 2.25rem; margin-bottom: 1.5rem; position: relative;">
-        <div style="position: relative; display: flex; align-items: center;">
-            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1.25rem; color: #e28743; font-size: 1.15rem; pointer-events: none;"></i>
-            <input type="text" id="liveSearchInput" onkeyup="handleLiveSearch()" placeholder="Cari game atau layanan favoritmu (misal: Mobile Legends, Free Fire, PLN)..." style="width: 100%; background: rgba(18, 18, 22, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(226, 135, 67, 0.3); border-radius: 50px; padding: 0.95rem 3.25rem 0.95rem 3.25rem; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.98rem; font-weight: 500; outline: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.3);" onfocus="this.style.borderColor='#e28743'; this.style.boxShadow='0 0 20px rgba(226, 135, 67, 0.35)';" onblur="this.style.borderColor='rgba(226, 135, 67, 0.3)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)';">
-            <button type="button" id="btnClearSearch" onclick="clearLiveSearch()" style="display: none; position: absolute; right: 1.25rem; background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--text-secondary)';">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-    </div>
+
 
     <!-- Section: Flash Sale & Countdown Timer -->
     @if(isset($flashSales) && count($flashSales) > 0)
@@ -586,17 +577,26 @@
     // ----------------------------------------------------
     // Live Search Bar Functionality (Instant 0ms Filtering)
     // ----------------------------------------------------
-    function handleLiveSearch() {
-        const input = document.getElementById('liveSearchInput');
-        if (!input) return;
-
-        const query = input.value.trim().toLowerCase();
-        const clearBtn = document.getElementById('btnClearSearch');
-
-        if (clearBtn) {
-            clearBtn.style.display = query ? 'block' : 'none';
+    function handleLiveSearch(queryOverride) {
+        let rawQuery = '';
+        if (typeof queryOverride === 'string') {
+            rawQuery = queryOverride;
+        } else {
+            const navInput = document.getElementById('navSearchInput');
+            rawQuery = navInput ? navInput.value : '';
         }
 
+        const navInput = document.getElementById('navSearchInput');
+        if (navInput && navInput.value !== rawQuery) {
+            navInput.value = rawQuery;
+        }
+
+        const clearBtnNav = document.getElementById('navClearSearch');
+        if (clearBtnNav) {
+            clearBtnNav.style.display = rawQuery.trim() ? 'block' : 'none';
+        }
+
+        const query = rawQuery.trim().toLowerCase();
         const cards = document.querySelectorAll('#allCategoriesGrid .category-card');
         let matchCount = 0;
 
@@ -631,7 +631,7 @@
         if (noNotice) {
             if (query && matchCount === 0) {
                 noNotice.style.display = 'block';
-                if (kw) kw.innerText = input.value.trim();
+                if (kw) kw.innerText = rawQuery.trim();
             } else {
                 noNotice.style.display = 'none';
             }
@@ -643,10 +643,10 @@
     }
 
     function clearLiveSearch() {
-        const input = document.getElementById('liveSearchInput');
-        if (input) {
-            input.value = '';
-            handleLiveSearch();
+        if (typeof clearNavSearch === 'function') {
+            clearNavSearch();
+        } else {
+            handleLiveSearch('');
         }
     }
 
@@ -689,11 +689,18 @@
         setInterval(updateTimer, 1000);
     }
 
-    // Initialize Slider Autoplay, Category Limit & Flash Sale Timer on Load
+    // Initialize Slider Autoplay, Category Limit, Flash Sale Timer & URL Search on Load
     document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
         updateCategoryVisibility();
         startFlashSaleTimer();
+
+        // Check URL search param and trigger search if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+            handleLiveSearch(searchParam);
+        }
 
         const slider = document.querySelector('.slider-container');
         if (slider) {
