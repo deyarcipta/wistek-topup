@@ -582,7 +582,7 @@
                                         <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
                                         
                                         @if($hasFlashSale)
-                                            <span style="position: absolute; top: -10px; right: 10px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 2px 8px; border-radius: 10px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); z-index: 4; text-transform: uppercase;">
+                                            <span style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 3px 9px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); z-index: 4; text-transform: uppercase; letter-spacing: 0.3px;">
                                                 ⚡ PROMO -{{ $discountPercent }}%
                                             </span>
                                         @endif
