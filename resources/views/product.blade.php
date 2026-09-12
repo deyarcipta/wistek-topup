@@ -1851,5 +1851,21 @@
             menu.style.display = 'none';
         }
     });
+
+    // Auto-select product card if product_id URL query parameter is present (e.g. from Flash Sale click on homepage)
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetProductId = urlParams.get('product_id') || urlParams.get('product') || urlParams.get('select');
+
+        if (targetProductId) {
+            const targetCard = document.querySelector(`.nominal-card[data-product-id="${targetProductId}"]`);
+            if (targetCard) {
+                setTimeout(() => {
+                    targetCard.click();
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
+        }
+    });
 </script>
 @endsection

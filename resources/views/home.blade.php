@@ -179,7 +179,7 @@
                             </div>
 
                             @if($remaining > 0)
-                                <a href="{{ url('/category/' . $category->slug) }}" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
+                                <a href="{{ url('/category/' . $category->slug . '?product_id=' . $product->id) }}" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
                                     <span>Beli Sekarang</span> <i class="fa-solid fa-bolt" style="font-size: 0.75rem;"></i>
                                 </a>
                             @else
