@@ -1149,6 +1149,18 @@
     }
 
     function selectPayment(code) {
+        const isVa = (code.includes('VA') || code.includes('VIRTUAL') || code.includes('MYBVA') || code.includes('OTHERBANK'));
+        const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
+
+        if (isVa && selectedPrice > 0 && discountedPrice < 10000) {
+            alert('Metode Virtual Account memerlukan minimal transaksi Rp 10.000.\n\nSilakan pilih QRIS atau E-Wallet untuk transaksi di bawah Rp 10.000.');
+            const qrisItem = document.querySelector('.payment-row-item[data-code="QRIS"]');
+            if (qrisItem) {
+                selectPayment('QRIS');
+            }
+            return;
+        }
+
         // Remove active class from all payment items
         document.querySelectorAll('.payment-row-item').forEach(item => {
             item.classList.remove('active');
@@ -1174,17 +1186,33 @@
         if (!selectedPrice) return;
         
         const formatRupiah = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
+        const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
         document.querySelectorAll('.payment-row-item').forEach(item => {
             const code = item.getAttribute('data-code') || '';
             const isQris = (code === 'QRIS' || code.includes('QRIS'));
+            const isVa = (code.includes('VA') || code.includes('VIRTUAL') || code.includes('MYBVA') || code.includes('OTHERBANK'));
             const feeFlat = parseFloat(item.getAttribute('data-fee-flat') || 0);
             let feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             const minFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             const maxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
-            
-            // Calculate base price after discount
-            const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
+
+            if (isVa) {
+                const vaBadge = item.querySelector('.va-min-badge');
+                if (discountedPrice < 10000) {
+                    item.style.opacity = '0.5';
+                    if (vaBadge) vaBadge.style.display = 'block';
+                    if (item.classList.contains('active')) {
+                        const qrisItem = document.querySelector('.payment-row-item[data-code="QRIS"]');
+                        if (qrisItem) {
+                            selectPayment('QRIS');
+                        }
+                    }
+                } else {
+                    item.style.opacity = '1';
+                    if (vaBadge) vaBadge.style.display = 'none';
+                }
+            }
 
             if (isQris) {
                 feePercent = getServiceFeePercent(discountedPrice);
