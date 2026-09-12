@@ -51,6 +51,16 @@ class CategoryForm
                     ->label('Aktif / Tampilkan di Web')
                     ->default(true)
                     ->required(),
+                Toggle::make('is_maintenance')
+                    ->label('Server Game Maintenance 🛠️')
+                    ->default(false)
+                    ->live()
+                    ->helperText('Aktifkan jika provider/server game sedang gangguan atau pemeliharaan rutin.'),
+                TextInput::make('maintenance_note')
+                    ->label('Pesan Maintenance')
+                    ->placeholder('Contoh: Server Moonton sedang pemeliharaan rutin. Top-up mungkin mengalami sedikit penundaan.')
+                    ->helperText('Pesan penjelas yang akan ditampilkan sebagai peringatan di halaman produk.')
+                    ->visible(fn (Get $get): bool => (bool) $get('is_maintenance')),
                 Toggle::make('is_nickname_check_enabled')
                     ->label('Aktifkan Cek Username')
                     ->default(true)

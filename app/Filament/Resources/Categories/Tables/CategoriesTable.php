@@ -60,6 +60,9 @@ class CategoriesTable
                 ToggleColumn::make('status')
                     ->label('Aktif / Tampilkan')
                     ->sortable(),
+                ToggleColumn::make('is_maintenance')
+                    ->label('Maintenance 🛠️')
+                    ->sortable(),
                 ToggleColumn::make('is_nickname_check_enabled')
                     ->label('Cek Username')
                     ->sortable(),

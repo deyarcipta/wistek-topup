@@ -102,9 +102,104 @@
         </section>
     @endif
 
+    <!-- Live Search Bar Section -->
+    <div style="margin-top: 2.25rem; margin-bottom: 1.5rem; position: relative;">
+        <div style="position: relative; display: flex; align-items: center;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 1.25rem; color: #e28743; font-size: 1.15rem; pointer-events: none;"></i>
+            <input type="text" id="liveSearchInput" onkeyup="handleLiveSearch()" placeholder="Cari game atau layanan favoritmu (misal: Mobile Legends, Free Fire, PLN)..." style="width: 100%; background: rgba(18, 18, 22, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(226, 135, 67, 0.3); border-radius: 50px; padding: 0.95rem 3.25rem 0.95rem 3.25rem; color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.98rem; font-weight: 500; outline: none; transition: all 0.3s ease; box-shadow: 0 8px 25px rgba(0,0,0,0.3);" onfocus="this.style.borderColor='#e28743'; this.style.boxShadow='0 0 20px rgba(226, 135, 67, 0.35)';" onblur="this.style.borderColor='rgba(226, 135, 67, 0.3)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.3)';">
+            <button type="button" id="btnClearSearch" onclick="clearLiveSearch()" style="display: none; position: absolute; right: 1.25rem; background: none; border: none; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; transition: color 0.2s;" onmouseover="this.style.color='#fff';" onmouseout="this.style.color='var(--text-secondary)';">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Section: Flash Sale & Countdown Timer -->
+    @if(isset($flashSales) && count($flashSales) > 0)
+        @php
+            $firstEndTime = $flashSales->min('end_at');
+            $endTimeIso = $firstEndTime ? $firstEndTime->format('Y-m-d\TH:i:s') : '';
+        @endphp
+        <section id="flashSaleSection" style="margin-top: 2rem; margin-bottom: 3rem; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(226, 135, 67, 0.1)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 20px; padding: 1.75rem; box-shadow: 0 12px 35px rgba(239, 68, 68, 0.15); position: relative; overflow: hidden;">
+            
+            <div style="position: absolute; top: -50px; right: -50px; width: 180px; height: 180px; background: rgba(239, 68, 68, 0.2); filter: blur(60px); border-radius: 50%; pointer-events: none;"></div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px dashed rgba(255, 255, 255, 0.1); padding-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="background: linear-gradient(135deg, #ef4444, #e28743); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);">
+                        <i class="fa-solid fa-bolt" style="font-size: 1.35rem; color: #fff; animation: pulse 1.5s infinite;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.3rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+                            FLASH SALE <span style="color: #ef4444;">TERBATAS</span> ⚡
+                        </h2>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary);">Penawaran diskon spesial dengan kuota terbatas!</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(239, 68, 68, 0.4); padding: 0.5rem 1rem; border-radius: 12px;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">BERAKHIR DALAM:</span>
+                    <div id="flashSaleTimer" data-end="{{ $endTimeIso }}" style="display: flex; gap: 0.35rem; font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1rem; color: #fff;">
+                        <span id="timerHours" style="background: #ef4444; padding: 2px 7px; border-radius: 6px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);">00</span> :
+                        <span id="timerMinutes" style="background: #e28743; padding: 2px 7px; border-radius: 6px; box-shadow: 0 2px 6px rgba(226, 135, 67, 0.4);">00</span> :
+                        <span id="timerSeconds" style="background: #10b981; padding: 2px 7px; border-radius: 6px; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);">00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem;">
+                @foreach($flashSales as $sale)
+                    @php
+                        $product = $sale->product;
+                        $category = $product ? $product->category : null;
+                        $percentage = $sale->discount_percentage;
+                        $remaining = $sale->stock_remaining;
+                        $soldPercent = $sale->stock_total > 0 ? min(100, round(($sale->stock_sold / $sale->stock_total) * 100)) : 0;
+                    @endphp
+                    @if($product && $category)
+                        <div style="background: rgba(18, 18, 22, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; transition: all 0.25s ease;" onmouseover="this.style.borderColor='#ef4444'; this.style.transform='translateY(-4px)';" onmouseout="this.style.borderColor='rgba(255, 255, 255, 0.08)'; this.style.transform='none';">
+                            
+                            <span style="position: absolute; top: 0.6rem; right: 0.6rem; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-weight: 800; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); z-index: 2;">
+                                DISKON {{ $percentage }}%
+                            </span>
+
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;">
+                                <img src="{{ $category->thumbnail ?? 'https://placehold.co/100x100' }}" alt="{{ $category->name }}" style="width: 48px; height: 48px; border-radius: 10px; object-fit: cover; border: 1.5px solid rgba(239, 68, 68, 0.3);">
+                                <div>
+                                    <span style="font-size: 0.72rem; color: #ef4444; font-weight: 700; text-transform: uppercase; display: block;">{{ $category->name }}</span>
+                                    <h4 style="font-family: 'Outfit', sans-serif; font-size: 0.92rem; font-weight: 700; color: #fff; margin: 2px 0 0 0; line-height: 1.25;">{{ $product->name }}</h4>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 0.85rem; background: rgba(0,0,0,0.25); padding: 0.6rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <span style="font-size: 0.78rem; color: var(--text-secondary); text-decoration: line-through;">Rp {{ number_format($product->price_sell, 0, ',', '.') }}</span>
+                                </div>
+                                <span style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 800; color: #10b981;">Rp {{ number_format($sale->discount_price, 0, ',', '.') }}</span>
+                            </div>
+
+                            <div style="margin-bottom: 0.85rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.25rem; font-weight: 600;">
+                                    <span>Tersisa: <strong style="color: #ef4444;">{{ $remaining }} item</strong></span>
+                                    <span>{{ $soldPercent }}% Terjual</span>
+                                </div>
+                                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+                                    <div style="width: {{ $soldPercent }}%; height: 100%; background: linear-gradient(90deg, #ef4444, #f59e0b); border-radius: 10px; transition: width 0.4s ease;"></div>
+                                </div>
+                            </div>
+
+                            <a href="{{ url('/category/' . $category->slug) }}" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.85rem; font-weight: 700; padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);" onmouseover="this.style.transform='scale(1.02)';" onmouseout="this.style.transform='none';">
+                                <span>Beli Sekarang</span> <i class="fa-solid fa-bolt" style="font-size: 0.75rem;"></i>
+                            </a>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <!-- Section: Kategori Populer -->
     @if(count($popularCategories) > 0)
-        <section style="margin-top: 4rem; margin-bottom: 2rem;">
+        <section style="margin-top: 2.5rem; margin-bottom: 2rem;">
             <h2 class="section-title" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
                 <i class="fa-solid fa-fire" style="color: #ef4444; animation: pulse 2s infinite;"></i> Game Populer
             </h2>
@@ -112,6 +207,11 @@
             <div class="categories-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 0;">
                 @foreach($popularCategories as $category)
                     <a href="{{ url('/category/' . $category->slug) }}" class="category-card" style="border-color: rgba(226, 135, 67, 0.15); box-shadow: 0 8px 24px rgba(226, 135, 67, 0.03); position: relative; overflow: hidden;">
+                        @if($category->is_maintenance)
+                            <span style="position: absolute; top: 0.75rem; left: 0.75rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); z-index: 2;">
+                                <i class="fa-solid fa-wrench" style="font-size: 0.6rem;"></i> MAINTENANCE
+                            </span>
+                        @endif
                         <span style="position: absolute; top: 0.75rem; right: 0.75rem; background: linear-gradient(135deg, #ef4444, #e28743); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25); z-index: 2;">
                             <i class="fa-solid fa-star" style="font-size: 0.6rem;"></i> POPULER
                         </span>
@@ -171,7 +271,12 @@
         
         <div class="categories-grid" id="allCategoriesGrid">
             @forelse($categories as $category)
-                <a href="{{ url('/category/' . $category->slug) }}" class="category-card" data-category-type="{{ $category->type }}">
+                <a href="{{ url('/category/' . $category->slug) }}" class="category-card" data-category-type="{{ $category->type }}" style="position: relative; overflow: hidden;">
+                    @if($category->is_maintenance)
+                        <span style="position: absolute; top: 0.75rem; right: 0.75rem; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.65rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.25rem; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3); z-index: 2;">
+                            <i class="fa-solid fa-wrench" style="font-size: 0.6rem;"></i> MAINTENANCE
+                        </span>
+                    @endif
                     <img src="{{ $category->thumbnail ?? 'https://placehold.co/150x150/1e293b/ffffff?text=' . urlencode($category->name) }}" alt="{{ $category->name }}" class="category-thumbnail" onerror="this.onerror=null; this.src='https://placehold.co/150x150/1e293b/ffffff?text={{ urlencode($category->name) }}';">
                     <div class="category-info">
                         <h3>{{ $category->name }}</h3>
@@ -193,6 +298,13 @@
                     <p style="color: var(--text-secondary);">Belum ada produk/kategori tersedia. Silakan jalankan seeder atau lakukan sinkronisasi.</p>
                 </div>
             @endforelse
+
+            <!-- Empty state notice when live search yields 0 results -->
+            <div id="noSearchMatchNotice" style="display: none; grid-column: 1/-1; text-align: center; padding: 4rem; background: var(--bg-card); border-radius: 16px; border: 1px dashed var(--border-color);">
+                <i class="fa-solid fa-magnifying-glass-minus" style="font-size: 2.5rem; color: #ef4444; margin-bottom: 1rem;"></i>
+                <h4 style="color: #fff; font-size: 1.1rem; margin-bottom: 0.5rem; font-family: 'Outfit', sans-serif;">Pencarian Tidak Ditemukan</h4>
+                <p style="color: var(--text-secondary); font-size: 0.88rem;">Tidak ada game atau layanan yang cocok dengan "<strong id="searchQueryKeyword" style="color: #e28743;"></strong>". Silakan coba kata kunci lain.</p>
+            </div>
         </div>
 
         <!-- Tombol Tampilkan Lainnya (Limit 12) -->
@@ -471,10 +583,117 @@
         updateCategoryVisibility();
     }
 
-    // Initialize Slider Autoplay & Category Limit on Load
+    // ----------------------------------------------------
+    // Live Search Bar Functionality (Instant 0ms Filtering)
+    // ----------------------------------------------------
+    function handleLiveSearch() {
+        const input = document.getElementById('liveSearchInput');
+        if (!input) return;
+
+        const query = input.value.trim().toLowerCase();
+        const clearBtn = document.getElementById('btnClearSearch');
+
+        if (clearBtn) {
+            clearBtn.style.display = query ? 'block' : 'none';
+        }
+
+        const cards = document.querySelectorAll('#allCategoriesGrid .category-card');
+        let matchCount = 0;
+
+        cards.forEach(card => {
+            const titleEl = card.querySelector('h3');
+            const typeEl = card.querySelector('span');
+
+            const name = titleEl ? titleEl.innerText.toLowerCase() : '';
+            const typeAttr = card.getAttribute('data-category-type') || '';
+            const typeTxt = typeEl ? typeEl.innerText.toLowerCase() : '';
+
+            const isMatch = !query || name.includes(query) || typeAttr.includes(query) || typeTxt.includes(query);
+
+            if (isMatch) {
+                matchCount++;
+                card.style.display = 'flex';
+                card.style.opacity = '1';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Hide show more container when searching
+        const showMoreContainer = document.getElementById('showMoreContainer');
+        if (showMoreContainer) {
+            showMoreContainer.style.display = query ? 'none' : (matchCount > CATEGORY_LIMIT ? 'flex' : 'none');
+        }
+
+        // Toggle No Match Notice
+        const noNotice = document.getElementById('noSearchMatchNotice');
+        const kw = document.getElementById('searchQueryKeyword');
+        if (noNotice) {
+            if (query && matchCount === 0) {
+                noNotice.style.display = 'block';
+                if (kw) kw.innerText = input.value.trim();
+            } else {
+                noNotice.style.display = 'none';
+            }
+        }
+
+        if (!query) {
+            updateCategoryVisibility();
+        }
+    }
+
+    function clearLiveSearch() {
+        const input = document.getElementById('liveSearchInput');
+        if (input) {
+            input.value = '';
+            handleLiveSearch();
+        }
+    }
+
+    // ----------------------------------------------------
+    // Flash Sale Real-Time Digital Countdown Timer
+    // ----------------------------------------------------
+    function startFlashSaleTimer() {
+        const timerEl = document.getElementById('flashSaleTimer');
+        if (!timerEl) return;
+
+        const endDateStr = timerEl.getAttribute('data-end');
+        if (!endDateStr) return;
+
+        const targetTime = new Date(endDateStr).getTime();
+
+        function updateTimer() {
+            const now = new Date().getTime();
+            const diff = targetTime - now;
+
+            if (diff <= 0) {
+                const section = document.getElementById('flashSaleSection');
+                if (section) section.style.display = 'none';
+                return;
+            }
+
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            const hEl = document.getElementById('timerHours');
+            const mEl = document.getElementById('timerMinutes');
+            const sEl = document.getElementById('timerSeconds');
+
+            if (hEl) hEl.innerText = String(hours).padStart(2, '0');
+            if (mEl) mEl.innerText = String(minutes).padStart(2, '0');
+            if (sEl) sEl.innerText = String(seconds).padStart(2, '0');
+        }
+
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    }
+
+    // Initialize Slider Autoplay, Category Limit & Flash Sale Timer on Load
     document.addEventListener('DOMContentLoaded', () => {
         startAutoplay();
         updateCategoryVisibility();
+        startFlashSaleTimer();
 
         const slider = document.querySelector('.slider-container');
         if (slider) {

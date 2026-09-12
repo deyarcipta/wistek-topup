@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Banner;
 use App\Models\Category;
+use App\Models\FlashSale;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\Transaction;
@@ -72,7 +73,13 @@ class TopupController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
-        return view('home', compact('banners', 'popularCategories', 'categories'));
+        $flashSales = FlashSale::with(['product.category'])
+            ->where('is_active', true)
+            ->where('start_at', '<=', now())
+            ->where('end_at', '>', now())
+            ->get();
+
+        return view('home', compact('banners', 'popularCategories', 'categories', 'flashSales'));
     }
 
     /**

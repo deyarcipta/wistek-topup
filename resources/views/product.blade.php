@@ -270,6 +270,22 @@
 
 @section('content')
 <div class="container" style="padding-bottom: 5rem;">
+
+    @if($category->is_maintenance)
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1)); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 1.15rem 1.5rem; margin-top: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; color: #f59e0b; box-shadow: 0 8px 20px rgba(245, 158, 11, 0.12);">
+            <div style="background: rgba(245, 158, 11, 0.2); width: 44px; height: 44px; min-width: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(245, 158, 11, 0.4);">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem; color: #f59e0b;"></i>
+            </div>
+            <div>
+                <h4 style="color: #fff; font-family: 'Outfit', sans-serif; font-size: 0.98rem; font-weight: 700; margin: 0 0 4px 0; display: flex; align-items: center; gap: 0.4rem;">
+                    PERINGATAN MAINTENANCE SERVER GAME 🛠️
+                </h4>
+                <p style="font-size: 0.85rem; color: #d1d5db; margin: 0; line-height: 1.5;">
+                    {{ $category->maintenance_note ?: 'Server game / provider saat ini sedang dalam pemeliharaan rutin. Transaksi tetap dapat dilakukan dan akan diproses secara bertahap begitu server kembali normal.' }}
+                </p>
+            </div>
+        </div>
+    @endif
     
     <form action="{{ url('/checkout') }}" method="POST" id="topupForm">
         @csrf

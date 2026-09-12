@@ -13,6 +13,8 @@ class Category extends Model
         'type',
         'sort_order',
         'status',
+        'is_maintenance',
+        'maintenance_note',
         'is_nickname_check_enabled',
         'nickname_check_provider',
         'digiflazz_inquiry_sku',
@@ -20,6 +22,7 @@ class Category extends Model
 
     protected $casts = [
         'status' => 'boolean',
+        'is_maintenance' => 'boolean',
         'is_nickname_check_enabled' => 'boolean',
         'sort_order' => 'integer',
     ];
