@@ -41,9 +41,9 @@ class MemberForm
                 Select::make('tier_level')
                     ->label('Level / Tier Member')
                     ->options([
-                        'regular' => 'Publik / Regular',
-                        'gold' => 'Gold (VIP)',
-                        'platinum' => 'Platinum (VVIP / Reseller)',
+                        'regular' => 'Regular Member',
+                        'gold' => 'Gold Member (VIP)',
+                        'platinum' => 'Platinum Member (VVIP)',
                     ])
                     ->default('regular')
                     ->required()

@@ -328,19 +328,21 @@
                         $user = Auth::user();
                         $targetUrl = $user->isMember() ? url('/dashboard') : url('/w1st3k');
                     @endphp
-                    <a href="{{ $targetUrl }}" class="nav-link" style="color: #e28743; display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <a href="{{ $targetUrl }}" class="nav-link" style="color: #e28743; display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
                         @if($user->profile_photo_path)
-                            <img src="{{ asset('storage/' . $user->profile_photo_path) }}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid #e28743;">
+                            <img src="{{ asset('storage/' . $user->profile_photo_path) }}" style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover; border: 1px solid #e28743; flex-shrink: 0;">
                         @else
-                            <i class="fa-solid fa-user"></i>
+                            <i class="fa-solid fa-user" style="flex-shrink: 0;"></i>
                         @endif
-                        {{ $user->name }}
+                        <span style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;" title="{{ $user->name }}">
+                            {{ $user->name }}
+                        </span>
                         @if($user->isMember())
-                            ({{ number_format($user->points_balance) }} Pts)
+                            <span style="font-size: 0.78rem; opacity: 0.85; color: var(--text-secondary); font-weight: 600; flex-shrink: 0;">({{ number_format($user->points_balance) }} Pts)</span>
                         @elseif($user->isAdmin())
-                            (Admin)
+                            <span style="font-size: 0.78rem; opacity: 0.85; flex-shrink: 0;">(Admin)</span>
                         @elseif($user->isCashier())
-                            (Petugas)
+                            <span style="font-size: 0.78rem; opacity: 0.85; flex-shrink: 0;">(Petugas)</span>
                         @endif
                     </a>
                 @else

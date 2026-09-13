@@ -42,9 +42,9 @@ class MembersTable
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'platinum' => 'Platinum (Reseller)',
-                        'gold' => 'Gold (VIP)',
-                        default => 'Regular (Publik)',
+                        'platinum' => 'Platinum Member (VVIP)',
+                        'gold' => 'Gold Member (VIP)',
+                        default => 'Regular Member',
                     })
                     ->sortable(),
                 TextColumn::make('referral_code')

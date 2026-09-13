@@ -125,39 +125,7 @@
     <div class="dashboard-grid">
         
         <!-- Sidebar Navigation -->
-        <div class="dashboard-sidebar">
-            <div style="text-align: center; padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
-                @if($user->profile_photo_path)
-                    <img src="{{ asset('storage/' . $user->profile_photo_path) }}" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; margin: 0 auto 1rem; border: 2px solid #e28743; display: block; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-                @else
-                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #e28743 0%, #8b5cf6 100%); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Outfit', sans-serif;">
-                        {{ strtoupper(substr($user->name, 0, 2)) }}
-                    </div>
-                @endif
-                <h4 style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #fff; margin: 0 0 0.25rem;">{{ $user->name }}</h4>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);">@ {{$user->username}}</span>
-            </div>
-            
-            <a href="{{ url('/dashboard') }}" class="dashboard-menu-link {{ Request::is('dashboard') ? 'active' : '' }}">
-                <i class="fa-solid fa-chart-line"></i> Ringkasan Akun
-            </a>
-            <a href="{{ url('/dashboard/transactions') }}" class="dashboard-menu-link {{ Request::is('dashboard/transactions*') ? 'active' : '' }}">
-                <i class="fa-solid fa-receipt"></i> Riwayat Transaksi
-            </a>
-            <a href="{{ url('/dashboard/points') }}" class="dashboard-menu-link {{ Request::is('dashboard/points*') ? 'active' : '' }}">
-                <i class="fa-solid fa-gift"></i> Riwayat Poin
-            </a>
-            <a href="{{ url('/dashboard/profile') }}" class="dashboard-menu-link {{ Request::is('dashboard/profile*') ? 'active' : '' }}">
-                <i class="fa-solid fa-user-gear"></i> Edit Profil
-            </a>
-            
-            <form action="{{ url('/logout') }}" method="POST" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
-                @csrf
-                <button type="submit" class="dashboard-menu-link" style="background: none; border: none; width: 100%; cursor: pointer; text-align: left;">
-                    <i class="fa-solid fa-right-from-bracket" style="color: var(--danger);"></i> Keluar Akun
-                </button>
-            </form>
-        </div>
+        @include('dashboard._sidebar')
         
         <!-- Main Content Area -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
