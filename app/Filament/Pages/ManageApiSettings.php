@@ -163,6 +163,8 @@ class ManageApiSettings extends Page implements HasForms
             'digiflazz_mode' => Setting::get('digiflazz_mode', 'development'),
             'digiflazz_trusted_seller_enabled' => Setting::get('digiflazz_trusted_seller_enabled', '1'),
             'digiflazz_price_tolerance' => Setting::get('digiflazz_price_tolerance', '200'),
+            'digiflazz_min_balance_alert' => Setting::get('digiflazz_min_balance_alert', '100000'),
+            'admin_wa_alert_number' => Setting::get('admin_wa_alert_number', '081234567890'),
             'digiflazz_connection_status' => ($status['success'] ?? false) ? '🟢 Terhubung (OK)' : '🔴 Gagal: '.($status['message'] ?? 'Belum dikonfigurasi'),
             'digiflazz_balance' => ($status['success'] ?? false) ? 'Rp '.number_format((float) ($status['balance'] ?? 0), 0, ',', '.') : 'Rp 0',
 
@@ -384,6 +386,17 @@ class ManageApiSettings extends Page implements HasForms
                             ->default(200)
                             ->placeholder('200')
                             ->helperText('Batas maksimal selisih harga modal (Rp) di mana sistem akan mengutamakan seller yang lebih terpercaya & cepat.'),
+                        TextInput::make('digiflazz_min_balance_alert')
+                            ->label('Ambang Batas Alert Saldo Menipis (Rp)')
+                            ->numeric()
+                            ->default(100000)
+                            ->prefix('Rp')
+                            ->placeholder('100000')
+                            ->helperText('Sistem otomatis mengirimi WhatsApp Alert ke Admin jika saldo Digiflazz < nominal ini.'),
+                        TextInput::make('admin_wa_alert_number')
+                            ->label('Nomor WhatsApp Alert Admin / CS')
+                            ->placeholder('Contoh: 081234567890')
+                            ->helperText('Nomor WhatsApp yang akan menerima notifikasi otomatis ketika saldo provider menipis.'),
                     ])->columns(2),
 
                 Section::make('WhatsApp Notification Gateway (open-wa)')
@@ -476,7 +489,7 @@ class ManageApiSettings extends Page implements HasForms
             'tripay_merchant_code', 'tripay_api_key', 'tripay_private_key', 'tripay_mode', 'tripay_qris_fee_share', 'tripay_qris_free_min_amount',
             'doku_client_id', 'doku_secret_key', 'doku_mode',
             'digiflazz_username', 'digiflazz_api_key', 'digiflazz_webhook_secret', 'digiflazz_mode',
-            'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance',
+            'digiflazz_trusted_seller_enabled', 'digiflazz_price_tolerance', 'digiflazz_min_balance_alert', 'admin_wa_alert_number',
             'whatsapp_enabled', 'whatsapp_api_url', 'whatsapp_api_token', 'whatsapp_session_id',
             'simup_enabled', 'simup_webhook_url', 'simup_webhook_secret',
         ] as $key) {

@@ -17,6 +17,7 @@ class Transaction extends Model
         'target_no',
         'customer_phone',
         'price',
+        'profit',
         'voucher_code',
         'discount_amount',
         'points_used',
@@ -33,11 +34,29 @@ class Transaction extends Model
     protected $casts = [
         'payment_details' => 'array',
         'user_id' => 'integer',
+        'price' => 'decimal:2',
+        'profit' => 'decimal:2',
         'points_used' => 'integer',
         'points_earned' => 'integer',
         'is_synced_to_simup' => 'boolean',
         'synced_to_simup_at' => 'datetime',
     ];
+
+    public function calculateAndSaveProfit(?float $costPrice = null): float
+    {
+        if ($costPrice === null) {
+            $product = Product::where('sku', $this->sku)->first();
+            $costPrice = $product ? (float) $product->price_cost : 0;
+        }
+
+        $grossPrice = (float) $this->price;
+        $profit = max(0, $grossPrice - $costPrice);
+
+        $this->profit = $profit;
+        $this->saveQuietly();
+
+        return $profit;
+    }
 
     public function user()
     {
@@ -48,6 +67,10 @@ class Transaction extends Model
     {
         static::saved(function (Transaction $transaction) {
             if ($transaction->payment_status === 'paid') {
+                if ((float) $transaction->profit <= 0 && (float) $transaction->price > 0) {
+                    $transaction->calculateAndSaveProfit();
+                }
+
                 if (! $transaction->is_synced_to_simup) {
                     try {
                         app(SimupIntegrationService::class)->syncTransaction($transaction);

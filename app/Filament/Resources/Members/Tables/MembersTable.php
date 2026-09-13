@@ -33,6 +33,20 @@ class MembersTable
                     ->label('Saldo Poin')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('tier_level')
+                    ->label('Level Tier')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'platinum' => 'info',
+                        'gold' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'platinum' => 'Platinum (Reseller)',
+                        'gold' => 'Gold (VIP)',
+                        default => 'Regular (Publik)',
+                    })
+                    ->sortable(),
                 TextColumn::make('referral_code')
                     ->label('Kode Referral')
                     ->searchable(),

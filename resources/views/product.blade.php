@@ -575,15 +575,21 @@
                                     @php
                                         $flashSaleItem = (isset($flashSalesMap) && $flashSalesMap->has($product->id)) ? $flashSalesMap->get($product->id) : null;
                                         $hasFlashSale = $flashSaleItem && $flashSaleItem->isRunning();
-                                        $effectivePrice = $hasFlashSale ? (float) $flashSaleItem->discount_price : (float) $product->price_sell;
+                                        $userTierPrice = $product->getPriceForUser(Auth::user());
+                                        $effectivePrice = $hasFlashSale ? (float) $flashSaleItem->discount_price : $userTierPrice;
                                         $discountPercent = $hasFlashSale ? $flashSaleItem->discount_percentage : 0;
+                                        $hasTierDiscount = !$hasFlashSale && Auth::check() && $userTierPrice < (float) $product->price_sell;
                                     @endphp
-                                    <div class="nominal-card {{ $hasFlashSale ? 'flash-sale-card' : '' }}" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $effectivePrice }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid {{ $hasFlashSale ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.08)' }}; transition: all 0.22s ease; cursor: pointer; position: relative; {{ $hasFlashSale ? 'box-shadow: 0 4px 15px rgba(239, 68, 68, 0.12);' : '' }}">
+                                    <div class="nominal-card {{ $hasFlashSale ? 'flash-sale-card' : '' }}" data-product-id="{{ $product->id }}" onclick="selectProduct({{ $product->id }}, {{ $effectivePrice }})" style="display: flex; flex-direction: column; justify-content: space-between; padding: 1.1rem 1.15rem; min-height: 100px; border-radius: 12px; background: rgba(22, 22, 22, 0.65); border: 1px solid {{ $hasFlashSale ? 'rgba(239, 68, 68, 0.4)' : ($hasTierDiscount ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.08)') }}; transition: all 0.22s ease; cursor: pointer; position: relative; {{ $hasFlashSale ? 'box-shadow: 0 4px 15px rgba(239, 68, 68, 0.12);' : '' }}">
                                         <div class="check-indicator"><i class="fa-solid fa-check"></i></div>
                                         
                                         @if($hasFlashSale)
                                             <span style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 3px 9px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4); z-index: 4; text-transform: uppercase; letter-spacing: 0.3px;">
                                                 ⚡ PROMO -{{ $discountPercent }}%
+                                            </span>
+                                        @elseif($hasTierDiscount)
+                                            <span style="position: absolute; top: 0; right: 0; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 0.62rem; font-weight: 800; padding: 3px 9px; border-bottom-left-radius: 10px; border-top-right-radius: 11px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4); z-index: 4; text-transform: uppercase; letter-spacing: 0.3px;">
+                                                👑 HARGA VIP
                                             </span>
                                         @endif
 

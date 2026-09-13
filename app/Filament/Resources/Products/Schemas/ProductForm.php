@@ -45,10 +45,22 @@ class ProductForm
                     ->prefix('Rp')
                     ->required(),
                 TextInput::make('price_sell')
-                    ->label('Harga Jual (Online / Gateway)')
+                    ->label('Harga Jual (Publik / Regular)')
                     ->numeric()
                     ->prefix('Rp')
                     ->required(),
+                TextInput::make('price_gold')
+                    ->label('Harga Khusus Gold (VIP)')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->placeholder('Opsional (opsional jika sama dengan harga publik)')
+                    ->helperText('Harga khusus member level Gold / VIP. Jika dikosongkan, sistem memakai Harga Publik.'),
+                TextInput::make('price_platinum')
+                    ->label('Harga Khusus Platinum (VVIP / Reseller)')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->placeholder('Opsional (opsional jika sama dengan harga VIP)')
+                    ->helperText('Harga grosir khusus member level Platinum / Reseller. Jika dikosongkan, sistem memakai Harga VIP / Publik.'),
                 TextInput::make('price_cash')
                     ->label('Harga Cash (Petugas / Kasir)')
                     ->numeric()

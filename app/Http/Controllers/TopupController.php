@@ -158,7 +158,7 @@ class TopupController extends Controller
 
         $effectiveSellPrice = ($activeFlashSale && (float) $activeFlashSale->discount_price > 0)
             ? (float) $activeFlashSale->discount_price
-            : (float) $product->price_sell;
+            : $product->getPriceForUser(Auth::user());
 
         $isCashPayment = in_array(strtoupper((string) $request->payment_method), ['CASH', 'MANUAL']);
         $basePrice = (int) ($isCashPayment ? $product->final_price_cash : $effectiveSellPrice);

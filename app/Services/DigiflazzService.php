@@ -49,8 +49,11 @@ class DigiflazzService
 
             if ($response->successful()) {
                 $data = $response->json();
+                $balance = (float) ($data['data']['deposit'] ?? 0);
 
-                return $data['data']['deposit'] ?? 0;
+                $this->checkAndTriggerLowBalanceAlert($balance);
+
+                return $balance;
             }
 
             return 0;
@@ -58,6 +61,41 @@ class DigiflazzService
             logger()->error('Digiflazz getBalance failed: '.$e->getMessage());
 
             return 0;
+        }
+    }
+
+    /**
+     * Check current balance against threshold and send WhatsApp Alert to Admin if low
+     */
+    public function checkAndTriggerLowBalanceAlert(float $currentBalance): void
+    {
+        $threshold = (float) Setting::get('digiflazz_min_balance_alert', '100000');
+        $adminPhone = Setting::get('admin_wa_alert_number');
+
+        if ($currentBalance > 0 && $currentBalance < $threshold && ! empty($adminPhone)) {
+            $cacheKey = 'digiflazz_low_balance_alert_sent';
+            if (! Cache::has($cacheKey)) {
+                Cache::put($cacheKey, true, now()->addHour());
+
+                dispatch(function () use ($adminPhone, $currentBalance, $threshold) {
+                    try {
+                        $whatsapp = new WhatsappService;
+                        $formattedBal = number_format($currentBalance, 0, ',', '.');
+                        $formattedMin = number_format($threshold, 0, ',', '.');
+
+                        $msg = "⚠️ *PERINGATAN SALDO DIGIFLAZZ MENIPIS!* ⚠️\n\n"
+                             ."Halo Admin Wistek Topup,\n"
+                             ."Saldo deposit Digiflazz Anda saat ini sisa: *Rp {$formattedBal}*\n"
+                             ."Batas minimal alert: *Rp {$formattedMin}*\n\n"
+                             ."Silakan segera lakukan *Deposit / Top Up Saldo* di Digiflazz agar transaksi pembeli tidak gagal!\n\n"
+                             .'Terima kasih.';
+
+                        $whatsapp->sendMessage($adminPhone, $msg);
+                    } catch (\Throwable $e) {
+                        logger()->error('Low balance WhatsApp alert failed: '.$e->getMessage());
+                    }
+                })->afterResponse();
+            }
         }
     }
 

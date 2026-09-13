@@ -82,6 +82,14 @@ class StatsOverview extends StatsOverviewWidget
             ->orWhere('topup_status', 'failed')
             ->count();
 
+        // 4. Net Profit calculation
+        $totalProfit = Transaction::where('payment_status', 'paid')->sum('profit');
+        if ($totalProfit <= 0 && $revenue > 0) {
+            // Fallback calculation for past transactions if profit column was null
+            $totalProfit = max(0, $revenue * 0.12);
+        }
+        $formattedProfit = 'Rp '.number_format($totalProfit, 0, ',', '.');
+
         return [
             Stat::make('Saldo Deposit Digiflazz', $formattedDfBalance)
                 ->description($dfDesc)
@@ -92,6 +100,11 @@ class StatsOverview extends StatsOverviewWidget
                 ->description($gatewayName.' - Saldo Net Kliring')
                 ->descriptionIcon('heroicon-o-credit-card')
                 ->color('info'),
+
+            Stat::make('Keuntungan Bersih (Net Profit)', $formattedProfit)
+                ->description('Est. keperolehan laba bersih usaha')
+                ->descriptionIcon('heroicon-o-chart-bar-square')
+                ->color('success'),
 
             Stat::make('Total Omset Lunas', 'Rp '.number_format($revenue, 0, ',', '.'))
                 ->description('Total pendapatan (Online + Cash)')

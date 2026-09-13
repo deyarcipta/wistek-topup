@@ -39,8 +39,13 @@ class TransactionsTable
                     ->label('No. Target')
                     ->searchable(),
                 TextColumn::make('price')
-                    ->label('Harga')
+                    ->label('Harga Jual')
                     ->formatStateUsing(fn ($state) => 'Rp '.number_format($state, 0, ',', '.'))
+                    ->sortable(),
+                TextColumn::make('profit')
+                    ->label('Untung (Net)')
+                    ->formatStateUsing(fn ($state) => 'Rp '.number_format((float) $state, 0, ',', '.'))
+                    ->color('success')
                     ->sortable(),
                 TextColumn::make('payment_method')
                     ->label('Pembayaran')

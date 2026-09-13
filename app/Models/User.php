@@ -15,7 +15,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 
-#[Fillable(['name', 'email', 'password', 'username', 'phone', 'role', 'referral_code', 'referred_by_id', 'registration_ip', 'points_balance', 'profile_photo_path'])]
+#[Fillable(['name', 'email', 'password', 'username', 'phone', 'role', 'tier_level', 'referral_code', 'referred_by_id', 'registration_ip', 'points_balance', 'profile_photo_path'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser
 {
@@ -44,6 +44,15 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'points_balance' => 'integer',
         ];
+    }
+
+    public function getTierNameAttribute(): string
+    {
+        return match ($this->tier_level) {
+            'platinum' => 'Platinum (VVIP / Reseller)',
+            'gold' => 'Gold (VIP)',
+            default => 'Publik / Regular',
+        };
     }
 
     public function isAdmin(): bool

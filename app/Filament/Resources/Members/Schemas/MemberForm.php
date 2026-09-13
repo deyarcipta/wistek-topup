@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Members\Schemas;
 
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -37,6 +38,16 @@ class MemberForm
                     ->numeric()
                     ->default(0)
                     ->required(),
+                Select::make('tier_level')
+                    ->label('Level / Tier Member')
+                    ->options([
+                        'regular' => 'Publik / Regular',
+                        'gold' => 'Gold (VIP)',
+                        'platinum' => 'Platinum (VVIP / Reseller)',
+                    ])
+                    ->default('regular')
+                    ->required()
+                    ->helperText('Level member menentukan potongan harga khusus saat berbelanja di website.'),
                 TextInput::make('referral_code')
                     ->label('Kode Referral')
                     ->disabled()
