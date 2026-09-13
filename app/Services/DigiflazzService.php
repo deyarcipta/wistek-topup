@@ -437,6 +437,9 @@ class DigiflazzService
 
                     if ($costChanged) {
                         $updateData['price_sell'] = self::calculatePriceSell($targetCost);
+                        $updateData['price_gold'] = self::calculateGoldPrice($targetCost);
+                        $updateData['price_platinum'] = self::calculatePlatinumPrice($targetCost);
+                        $updateData['price_cash'] = self::calculateFinalPriceCash($targetCost);
                     }
 
                     $product->update($updateData);
@@ -482,8 +485,10 @@ class DigiflazzService
                     $optimalCost = $bestSeller['price_cost'];
                     $optimalStatus = $bestSeller['is_active'];
 
-                    $margin = self::calculateMargin($optimalCost);
-                    $priceSell = $optimalCost + $margin;
+                    $priceSell = self::calculatePriceSell($optimalCost);
+                    $priceGold = self::calculateGoldPrice($optimalCost);
+                    $pricePlatinum = self::calculatePlatinumPrice($optimalCost);
+                    $priceCash = self::calculateFinalPriceCash($optimalCost);
 
                     if ($category) {
                         $newProduct = Product::create([
@@ -492,6 +497,9 @@ class DigiflazzService
                             'sku' => $optimalSku,
                             'price_cost' => $optimalCost,
                             'price_sell' => $priceSell,
+                            'price_gold' => $priceGold,
+                            'price_platinum' => $pricePlatinum,
+                            'price_cash' => $priceCash,
                             'status' => true,
                             'digiflazz_status' => $optimalStatus,
                         ]);
@@ -1079,6 +1087,50 @@ class DigiflazzService
         return $val;
     }
 
+    public static function calculateGoldMargin(float $cost): float
+    {
+        $rules = ManagePriceMarginSettings::getTierRules();
+        usort($rules, fn ($a, $b) => ((float) ($a['max_amount'] ?? 0) ?: 999999999) <=> ((float) ($b['max_amount'] ?? 0) ?: 999999999));
+
+        foreach ($rules as $rule) {
+            $max = (float) ($rule['max_amount'] ?? 0);
+            if ($max > 0 && $cost <= $max) {
+                return isset($rule['margin_gold']) && $rule['margin_gold'] !== '' ? (float) $rule['margin_gold'] : (float) ($rule['margin_online'] ?? 0);
+            }
+        }
+
+        $defaultRule = end($rules);
+        $val = isset($defaultRule['margin_gold']) && $defaultRule['margin_gold'] !== '' ? (float) $defaultRule['margin_gold'] : (float) ($defaultRule['margin_online'] ?? 2.5);
+
+        if ($val <= 100) {
+            return ceil(($cost * ($val / 100)) / 100) * 100;
+        }
+
+        return $val;
+    }
+
+    public static function calculatePlatinumMargin(float $cost): float
+    {
+        $rules = ManagePriceMarginSettings::getTierRules();
+        usort($rules, fn ($a, $b) => ((float) ($a['max_amount'] ?? 0) ?: 999999999) <=> ((float) ($b['max_amount'] ?? 0) ?: 999999999));
+
+        foreach ($rules as $rule) {
+            $max = (float) ($rule['max_amount'] ?? 0);
+            if ($max > 0 && $cost <= $max) {
+                return isset($rule['margin_platinum']) && $rule['margin_platinum'] !== '' ? (float) $rule['margin_platinum'] : self::calculateGoldMargin($cost);
+            }
+        }
+
+        $defaultRule = end($rules);
+        $val = isset($defaultRule['margin_platinum']) && $defaultRule['margin_platinum'] !== '' ? (float) $defaultRule['margin_platinum'] : (float) ($defaultRule['margin_gold'] ?? $defaultRule['margin_online'] ?? 1.5);
+
+        if ($val <= 100) {
+            return ceil(($cost * ($val / 100)) / 100) * 100;
+        }
+
+        return $val;
+    }
+
     public static function calculateCashMargin(float $cost): float
     {
         $rules = ManagePriceMarginSettings::getTierRules();
@@ -1117,6 +1169,16 @@ class DigiflazzService
     public static function calculatePriceSell(float $cost): float
     {
         return $cost + self::calculateMargin($cost);
+    }
+
+    public static function calculateGoldPrice(float $cost): float
+    {
+        return $cost + self::calculateGoldMargin($cost);
+    }
+
+    public static function calculatePlatinumPrice(float $cost): float
+    {
+        return $cost + self::calculatePlatinumMargin($cost);
     }
 
     public static function calculateFinalPriceCash(float $cost): float

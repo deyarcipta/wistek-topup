@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\DigiflazzService;
 use Illuminate\Database\Eloquent\Model;
 
 class Product extends Model
@@ -38,12 +39,20 @@ class Product extends Model
 
         $tier = $user->tier_level ?? 'regular';
 
-        if ($tier === 'platinum' && $this->price_platinum !== null && (float) $this->price_platinum > 0) {
-            return (float) $this->price_platinum;
+        if ($tier === 'platinum') {
+            if ($this->price_platinum !== null && (float) $this->price_platinum > 0) {
+                return (float) $this->price_platinum;
+            }
+
+            return (float) DigiflazzService::calculatePlatinumPrice((float) $this->price_cost);
         }
 
-        if (($tier === 'gold' || $tier === 'platinum') && $this->price_gold !== null && (float) $this->price_gold > 0) {
-            return (float) $this->price_gold;
+        if ($tier === 'gold') {
+            if ($this->price_gold !== null && (float) $this->price_gold > 0) {
+                return (float) $this->price_gold;
+            }
+
+            return (float) DigiflazzService::calculateGoldPrice((float) $this->price_cost);
         }
 
         return (float) $this->price_sell;
