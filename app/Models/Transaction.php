@@ -123,6 +123,13 @@ class Transaction extends Model
             return false;
         }
 
+        // Auto check & upgrade user tier level based on lifetime spend
+        try {
+            $user->checkAndUpgradeTier();
+        } catch (\Throwable $e) {
+            logger()->error('Auto tier upgrade failed: '.$e->getMessage());
+        }
+
         // Pastikan points_earned terhitung (1% dari harga jika belum terisi)
         $pointsToEarn = $this->points_earned;
         if ($pointsToEarn <= 0 && $this->price > 0) {

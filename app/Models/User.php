@@ -49,10 +49,62 @@ class User extends Authenticatable implements FilamentUser
     public function getTierNameAttribute(): string
     {
         return match ($this->tier_level) {
-            'platinum' => 'Platinum (VVIP / Reseller)',
-            'gold' => 'Gold (VIP)',
-            default => 'Publik / Regular',
+            'platinum' => 'Platinum Member (VVIP)',
+            'gold' => 'Gold Member (VIP)',
+            default => 'Regular Member',
         };
+    }
+
+    /**
+     * Check total lifetime spending from paid+success transactions and auto upgrade tier level
+     */
+    public function checkAndUpgradeTier(): void
+    {
+        if ($this->isAdmin() || $this->isCashier()) {
+            return;
+        }
+
+        $totalSpent = (float) Transaction::where('user_id', $this->id)
+            ->where('payment_status', 'paid')
+            ->where('topup_status', 'success')
+            ->sum('price');
+
+        $goldMinSpend = (float) Setting::get('tier_gold_min_spend', '1000000');
+        $platinumMinSpend = (float) Setting::get('tier_platinum_min_spend', '5000000');
+
+        $targetTier = 'regular';
+        if ($totalSpent >= $platinumMinSpend) {
+            $targetTier = 'platinum';
+        } elseif ($totalSpent >= $goldMinSpend) {
+            $targetTier = 'gold';
+        }
+
+        if ($this->tier_level !== $targetTier) {
+            $this->tier_level = $targetTier;
+            $this->saveQuietly();
+
+            // Trigger WhatsApp notification for tier level upgrade
+            if (! empty($this->phone)) {
+                $userName = $this->name;
+                $userPhone = $this->phone;
+                $newTierName = $this->tier_name;
+
+                dispatch(function () use ($userName, $userPhone, $newTierName) {
+                    try {
+                        $whatsapp = new WhatsappService;
+                        $msg = "🎉 *SELAMAT! AKUN WISTEK TOPUP ANDA NAIK LEVEL!* 🎉\n\n"
+                             ."Halo {$userName},\n"
+                             ."Terima kasih telah setia berbelanja di Wistek Topup! Akun Anda telah resmi naik ke level *{$newTierName}*.\n\n"
+                             ."Nikmati harga promo spesial VIP di setiap transaksi Anda!\n\n"
+                             ."Terima kasih,\nWistek Topup";
+
+                        $whatsapp->sendMessage($userPhone, $msg);
+                    } catch (\Throwable $e) {
+                        logger()->error('Tier upgrade WhatsApp alert failed: '.$e->getMessage());
+                    }
+                })->afterResponse();
+            }
+        }
     }
 
     public function isAdmin(): bool

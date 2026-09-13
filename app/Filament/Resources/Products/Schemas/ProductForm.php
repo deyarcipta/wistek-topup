@@ -56,11 +56,11 @@ class ProductForm
                     ->placeholder('Opsional (opsional jika sama dengan harga publik)')
                     ->helperText('Harga khusus member level Gold / VIP. Jika dikosongkan, sistem memakai Harga Publik.'),
                 TextInput::make('price_platinum')
-                    ->label('Harga Khusus Platinum (VVIP / Reseller)')
+                    ->label('Harga Khusus Platinum (VVIP)')
                     ->numeric()
                     ->prefix('Rp')
                     ->placeholder('Opsional (opsional jika sama dengan harga VIP)')
-                    ->helperText('Harga grosir khusus member level Platinum / Reseller. Jika dikosongkan, sistem memakai Harga VIP / Publik.'),
+                    ->helperText('Harga khusus member level Platinum / VVIP. Jika dikosongkan, sistem memakai Harga VIP / Publik.'),
                 TextInput::make('price_cash')
                     ->label('Harga Cash (Petugas / Kasir)')
                     ->numeric()

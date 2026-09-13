@@ -69,6 +69,8 @@ class ManageSettings extends Page implements HasForms
             'social_tiktok' => Setting::get('social_tiktok', 'https://tiktok.com'),
             'social_youtube' => Setting::get('social_youtube', 'https://youtube.com'),
             'social_whatsapp' => Setting::get('social_whatsapp', 'https://wa.me/6281234567890'),
+            'tier_gold_min_spend' => Setting::get('tier_gold_min_spend', '1000000'),
+            'tier_platinum_min_spend' => Setting::get('tier_platinum_min_spend', '5000000'),
         ];
     }
 
@@ -156,6 +158,25 @@ class ManageSettings extends Page implements HasForms
                             ->helperText('Tentukan durasi perpindahan slide ulasan secara otomatis di halaman beranda.'),
                     ])->columns(3),
 
+                Section::make('Syarat Kenaikan Level Member (Loyalty Tier)')
+                    ->description('Tentukan batas akumulasi nominal belanja lunas (Rp) agar akun customer otomatis naik ke level Gold VIP / Platinum VVIP.')
+                    ->schema([
+                        TextInput::make('tier_gold_min_spend')
+                            ->label('Syarat Minimal Belanja - Member Gold VIP (Rp)')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->default(1000000)
+                            ->required()
+                            ->helperText('Jika total belanja lunas customer mencapai nominal ini, level otomatis naik ke Gold VIP.'),
+                        TextInput::make('tier_platinum_min_spend')
+                            ->label('Syarat Minimal Belanja - Member Platinum VVIP (Rp)')
+                            ->numeric()
+                            ->prefix('Rp')
+                            ->default(5000000)
+                            ->required()
+                            ->helperText('Jika total belanja lunas customer mencapai nominal ini, level otomatis naik ke Platinum VVIP.'),
+                    ])->columns(2),
+
                 Section::make('Kontak Layanan Pelanggan (CS) & Media Sosial')
                     ->description('Kelola tautan menu Hubungi CS dan ikon media sosial resmi yang tampil pada footer website.')
                     ->schema([
@@ -193,6 +214,7 @@ class ManageSettings extends Page implements HasForms
             'promo_grand_opening_active', 'promo_grand_opening_points', 'promo_grand_opening_quota',
             'review_section_enabled', 'review_display_limit', 'review_autoplay_speed',
             'cs_whatsapp_url', 'social_instagram', 'social_tiktok', 'social_youtube', 'social_whatsapp',
+            'tier_gold_min_spend', 'tier_platinum_min_spend',
         ] as $key) {
             Setting::set($key, (string) ($data[$key] ?? ''));
         }
