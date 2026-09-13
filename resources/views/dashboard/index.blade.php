@@ -165,9 +165,9 @@
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.85rem;">
                         <span style="color: var(--text-secondary); font-weight: 600;">
                             @if($tierProgress['is_max'] ?? false)
-                                <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Level Tertinggi Ditempuh!
+                                <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Level Kalender {{ $tierProgress['current_year'] ?? now()->year }} Ditempuh!
                             @else
-                                Progres Akumulasi Belanja: <strong style="color: #fff;">{{ $tierProgress['progress_percent'] }}%</strong>
+                                Progres Belanja Tahun {{ $tierProgress['current_year'] ?? now()->year }}: <strong style="color: #fff;">{{ $tierProgress['progress_percent'] }}%</strong>
                             @endif
                         </span>
                         <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff;">
@@ -185,9 +185,9 @@
                     <i class="fa-solid fa-circle-info" style="font-size: 1.1rem; color: #e28743; min-width: 18px;"></i>
                     <span>
                         @if($tierProgress['is_max'] ?? false)
-                            Selamat! Anda telah berada di level tertinggi <strong>Platinum Member (VVIP)</strong>. Seluruh pesanan Anda otomatis mendapatkan harga promo termurah!
+                            Selamat! Anda telah berada di level tertinggi <strong>Platinum Member (VVIP)</strong> untuk tahun kalender {{ $tierProgress['current_year'] ?? now()->year }}. Seluruh pesanan Anda otomatis mendapatkan harga promo termurah!
                         @else
-                            Tingkatkan belanja Anda sebanyak <strong>Rp {{ number_format($tierProgress['shortfall'], 0, ',', '.') }}</strong> lagi untuk otomatis naik ke level <strong>{{ $tierProgress['next_tier_name'] }}</strong> dan mendapatkan diskon harga VIP otomatis di setiap pembelian!
+                            Tingkatkan belanja Anda di tahun {{ $tierProgress['current_year'] ?? now()->year }} sebanyak <strong>Rp {{ number_format($tierProgress['shortfall'], 0, ',', '.') }}</strong> lagi untuk otomatis naik ke level <strong>{{ $tierProgress['next_tier_name'] }}</strong>! Level member dievaluasi otomatis setiap tahun kalender (1 Jan - 31 Des).
                         @endif
                     </span>
                 </div>

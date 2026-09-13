@@ -57,8 +57,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function getTierProgressData(): array
     {
+        $currentYear = now()->year;
         $totalSpent = (float) Transaction::where('user_id', $this->id)
             ->where('payment_status', 'paid')
+            ->whereYear('created_at', $currentYear)
             ->sum('price');
 
         $goldThreshold = (float) Setting::get('tier_gold_min_spend', '1000000');
@@ -71,6 +73,7 @@ class User extends Authenticatable implements FilamentUser
                 'current_tier' => 'platinum',
                 'current_tier_name' => 'Platinum Member (VVIP)',
                 'next_tier_name' => null,
+                'current_year' => $currentYear,
                 'total_spent' => $totalSpent,
                 'target_threshold' => $platinumThreshold,
                 'progress_percent' => 100,
@@ -88,6 +91,7 @@ class User extends Authenticatable implements FilamentUser
                 'current_tier' => 'gold',
                 'current_tier_name' => 'Gold Member (VIP)',
                 'next_tier_name' => 'Platinum Member (VVIP)',
+                'current_year' => $currentYear,
                 'total_spent' => $totalSpent,
                 'target_threshold' => $target,
                 'progress_percent' => $percent,
@@ -105,6 +109,7 @@ class User extends Authenticatable implements FilamentUser
             'current_tier' => 'regular',
             'current_tier_name' => 'Regular Member',
             'next_tier_name' => 'Gold Member (VIP)',
+            'current_year' => $currentYear,
             'total_spent' => $totalSpent,
             'target_threshold' => $target,
             'progress_percent' => $percent,
@@ -114,7 +119,7 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Check total lifetime spending from paid+success transactions and auto upgrade tier level
+     * Check total annual spending in current year from paid+success transactions and auto upgrade tier level
      */
     public function checkAndUpgradeTier(): void
     {
@@ -122,9 +127,11 @@ class User extends Authenticatable implements FilamentUser
             return;
         }
 
+        $currentYear = now()->year;
         $totalSpent = (float) Transaction::where('user_id', $this->id)
             ->where('payment_status', 'paid')
             ->where('topup_status', 'success')
+            ->whereYear('created_at', $currentYear)
             ->sum('price');
 
         $goldMinSpend = (float) Setting::get('tier_gold_min_spend', '1000000');

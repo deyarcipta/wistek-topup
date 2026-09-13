@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Artisan;
 use UnitEnum;
 
 class ManageSettings extends Page implements HasForms
@@ -158,23 +159,42 @@ class ManageSettings extends Page implements HasForms
                             ->helperText('Tentukan durasi perpindahan slide ulasan secara otomatis di halaman beranda.'),
                     ])->columns(3),
 
-                Section::make('Syarat Kenaikan Level Member (Loyalty Tier)')
-                    ->description('Tentukan batas akumulasi nominal belanja lunas (Rp) agar akun customer otomatis naik ke level Gold VIP / Platinum VVIP.')
+                Section::make('Syarat Kenaikan Level Member (Loyalty Tier Tahunan)')
+                    ->description('Tentukan batas akumulasi nominal belanja lunas (Rp) dalam tahun kalender berjalan agar akun customer otomatis naik ke level Gold VIP / Platinum VVIP.')
+                    ->headerActions([
+                        Action::make('evalAnnualTiers')
+                            ->label('Evaluasi & Reset Level Member Tahunan')
+                            ->icon('heroicon-o-arrow-path-rounded-square')
+                            ->color('warning')
+                            ->requiresConfirmation()
+                            ->modalHeading('Evaluasi Ulang Level Member Tahunan?')
+                            ->modalDescription('Sistem akan mengevaluasi seluruh transaksi belanja member pada tahun berjalan ini. Level member yang tidak mencapai syarat minimal belanja tahunan akan di-reset kembali ke Regular Member.')
+                            ->action(function () {
+                                Artisan::call('members:reset-annual-tiers');
+                                $output = Artisan::output();
+
+                                Notification::make()
+                                    ->title('Evaluasi Level Member Selesai!')
+                                    ->body($output)
+                                    ->success()
+                                    ->send();
+                            }),
+                    ])
                     ->schema([
                         TextInput::make('tier_gold_min_spend')
-                            ->label('Syarat Minimal Belanja - Member Gold VIP (Rp)')
+                            ->label('Syarat Minimal Belanja Tahunan - Member Gold VIP (Rp)')
                             ->numeric()
                             ->prefix('Rp')
                             ->default(1000000)
                             ->required()
-                            ->helperText('Jika total belanja lunas customer mencapai nominal ini, level otomatis naik ke Gold VIP.'),
+                            ->helperText('Akumulasi belanja lunas tahunan untuk mencapai level Gold VIP.'),
                         TextInput::make('tier_platinum_min_spend')
-                            ->label('Syarat Minimal Belanja - Member Platinum VVIP (Rp)')
+                            ->label('Syarat Minimal Belanja Tahunan - Member Platinum VVIP (Rp)')
                             ->numeric()
                             ->prefix('Rp')
                             ->default(5000000)
                             ->required()
-                            ->helperText('Jika total belanja lunas customer mencapai nominal ini, level otomatis naik ke Platinum VVIP.'),
+                            ->helperText('Akumulasi belanja lunas tahunan untuk mencapai level Platinum VVIP.'),
                     ])->columns(2),
 
                 Section::make('Kontak Layanan Pelanggan (CS) & Media Sosial')

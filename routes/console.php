@@ -12,3 +12,4 @@ Schedule::command('points:expire')->daily();
 Schedule::command('products:sync-digiflazz')->everySixHours();
 Schedule::command('doku:check-pending')->everyTwoMinutes()->withoutOverlapping();
 Schedule::command('digiflazz:check-pending')->everyTwoMinutes()->withoutOverlapping();
+Schedule::command('members:reset-annual-tiers')->yearlyOn(1, 1, '00:00');
