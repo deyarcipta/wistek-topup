@@ -52,8 +52,8 @@ class WhatsappService
             ];
 
             $request = Http::asJson()
-                ->timeout(3)
-                ->connectTimeout(2);
+                ->timeout(10)
+                ->connectTimeout(5);
 
             if (! empty($this->apiToken)) {
                 $request = $request->withHeaders([
