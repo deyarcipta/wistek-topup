@@ -273,6 +273,29 @@ class AdminPanelProvider extends PanelProvider
                             margin-left: 0 !important;
                             border-left: none !important;
                         }
+
+                        /* ========================================================
+                           Stats Overview Widgets & Cards Light Mode Contrast Fix
+                           ======================================================== */
+                        .fi-wi-stats-overview-stat-label {
+                            color: #374151 !important;
+                            font-weight: 600 !important;
+                        }
+                        .dark .fi-wi-stats-overview-stat-label {
+                            color: #d1d5db !important;
+                        }
+
+                        .fi-wi-stats-overview-stat-value {
+                            color: #111827 !important;
+                            font-weight: 800 !important;
+                        }
+                        .dark .fi-wi-stats-overview-stat-value {
+                            color: #ffffff !important;
+                        }
+
+                        .fi-wi-stats-overview-stat-description {
+                            font-weight: 600 !important;
+                        }
                     </style>
                     <script>
                         (function() {
