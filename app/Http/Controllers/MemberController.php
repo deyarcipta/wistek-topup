@@ -18,6 +18,11 @@ class MemberController extends Controller
     {
         $user = Auth::user();
 
+        // Check if user is eligible for automatic tier upgrade based on total spending
+        $user->checkAndUpgradeTier();
+
+        $tierProgress = $user->getTierProgressData();
+
         // Calculate statistics
         $totalTransactions = $user->transactions()
             ->where('payment_status', 'paid')
@@ -43,6 +48,7 @@ class MemberController extends Controller
 
         return view('dashboard.index', compact(
             'user',
+            'tierProgress',
             'totalTransactions',
             'totalSpent',
             'expiringPoints',

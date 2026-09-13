@@ -112,8 +112,84 @@
                     <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.25rem;">Halo, {{ $user->name }}!</h2>
                     <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0;">Selamat datang di dashboard member Anda. Nikmati kemudahan transaksi instan Wistek.</p>
                 </div>
-                <div class="stat-badge">
-                    MEMBER AKTIF
+                @if(($tierProgress['current_tier'] ?? 'regular') === 'platinum')
+                    <div class="stat-badge" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(59, 130, 246, 0.25)); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.5); box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);">
+                        <i class="fa-solid fa-gem"></i> PLATINUM MEMBER (VVIP)
+                    </div>
+                @elseif(($tierProgress['current_tier'] ?? 'regular') === 'gold')
+                    <div class="stat-badge" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.25)); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.5); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);">
+                        <i class="fa-solid fa-crown"></i> GOLD MEMBER (VIP)
+                    </div>
+                @else
+                    <div class="stat-badge" style="background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);">
+                        <i class="fa-solid fa-user-shield"></i> REGULAR MEMBER
+                    </div>
+                @endif
+            </div>
+
+            <!-- Member Level & Auto-Upgrade Progress Card -->
+            <div class="dashboard-card" style="background: linear-gradient(135deg, rgba(20, 20, 25, 0.95), rgba(30, 30, 40, 0.95)); border: 1px solid {{ ($tierProgress['current_tier'] ?? 'regular') === 'platinum' ? 'rgba(168, 85, 247, 0.4)' : (($tierProgress['current_tier'] ?? 'regular') === 'gold' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.1)') }}; position: relative; overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);">
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 52px; height: 52px; border-radius: 14px; background: {{ ($tierProgress['current_tier'] ?? 'regular') === 'platinum' ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2))' : (($tierProgress['current_tier'] ?? 'regular') === 'gold' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2))' : 'rgba(255, 255, 255, 0.05)') }}; border: 1px solid {{ ($tierProgress['current_tier'] ?? 'regular') === 'platinum' ? 'rgba(168, 85, 247, 0.4)' : (($tierProgress['current_tier'] ?? 'regular') === 'gold' ? 'rgba(245, 158, 11, 0.4)' : 'rgba(255, 255, 255, 0.1)') }}; display: flex; align-items: center; justify-content: center;">
+                            @if(($tierProgress['current_tier'] ?? 'regular') === 'platinum')
+                                <i class="fa-solid fa-gem" style="font-size: 1.6rem; color: #c084fc;"></i>
+                            @elseif(($tierProgress['current_tier'] ?? 'regular') === 'gold')
+                                <i class="fa-solid fa-crown" style="font-size: 1.6rem; color: #f59e0b;"></i>
+                            @else
+                                <i class="fa-solid fa-layer-group" style="font-size: 1.5rem; color: #94a3b8;"></i>
+                            @endif
+                        </div>
+                        <div>
+                            <span style="font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 700; display: block; margin-bottom: 2px;">Tingkat Level Akun Anda</span>
+                            <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                                {{ $tierProgress['current_tier_name'] }}
+                                @if(($tierProgress['current_tier'] ?? 'regular') !== 'regular')
+                                    <span style="font-size: 0.7rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 20px; font-weight: 700;">VIP PROMO ACTIVE</span>
+                                @endif
+                            </h3>
+                        </div>
+                    </div>
+                    
+                    @if(!($tierProgress['is_max'] ?? false))
+                        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 0.5rem 1rem; border-radius: 10px; text-align: right;">
+                            <span style="font-size: 0.75rem; color: var(--text-secondary); display: block;">Target Level Berikutnya:</span>
+                            <strong style="font-family: 'Outfit', sans-serif; color: #e28743; font-size: 0.95rem;">{{ $tierProgress['next_tier_name'] }}</strong>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Progress Bar Section -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                        <span style="color: var(--text-secondary); font-weight: 600;">
+                            @if($tierProgress['is_max'] ?? false)
+                                <i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Level Tertinggi Ditempuh!
+                            @else
+                                Progres Akumulasi Belanja: <strong style="color: #fff;">{{ $tierProgress['progress_percent'] }}%</strong>
+                            @endif
+                        </span>
+                        <span style="font-family: 'Outfit', sans-serif; font-weight: 700; color: #fff;">
+                            Rp {{ number_format($tierProgress['total_spent'], 0, ',', '.') }} / Rp {{ number_format($tierProgress['target_threshold'], 0, ',', '.') }}
+                        </span>
+                    </div>
+
+                    <div style="width: 100%; height: 12px; background: rgba(255, 255, 255, 0.06); border-radius: 10px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.08); position: relative;">
+                        <div style="width: {{ $tierProgress['progress_percent'] }}%; height: 100%; background: {{ ($tierProgress['current_tier'] ?? 'regular') === 'platinum' ? 'linear-gradient(90deg, #c084fc, #3b82f6)' : 'linear-gradient(90deg, #f59e0b, #e28743)' }}; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 12px {{ ($tierProgress['current_tier'] ?? 'regular') === 'platinum' ? 'rgba(192, 132, 252, 0.5)' : 'rgba(245, 158, 11, 0.5)' }};"></div>
+                    </div>
+                </div>
+
+                <!-- Guidance Info Text -->
+                <div style="background: rgba(0, 0, 0, 0.25); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.84rem; color: #d1d5db;">
+                    <i class="fa-solid fa-circle-info" style="font-size: 1.1rem; color: #e28743; min-width: 18px;"></i>
+                    <span>
+                        @if($tierProgress['is_max'] ?? false)
+                            Selamat! Anda telah berada di level tertinggi <strong>Platinum Member (VVIP)</strong>. Seluruh pesanan Anda otomatis mendapatkan harga promo termurah!
+                        @else
+                            Tingkatkan belanja Anda sebanyak <strong>Rp {{ number_format($tierProgress['shortfall'], 0, ',', '.') }}</strong> lagi untuk otomatis naik ke level <strong>{{ $tierProgress['next_tier_name'] }}</strong> dan mendapatkan diskon harga VIP otomatis di setiap pembelian!
+                        @endif
+                    </span>
                 </div>
             </div>
 

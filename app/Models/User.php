@@ -55,6 +55,64 @@ class User extends Authenticatable implements FilamentUser
         };
     }
 
+    public function getTierProgressData(): array
+    {
+        $totalSpent = (float) Transaction::where('user_id', $this->id)
+            ->where('payment_status', 'paid')
+            ->sum('price');
+
+        $goldThreshold = (float) Setting::get('tier_gold_min_spend', '1000000');
+        $platinumThreshold = (float) Setting::get('tier_platinum_min_spend', '5000000');
+
+        $tier = $this->tier_level ?? 'regular';
+
+        if ($tier === 'platinum') {
+            return [
+                'current_tier' => 'platinum',
+                'current_tier_name' => 'Platinum Member (VVIP)',
+                'next_tier_name' => null,
+                'total_spent' => $totalSpent,
+                'target_threshold' => $platinumThreshold,
+                'progress_percent' => 100,
+                'shortfall' => 0,
+                'is_max' => true,
+            ];
+        }
+
+        if ($tier === 'gold') {
+            $target = $platinumThreshold;
+            $shortfall = max(0, $target - $totalSpent);
+            $percent = $target > 0 ? min(100, round(($totalSpent / $target) * 100, 1)) : 100;
+
+            return [
+                'current_tier' => 'gold',
+                'current_tier_name' => 'Gold Member (VIP)',
+                'next_tier_name' => 'Platinum Member (VVIP)',
+                'total_spent' => $totalSpent,
+                'target_threshold' => $target,
+                'progress_percent' => $percent,
+                'shortfall' => $shortfall,
+                'is_max' => false,
+            ];
+        }
+
+        // Regular tier
+        $target = $goldThreshold;
+        $shortfall = max(0, $target - $totalSpent);
+        $percent = $target > 0 ? min(100, round(($totalSpent / $target) * 100, 1)) : 100;
+
+        return [
+            'current_tier' => 'regular',
+            'current_tier_name' => 'Regular Member',
+            'next_tier_name' => 'Gold Member (VIP)',
+            'total_spent' => $totalSpent,
+            'target_threshold' => $target,
+            'progress_percent' => $percent,
+            'shortfall' => $shortfall,
+            'is_max' => false,
+        ];
+    }
+
     /**
      * Check total lifetime spending from paid+success transactions and auto upgrade tier level
      */
