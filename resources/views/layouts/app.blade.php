@@ -78,6 +78,9 @@
         }
 
         @media (max-width: 768px) {
+            header {
+                padding: 0.5rem 0 !important;
+            }
             .navbar {
                 position: relative !important;
                 height: auto !important;
@@ -87,8 +90,8 @@
                 flex-wrap: wrap !important;
                 justify-content: space-between !important;
                 align-items: center !important;
-                padding: 0.75rem 1rem !important;
-                gap: 0.5rem 0 !important;
+                padding: 0.85rem 1.25rem !important;
+                gap: 0.75rem 0 !important;
             }
             .logo {
                 order: 1 !important;
@@ -101,7 +104,7 @@
                 margin-left: auto !important;
                 align-items: center !important;
                 justify-content: center !important;
-                padding: 0.4rem 0.65rem !important;
+                padding: 0.45rem 0.75rem !important;
                 border-radius: 10px !important;
                 background: rgba(255, 255, 255, 0.05) !important;
                 border: 1px solid var(--border-color) !important;
@@ -111,7 +114,7 @@
                 width: 100% !important;
                 flex-basis: 100% !important;
                 max-width: 100% !important;
-                margin: 0.35rem 0 0 0 !important;
+                margin: 0.65rem 0 0.25rem 0 !important;
             }
             .nav-links {
                 order: 4 !important;
