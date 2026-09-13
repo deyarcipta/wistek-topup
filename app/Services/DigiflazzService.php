@@ -539,6 +539,195 @@ class DigiflazzService
     }
 
     /**
+     * Find candidate alternative sellers in Digiflazz pricelist for a product.
+     * Enforces Margin Safety Guard: Only returns sellers where candidate_cost <= product->price_cost.
+     *
+     * @return array<int, array{sku: string, seller_name: string, price_cost: float, product_name: string}>
+     */
+    public function findAlternativeSellerSkus(Product $product, array $failedSkus = []): array
+    {
+        try {
+            $dfProducts = $this->getProducts(false);
+        } catch (Exception $e) {
+            logger()->error('findAlternativeSellerSkus failed to load pricelist: '.$e->getMessage());
+
+            return [];
+        }
+
+        if (empty($dfProducts)) {
+            return [];
+        }
+
+        $categoryName = $product->category ? $product->category->name : '';
+        $brandSlug = $product->category ? Str::slug($product->category->slug) : '';
+
+        $primaryCost = (float) $product->price_cost;
+        if ($primaryCost <= 0) {
+            $primaryCost = (float) $product->price_sell;
+        }
+
+        $candidates = [];
+
+        foreach ($dfProducts as $item) {
+            $sku = trim((string) ($item['buyer_sku_code'] ?? ''));
+            if ($sku === '' || in_array($sku, $failedSkus, true) || $sku === $product->sku) {
+                continue;
+            }
+
+            // Check if seller status is active
+            $buyerActive = in_array(strtolower((string) ($item['buyer_product_status'] ?? '')), ['1', 'true', 'active'], true);
+            $sellerActive = in_array(strtolower((string) ($item['seller_product_status'] ?? '')), ['1', 'true', 'active'], true);
+
+            if (! $buyerActive || ! $sellerActive) {
+                continue;
+            }
+
+            $candidateCost = (float) ($item['price'] ?? 0);
+
+            // 1. MARGIN SAFETY GUARD: candidate cost MUST be <= primary product cost (or price_sell if cost 0)
+            if ($primaryCost > 0 && $candidateCost > $primaryCost) {
+                continue;
+            }
+
+            $itemBrand = trim((string) ($item['brand'] ?? ''));
+            $itemProductName = trim((string) ($item['product_name'] ?? ''));
+
+            // Check if brand matches
+            $brandMatches = false;
+            if ($brandSlug !== '' && $itemBrand !== '') {
+                $brandMatches = str_contains(Str::slug($itemBrand), $brandSlug) || str_contains($brandSlug, Str::slug($itemBrand));
+            } elseif ($categoryName !== '' && $itemBrand !== '') {
+                $brandMatches = str_contains(strtolower($itemBrand), strtolower($categoryName)) || str_contains(strtolower($categoryName), strtolower($itemBrand));
+            }
+
+            if (! $brandMatches && $categoryName !== '') {
+                $itemCat = trim((string) ($item['category'] ?? ''));
+                $brandMatches = str_contains(strtolower($itemCat), strtolower($categoryName));
+            }
+
+            if (! $brandMatches) {
+                continue;
+            }
+
+            // Check product nominal/name similarity
+            $cleanProductName = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', ' ', $product->name)));
+            $cleanItemName = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', ' ', $itemProductName)));
+
+            preg_match_all('/\d+/', $cleanProductName, $prodNums);
+            preg_match_all('/\d+/', $cleanItemName, $itemNums);
+
+            $prodNumStr = implode('-', $prodNums[0] ?? []);
+            $itemNumStr = implode('-', $itemNums[0] ?? []);
+
+            $nameMatches = false;
+            if ($cleanProductName === $cleanItemName) {
+                $nameMatches = true;
+            } elseif ($prodNumStr !== '' && $prodNumStr === $itemNumStr) {
+                $nameMatches = true;
+            } elseif (str_contains($cleanItemName, $cleanProductName) || str_contains($cleanProductName, $cleanItemName)) {
+                $nameMatches = true;
+            }
+
+            if ($nameMatches) {
+                $candidates[] = [
+                    'sku' => $sku,
+                    'seller_name' => trim((string) ($item['seller_name'] ?? 'Digiflazz Seller')),
+                    'price_cost' => $candidateCost,
+                    'product_name' => $itemProductName,
+                ];
+            }
+        }
+
+        // Sort candidates by price_cost ASC (cheapest candidate first)
+        usort($candidates, fn ($a, $b) => $a['price_cost'] <=> $b['price_cost']);
+
+        return $candidates;
+    }
+
+    /**
+     * Order topup with automatic multi-seller failover protection.
+     * If primary seller SKU fails or is inactive/gangguan, it attempts up to 3 candidate sellers
+     * with candidate_cost <= primary_cost, ensuring 0 loss margin safety.
+     *
+     * @return array{success: bool, data?: array, message?: string}
+     */
+    public function orderTopupWithFailover(Transaction $transaction, ?Product $product = null): array
+    {
+        if (! $product) {
+            $product = Product::where('sku', $transaction->sku)->first();
+            if (! $product && $transaction->product_name) {
+                $product = Product::where('name', $transaction->product_name)->first();
+            }
+        }
+
+        $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
+        $primarySku = $transaction->sku;
+
+        // Check deposit balance first
+        if ($product && $this->isConfigured()) {
+            $balanceCheck = $this->checkBalanceForProduct($product);
+            if (! $balanceCheck['sufficient']) {
+                return [
+                    'success' => false,
+                    'message' => $balanceCheck['message'] ?? 'Saldo Digiflazz tidak mencukupi.',
+                ];
+            }
+        }
+
+        logger()->info("Attempting primary Digiflazz order: ref_id={$transaction->invoice}, sku={$primarySku}");
+        $primaryResponse = $this->orderTopup($transaction->invoice, $primarySku, $targetNo);
+
+        if ($primaryResponse['success']) {
+            $status = strtolower($primaryResponse['data']['status'] ?? '');
+            if ($status !== 'gagal') {
+                return $primaryResponse;
+            }
+        }
+
+        // Primary SKU failed or returned error status (e.g. RC 43 / Gagal / Offline)
+        $failedSkus = [$primarySku];
+        $failReason = $primaryResponse['message'] ?? ($primaryResponse['data']['message'] ?? 'Primary seller failed');
+        logger()->warning("Primary seller SKU {$primarySku} failed for invoice {$transaction->invoice}: {$failReason}. Initiating Auto-Failover...");
+
+        if ($product) {
+            $candidates = $this->findAlternativeSellerSkus($product, $failedSkus);
+
+            $attempt = 1;
+            foreach ($candidates as $candidate) {
+                if ($attempt > 3) {
+                    break; // Maximum 3 failover retries
+                }
+
+                $candidateSku = $candidate['sku'];
+                $failoverRefId = "{$transaction->invoice}-F{$attempt}";
+
+                logger()->info("Auto-Failover Attempt #{$attempt} for invoice {$transaction->invoice}: trying candidate SKU {$candidateSku} (Seller: {$candidate['seller_name']}, Cost: Rp {$candidate['price_cost']})");
+
+                $retryResponse = $this->orderTopup($failoverRefId, $candidateSku, $targetNo);
+
+                if ($retryResponse['success']) {
+                    $retryStatus = strtolower($retryResponse['data']['status'] ?? '');
+                    if ($retryStatus !== 'gagal') {
+                        logger()->info("Auto-Failover SUCCESS on attempt #{$attempt} using candidate SKU {$candidateSku} for invoice {$transaction->invoice}!");
+
+                        // Update transaction record with the new working SKU & note
+                        $transaction->sku = $candidateSku;
+                        $transaction->note = "Sukses via Failover Seller ({$candidate['seller_name']} - SKU {$candidateSku})";
+                        $transaction->save();
+
+                        return $retryResponse;
+                    }
+                }
+
+                $failedSkus[] = $candidateSku;
+                $attempt++;
+            }
+        }
+
+        return $primaryResponse;
+    }
+
+    /**
      * Check transaction status directly from Digiflazz API and sync DB status
      *
      * @return array{success: bool, status: string, note: string|null, message: string|null}

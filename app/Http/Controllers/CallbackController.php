@@ -393,13 +393,7 @@ class CallbackController extends Controller
         $transaction->save();
 
         try {
-            $targetNo = str_replace([' ', '(', ')', '-'], '', $transaction->target_no);
-
-            $dfResponse = $digiflazz->orderTopup(
-                $transaction->invoice,
-                $transaction->sku,
-                $targetNo
-            );
+            $dfResponse = $digiflazz->orderTopupWithFailover($transaction);
 
             if ($dfResponse['success']) {
                 $dfData = $dfResponse['data'];
