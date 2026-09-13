@@ -78,26 +78,43 @@
         }
 
         @media (max-width: 768px) {
-            .menu-toggle {
-                display: block !important;
-            }
             .navbar {
-                position: relative;
+                position: relative !important;
                 height: auto !important;
-                min-height: 70px !important;
+                min-height: 60px !important;
+                display: flex !important;
+                flex-direction: row !important;
                 flex-wrap: wrap !important;
                 justify-content: space-between !important;
                 align-items: center !important;
-                padding: 0.75rem 1.25rem !important;
-                gap: 0.75rem !important;
+                padding: 0.75rem 1rem !important;
+                gap: 0.5rem 0 !important;
+            }
+            .logo {
+                order: 1 !important;
+                margin: 0 !important;
+                font-size: 1.35rem !important;
+            }
+            .menu-toggle {
+                display: flex !important;
+                order: 2 !important;
+                margin-left: auto !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0.4rem 0.65rem !important;
+                border-radius: 10px !important;
+                background: rgba(255, 255, 255, 0.05) !important;
+                border: 1px solid var(--border-color) !important;
             }
             .nav-search-container {
-                order: 3;
+                order: 3 !important;
                 width: 100% !important;
+                flex-basis: 100% !important;
                 max-width: 100% !important;
-                margin: 0 !important;
+                margin: 0.35rem 0 0 0 !important;
             }
             .nav-links {
+                order: 4 !important;
                 display: none !important;
                 position: absolute !important;
                 top: 100% !important;
@@ -105,14 +122,15 @@
                 width: 100% !important;
                 background: rgba(8, 9, 12, 0.98) !important;
                 backdrop-filter: blur(16px) !important;
+                -webkit-backdrop-filter: blur(16px) !important;
                 border-bottom: 1px solid var(--border-color) !important;
                 flex-direction: column !important;
-                padding: 1.5rem !important;
-                gap: 1rem !important;
+                padding: 1.25rem 1.5rem !important;
+                gap: 0.85rem !important;
                 margin-top: 0 !important;
                 align-items: flex-start !important;
                 z-index: 1000 !important;
-                box-shadow: 0 10px 15px rgba(0,0,0,0.5) !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important;
             }
             .nav-links.open {
                 display: flex !important;
