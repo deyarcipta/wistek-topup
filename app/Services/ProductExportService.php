@@ -3,13 +3,17 @@
 namespace App\Services;
 
 use App\Models\Product;
+use OpenSpout\Common\Entity\Cell;
 use OpenSpout\Common\Entity\Row;
+use OpenSpout\Common\Entity\Style\CellAlignment;
+use OpenSpout\Common\Entity\Style\Color;
+use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Writer\XLSX\Writer;
 
 class ProductExportService
 {
     /**
-     * Generate an Excel (XLSX) file containing all products with price and profit calculations.
+     * Generate a professionally formatted Excel (XLSX) file containing all products.
      *
      * @return string Absolute file path to the generated XLSX file.
      */
@@ -20,7 +24,63 @@ class ProductExportService
         $writer = new Writer;
         $writer->openToFile($tempPath);
 
-        // Header row
+        // Configure Column Widths for a clean, non-truncated layout
+        $options = $writer->getOptions();
+        $options->setColumnWidth(8, 1);    // No
+        $options->setColumnWidth(16, 2);   // SKU
+        $options->setColumnWidth(22, 3);   // Kategori
+        $options->setColumnWidth(38, 4);   // Nama Produk
+        $options->setColumnWidth(18, 5);   // Harga Modal
+        $options->setColumnWidth(20, 6);   // Harga Jual Publik
+        $options->setColumnWidth(24, 7);   // Harga Jual VIP (Gold)
+        $options->setColumnWidth(26, 8);   // Harga Jual VVIP (Platinum)
+        $options->setColumnWidth(28, 9);   // Potongan QRIS (0.7% + 750)
+        $options->setColumnWidth(18, 10);  // Untung Publik
+        $options->setColumnWidth(18, 11);  // Untung Gold
+        $options->setColumnWidth(18, 12);  // Untung Platinum
+
+        // Define Reusable Styles
+        $titleStyle = (new Style)
+            ->setFontBold()
+            ->setFontSize(14)
+            ->setFontName('Segoe UI')
+            ->setFontColor('0F172A');
+
+        $metaStyle = (new Style)
+            ->setFontItalic()
+            ->setFontSize(10)
+            ->setFontName('Segoe UI')
+            ->setFontColor('64748B');
+
+        $headerStyle = (new Style)
+            ->setFontBold()
+            ->setFontSize(11)
+            ->setFontName('Segoe UI')
+            ->setFontColor(Color::WHITE)
+            ->setBackgroundColor('1E293B')
+            ->setCellAlignment(CellAlignment::CENTER);
+
+        // Data Styles (White & Zebra backgrounds)
+        $centerWhite = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setCellAlignment(CellAlignment::CENTER);
+        $centerZebra = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setBackgroundColor('F8FAFC')->setCellAlignment(CellAlignment::CENTER);
+
+        $leftWhite = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setCellAlignment(CellAlignment::LEFT);
+        $leftZebra = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setBackgroundColor('F8FAFC')->setCellAlignment(CellAlignment::LEFT);
+
+        $numWhite = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setCellAlignment(CellAlignment::RIGHT)->setFormat('Rp #,##0');
+        $numZebra = (new Style)->setFontName('Segoe UI')->setFontSize(10)->setBackgroundColor('F8FAFC')->setCellAlignment(CellAlignment::RIGHT)->setFormat('Rp #,##0');
+
+        $products = Product::with(['category', 'subCategory'])
+            ->orderBy('category_id')
+            ->orderBy('name')
+            ->get();
+
+        // 1. Report Header Banner
+        $writer->addRow(Row::fromValues(['LAPORAN KATALOG & ESTIMASI KEUNTUNGAN PRODUK WISTEK TOPUP'], $titleStyle));
+        $writer->addRow(Row::fromValues(['Tanggal Export: '.date('d-m-Y H:i').' WIB | Total Produk: '.$products->count().' Item'], $metaStyle));
+        $writer->addRow(Row::fromValues([''])); // Blank row
+
+        // 2. Table Headers
         $headers = [
             'No',
             'SKU',
@@ -35,16 +95,17 @@ class ProductExportService
             'Untung Gold',
             'Untung Platinum',
         ];
+        $writer->addRow(Row::fromValues($headers, $headerStyle));
 
-        $writer->addRow(Row::fromValues($headers));
-
-        $products = Product::with(['category', 'subCategory'])
-            ->orderBy('category_id')
-            ->orderBy('name')
-            ->get();
-
+        // 3. Data Rows
         $no = 1;
-        foreach ($products as $product) {
+        foreach ($products as $index => $product) {
+            $isEven = ($index % 2 === 0);
+
+            $cStyle = $isEven ? $centerZebra : $centerWhite;
+            $lStyle = $isEven ? $leftZebra : $leftWhite;
+            $nStyle = $isEven ? $numZebra : $numWhite;
+
             $cost = (float) $product->price_cost;
             $sellPublik = (float) $product->price_sell;
 
@@ -76,22 +137,22 @@ class ProductExportService
             $untungGold = $totalGold - $qrisCutGold - $cost;
             $untungPlatinum = $totalPlatinum - $qrisCutPlatinum - $cost;
 
-            $rowValues = [
-                $no++,
-                (string) ($product->sku ?? ''),
-                $product->category ? $product->category->name : '-',
-                (string) $product->name,
-                round($cost, 2),
-                round($sellPublik, 2),
-                round($sellGold, 2),
-                round($sellPlatinum, 2),
-                round($qrisCutPublik, 2),
-                round($untungPublik, 2),
-                round($untungGold, 2),
-                round($untungPlatinum, 2),
+            $rowCells = [
+                Cell::fromValue($no++, $cStyle),
+                Cell::fromValue((string) ($product->sku ?? ''), $cStyle),
+                Cell::fromValue($product->category ? $product->category->name : '-', $lStyle),
+                Cell::fromValue((string) $product->name, $lStyle),
+                Cell::fromValue(round($cost), $nStyle),
+                Cell::fromValue(round($sellPublik), $nStyle),
+                Cell::fromValue(round($sellGold), $nStyle),
+                Cell::fromValue(round($sellPlatinum), $nStyle),
+                Cell::fromValue(round($qrisCutPublik), $nStyle),
+                Cell::fromValue(round($untungPublik), $nStyle),
+                Cell::fromValue(round($untungGold), $nStyle),
+                Cell::fromValue(round($untungPlatinum), $nStyle),
             ];
 
-            $writer->addRow(Row::fromValues($rowValues));
+            $writer->addRow(new Row($rowCells));
         }
 
         $writer->close();
