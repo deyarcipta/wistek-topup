@@ -41,11 +41,11 @@ class ManagePriceMarginSettings extends Page implements HasForms
     public static function getDefaultTierRules(): array
     {
         return [
-            ['max_amount' => 5000, 'margin_online' => 600, 'margin_gold' => 400, 'margin_platinum' => 200, 'margin_cash' => 400, 'service_fee_percent' => 6.0, 'note' => 'Nominal ≤ Rp 5.000'],
-            ['max_amount' => 10000, 'margin_online' => 1000, 'margin_gold' => 700, 'margin_platinum' => 400, 'margin_cash' => 700, 'service_fee_percent' => 5.0, 'note' => 'Nominal ≤ Rp 10.000'],
-            ['max_amount' => 50000, 'margin_online' => 1500, 'margin_gold' => 1000, 'margin_platinum' => 600, 'margin_cash' => 1000, 'service_fee_percent' => 3.5, 'note' => 'Nominal ≤ Rp 50.000'],
-            ['max_amount' => 100000, 'margin_online' => 2200, 'margin_gold' => 1500, 'margin_platinum' => 1000, 'margin_cash' => 1500, 'service_fee_percent' => 2.5, 'note' => 'Nominal ≤ Rp 100.000'],
-            ['max_amount' => 0, 'margin_online' => 3.5, 'margin_gold' => 2.5, 'margin_platinum' => 1.5, 'margin_cash' => 2.5, 'service_fee_percent' => 1.5, 'note' => 'Nominal > Rp 100.000 (Default / Persen)'],
+            ['max_amount' => 5000, 'margin_online' => 4.0, 'margin_gold' => 3.0, 'margin_platinum' => 2.0, 'margin_cash' => 3.0, 'service_fee_percent' => 800, 'note' => 'Tier 1: Nominal ≤ Rp 5.000'],
+            ['max_amount' => 35000, 'margin_online' => 2.5, 'margin_gold' => 1.5, 'margin_platinum' => 0.5, 'margin_cash' => 1.5, 'service_fee_percent' => 850, 'note' => 'Tier 2: Nominal ≤ Rp 35.000'],
+            ['max_amount' => 100000, 'margin_online' => 2.0, 'margin_gold' => 1.2, 'margin_platinum' => 0.4, 'margin_cash' => 1.2, 'service_fee_percent' => 1100, 'note' => 'Tier 3: Nominal ≤ Rp 100.000'],
+            ['max_amount' => 200000, 'margin_online' => 1.5, 'margin_gold' => 1.0, 'margin_platinum' => 0.3, 'margin_cash' => 1.0, 'service_fee_percent' => 1300, 'note' => 'Tier 4: Nominal ≤ Rp 200.000'],
+            ['max_amount' => 0, 'margin_online' => 1.2, 'margin_gold' => 0.8, 'margin_platinum' => 0.2, 'margin_cash' => 0.8, 'service_fee_percent' => 1600, 'note' => 'Tier 5: Default (> Rp 200.000)'],
         ];
     }
 
