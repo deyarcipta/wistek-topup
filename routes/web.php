@@ -6,6 +6,7 @@ use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\TopupController;
 use App\Http\Controllers\ValidationController;
+use App\Services\ProductExportService;
 use Illuminate\Support\Facades\Route;
 
 // Landing Homepage
@@ -66,3 +67,14 @@ Route::middleware(['auth', 'member'])->group(function () {
     Route::post('/dashboard/profile', [MemberController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 });
+
+// Admin Product Excel Export Route
+Route::middleware(['auth'])->get('/admin/products/export-excel', function () {
+    if (! auth()->user()?->isAdmin()) {
+        abort(403);
+    }
+
+    $filePath = ProductExportService::exportToXlsx();
+
+    return response()->download($filePath, 'Laporan_Produk_Wistek_'.date('Y-m-d_His').'.xlsx')->deleteFileAfterSend(true);
+})->name('admin.products.export');

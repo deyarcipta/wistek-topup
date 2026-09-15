@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Pages;
 
 use App\Filament\Resources\Products\ProductResource;
 use App\Services\DigiflazzService;
+use App\Services\ProductExportService;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Notifications\Notification;
@@ -16,6 +17,23 @@ class ListProducts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('exportExcel')
+                ->label('Download Excel Produk')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('info')
+                ->action(function () {
+                    try {
+                        $filePath = ProductExportService::exportToXlsx();
+
+                        return response()->download($filePath, 'Laporan_Produk_Wistek_'.date('Y-m-d_His').'.xlsx')->deleteFileAfterSend(true);
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Gagal Export Excel')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
             Action::make('autoSwitchSeller')
                 ->label('⚡ Switch Seller Termurah')
                 ->icon('heroicon-o-bolt')
