@@ -735,7 +735,7 @@
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                        <span class="payment-row-price" data-base-price="0">Pilih Nominal</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -779,7 +779,7 @@
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                        <span class="payment-row-price" data-base-price="0">Pilih Nominal</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -831,7 +831,7 @@
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                        <span class="payment-row-price" data-base-price="0">Pilih Nominal</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -881,7 +881,7 @@
                                                         <span class="payment-name-txt">{{ $displayName }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                        <span class="payment-row-price" data-base-price="0">Pilih Nominal</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -925,7 +925,7 @@
                                                         <span class="payment-name-txt">{{ $channel['name'] }}</span>
                                                     </div>
                                                     <div class="payment-right-side">
-                                                        <span class="payment-row-price" data-base-price="0">Rp 0</span>
+                                                        <span class="payment-row-price" data-base-price="0">Pilih Nominal</span>
                                                     </div>
                                                 </div>
                                             @endforeach
@@ -1269,16 +1269,27 @@
     }
 
     function updateAllPaymentRowPrices() {
-        if (!selectedPrice) return;
-        
         const formatRupiah = (num) => 'Rp ' + new Intl.NumberFormat('id-ID').format(num);
         const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
         document.querySelectorAll('.payment-row-item').forEach(item => {
+            const priceEl = item.querySelector('.payment-row-price');
+            if (!priceEl) return;
+
+            if (!selectedPrice || selectedPrice <= 0) {
+                priceEl.innerText = 'Pilih Nominal';
+                priceEl.style.fontSize = '0.8rem';
+                priceEl.style.opacity = '0.65';
+                return;
+            }
+
+            priceEl.style.fontSize = '';
+            priceEl.style.opacity = '1';
+
             const code = item.getAttribute('data-code') || '';
             const isQris = (code === 'QRIS' || code.includes('QRIS'));
             const isVa = (code.includes('VA') || code.includes('VIRTUAL') || code.includes('MYBVA') || code.includes('OTHERBANK'));
-            const feeFlat = parseFloat(item.getAttribute('data-fee-flat') || 0);
+            let feeFlat = parseFloat(item.getAttribute('data-fee-flat') || 0);
             let feePercent = parseFloat(item.getAttribute('data-fee-percent') || 0);
             const minFee = parseFloat(item.getAttribute('data-min-fee') || 0);
             const maxFee = parseFloat(item.getAttribute('data-max-fee') || 0);
@@ -1318,10 +1329,7 @@
             }
             const total = discountedPrice + fee;
 
-            const priceEl = item.querySelector('.payment-row-price');
-            if (priceEl) {
-                priceEl.innerText = formatRupiah(total);
-            }
+            priceEl.innerText = formatRupiah(total);
         });
     }
 
