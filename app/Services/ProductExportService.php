@@ -14,6 +14,7 @@ class ProductExportService
 {
     /**
      * Generate a professionally formatted Excel (XLSX) file containing all products.
+     * All tier boundary constraints (Margins & Service Fees) are evaluated strictly against Harga Modal.
      *
      * @return string Absolute file path to the generated XLSX file.
      */
@@ -104,33 +105,31 @@ class ProductExportService
             $lStyle = $isEven ? $leftZebra : $leftWhite;
             $nStyle = $isEven ? $numZebra : $numWhite;
 
+            // Langkah A: Data Utama
             $cost = (float) $product->price_cost;
-            $sellPublik = (float) $product->price_sell;
 
+            // Langkah B: Hitung Harga Katalog = Harga Modal + (Harga Modal * Margin %)
+            $sellPublik = (float) DigiflazzService::calculatePriceSell($cost);
             $sellGold = ($product->price_gold !== null && (float) $product->price_gold > 0)
                 ? (float) $product->price_gold
                 : (float) DigiflazzService::calculateGoldPrice($cost);
-
             $sellPlatinum = ($product->price_platinum !== null && (float) $product->price_platinum > 0)
                 ? (float) $product->price_platinum
                 : (float) DigiflazzService::calculatePlatinumPrice($cost);
 
-            // Compute Service Fees (Biaya Layanan Flat / Percent)
-            $pubFee = self::calculateServiceFee($sellPublik);
-            $goldFee = self::calculateServiceFee($sellGold);
-            $platFee = self::calculateServiceFee($sellPlatinum);
+            // Langkah C: Total Bayar Konsumen = Harga Katalog + Biaya Layanan Flat (Strictly evaluated against Harga Modal)
+            $serviceFeeFlat = self::calculateServiceFee($cost);
 
-            // Total Bayar Akhir (Harga Katalog + Biaya Layanan)
-            $totalPublik = $sellPublik + $pubFee;
-            $totalGold = $sellGold + $goldFee;
-            $totalPlatinum = $sellPlatinum + $platFee;
+            $totalPublik = $sellPublik + $serviceFeeFlat;
+            $totalGold = $sellGold + $serviceFeeFlat;
+            $totalPlatinum = $sellPlatinum + $serviceFeeFlat;
 
-            // Potongan TriPay = (Total Bayar Akhir × 0.7%) + Rp750
+            // Langkah D: Potongan TriPay = (Total Bayar Konsumen * 0.7%) + Rp750
             $triPayCutPublik = ($totalPublik * 0.007) + 750;
             $triPayCutGold = ($totalGold * 0.007) + 750;
             $triPayCutPlatinum = ($totalPlatinum * 0.007) + 750;
 
-            // Keuntungan Bersih = Total Bayar Akhir - Potongan TriPay - Harga Modal
+            // Langkah E: Untung Bersih = Total Bayar Konsumen - Potongan TriPay - Harga Modal
             $untungPublik = $totalPublik - $triPayCutPublik - $cost;
             $untungGold = $totalGold - $triPayCutGold - $cost;
             $untungPlatinum = $totalPlatinum - $triPayCutPlatinum - $cost;
@@ -158,14 +157,15 @@ class ProductExportService
     }
 
     /**
-     * Calculate service fee for a given selling price based on dynamic margin tier rules.
+     * Calculate service fee for a given cost price based on dynamic margin tier rules.
+     * Evaluates strictly against Harga Modal.
      */
-    public static function calculateServiceFee(float $amount): float
+    public static function calculateServiceFee(float $cost): float
     {
-        $rule = TripayService::getServiceFeeRule($amount);
+        $rule = TripayService::getServiceFeeRule($cost);
 
         if (($rule['percent'] ?? 0) > 0) {
-            return (float) round(($amount * $rule['percent']) / 100);
+            return (float) round(($cost * $rule['percent']) / 100);
         }
 
         return (float) ($rule['flat'] ?? 0);
