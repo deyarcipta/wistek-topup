@@ -1160,8 +1160,8 @@
 <script>
     window.tierRules = @json(\App\Filament\Pages\ManagePriceMarginSettings::getTierRules());
 
-    function getServiceFeePercent(amount) {
-        if (!window.tierRules || window.tierRules.length === 0) return 1.0;
+    function getServiceFeeRule(amount) {
+        if (!window.tierRules || window.tierRules.length === 0) return { flat: 0, percent: 1.0 };
         
         const parseNum = (val) => parseFloat(String(val || 0).replace(',', '.')) || 0;
 
@@ -1171,15 +1171,29 @@
             return maxA - maxB;
         });
 
+        let val = 0;
         for (let rule of sorted) {
             const max = parseNum(rule.max_amount);
             if (max > 0 && amount <= max) {
-                return parseNum(rule.service_fee_percent);
+                val = parseNum(rule.service_fee_percent);
+                break;
             }
         }
 
-        const defaultRule = sorted[sorted.length - 1];
-        return parseNum(defaultRule.service_fee_percent);
+        if (val <= 0 && sorted.length > 0) {
+            const defaultRule = sorted[sorted.length - 1];
+            val = parseNum(defaultRule.service_fee_percent);
+        }
+
+        if (val <= 100) {
+            return { flat: 0, percent: val };
+        }
+
+        return { flat: Math.round(val), percent: 0 };
+    }
+
+    function getServiceFeePercent(amount) {
+        return getServiceFeeRule(amount).percent;
     }
 
     let selectedPrice = 0;
@@ -1287,7 +1301,9 @@
             }
 
             if (isQris) {
-                feePercent = getServiceFeePercent(discountedPrice);
+                const qrisRule = getServiceFeeRule(discountedPrice);
+                feeFlat = qrisRule.flat;
+                feePercent = qrisRule.percent;
             }
 
             let fee = feeFlat;
@@ -1356,12 +1372,15 @@
             const discountedPrice = Math.max(0, selectedPrice - appliedDiscount);
 
             const isQris = (paymentMethod === 'QRIS' || paymentMethod.includes('QRIS'));
+            let feeFlat = selectedFeeFlat;
             let feePercent = selectedFeePercent;
             if (isQris) {
-                feePercent = getServiceFeePercent(discountedPrice);
+                const qrisRule = getServiceFeeRule(discountedPrice);
+                feeFlat = qrisRule.flat;
+                feePercent = qrisRule.percent;
             }
 
-            let fee = selectedFeeFlat;
+            let fee = feeFlat;
             if (feePercent > 0) {
                 fee += Math.round((discountedPrice * feePercent) / 100);
             }
