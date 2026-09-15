@@ -47,7 +47,7 @@ class TripayService
             : 'https://tripay.co.id/api-sandbox/';
     }
 
-    public static function getServiceFeePercent(float $amount): float
+    public static function getServiceFeeRule(float $amount): array
     {
         $rules = ManagePriceMarginSettings::getTierRules();
         usort($rules, function ($a, $b) {
@@ -57,16 +57,32 @@ class TripayService
             return ($maxA ?: 999999999) <=> ($maxB ?: 999999999);
         });
 
+        $val = 0.0;
         foreach ($rules as $rule) {
             $max = (float) str_replace(',', '.', (string) ($rule['max_amount'] ?? 0));
             if ($max > 0 && $amount <= $max) {
-                return (float) str_replace(',', '.', (string) ($rule['service_fee_percent'] ?? 8.0));
+                $val = (float) str_replace(',', '.', (string) ($rule['service_fee_percent'] ?? 0));
+                break;
             }
         }
 
-        $defaultRule = end($rules);
+        if ($val <= 0 && count($rules) > 0) {
+            $defaultRule = end($rules);
+            $val = (float) str_replace(',', '.', (string) ($defaultRule['service_fee_percent'] ?? 0));
+        }
 
-        return (float) str_replace(',', '.', (string) ($defaultRule['service_fee_percent'] ?? 2.0));
+        if ($val <= 100) {
+            return ['flat' => 0, 'percent' => $val];
+        }
+
+        return ['flat' => (int) $val, 'percent' => 0.0];
+    }
+
+    public static function getServiceFeePercent(float $amount): float
+    {
+        $rule = self::getServiceFeeRule($amount);
+
+        return $rule['percent'];
     }
 
     /**
@@ -110,8 +126,9 @@ class TripayService
                     $feePercent = (float) (($feeCustomer['percent'] ?? 0) ?: ($totalFee['percent'] ?? 0));
 
                     if ($isQris) {
-                        $feeFlat = 0;
-                        $feePercent = self::getServiceFeePercent($amount);
+                        $feeRule = self::getServiceFeeRule($amount);
+                        $feeFlat = $feeRule['flat'];
+                        $feePercent = $feeRule['percent'];
                     }
 
                     $minFee = isset($ch['minimum_fee']) ? (int) $ch['minimum_fee'] : 0;
@@ -154,8 +171,9 @@ class TripayService
         $qrisShare = (int) Setting::get('tripay_qris_fee_share', 50);
         $freeMinAmount = (int) Setting::get('tripay_qris_free_min_amount', 0);
 
-        $qrisFeeFlat = 0;
-        $qrisFeePercent = self::getServiceFeePercent($amount);
+        $qrisFeeRule = self::getServiceFeeRule($amount);
+        $qrisFeeFlat = $qrisFeeRule['flat'];
+        $qrisFeePercent = $qrisFeeRule['percent'];
 
         if ($freeMinAmount > 0 && $amount >= $freeMinAmount) {
             $qrisFeeFlat = 0;

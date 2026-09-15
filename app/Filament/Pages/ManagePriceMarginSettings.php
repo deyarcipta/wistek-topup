@@ -137,9 +137,9 @@ class ManagePriceMarginSettings extends Page implements HasForms
                                     ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('service_fee_percent')
-                                    ->label('Biaya Layanan (%)')
+                                    ->label('Biaya Layanan (Rp / %)')
                                     ->required()
-                                    ->helperText('Biaya layanan checkout.'),
+                                    ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('note')
                                     ->label('Catatan / Keterangan')

@@ -50,14 +50,14 @@ class MidtransService
             return [];
         }
 
-        $qrisFeePercent = TripayService::getServiceFeePercent($amount);
+        $qrisFeeRule = TripayService::getServiceFeeRule($amount);
 
         return [
             [
                 'code' => 'QRIS',
                 'name' => 'QRIS (GoPay, OVO, Dana, LinkAja, ShopeePay)',
-                'fee_flat' => 0,
-                'fee_percent' => $qrisFeePercent,
+                'fee_flat' => $qrisFeeRule['flat'],
+                'fee_percent' => $qrisFeeRule['percent'],
                 'min_fee' => 0,
                 'max_fee' => 0,
                 'icon_url' => url('/images/payments/qris.svg'),
