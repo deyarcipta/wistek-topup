@@ -119,22 +119,22 @@ class ManagePriceMarginSettings extends Page implements HasForms
                                 TextInput::make('margin_online')
                                     ->label('Margin Regular (Rp / %)')
                                     ->required()
-                                    ->helperText('Margin Member Regular/Publik.'),
+                                    ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('margin_gold')
                                     ->label('Margin Gold VIP (Rp / %)')
                                     ->required()
-                                    ->helperText('Margin Member Level Gold (VIP).'),
+                                    ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('margin_platinum')
                                     ->label('Margin Platinum VVIP (Rp / %)')
                                     ->required()
-                                    ->helperText('Margin Member Level Platinum (VVIP).'),
+                                    ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('margin_cash')
                                     ->label('Margin Cash (Rp / %)')
                                     ->required()
-                                    ->helperText('Margin Kasir / Tunai.'),
+                                    ->helperText('Angka ≤ 100 = Persen (%), > 100 = Rupiah (Rp).'),
 
                                 TextInput::make('service_fee_percent')
                                     ->label('Biaya Layanan (%)')

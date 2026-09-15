@@ -1066,6 +1066,19 @@ class DigiflazzService
         }
     }
 
+    public static function parseMarginValue(float $val, float $cost): float
+    {
+        if ($val <= 0) {
+            return 0;
+        }
+
+        if ($val <= 100) {
+            return ceil($cost * ($val / 100.0));
+        }
+
+        return $val;
+    }
+
     public static function calculateMargin(float $cost): float
     {
         $rules = ManagePriceMarginSettings::getTierRules();
@@ -1074,17 +1087,16 @@ class DigiflazzService
         foreach ($rules as $rule) {
             $max = (float) ($rule['max_amount'] ?? 0);
             if ($max > 0 && $cost <= $max) {
-                return (float) ($rule['margin_online'] ?? 0);
+                $val = (float) ($rule['margin_online'] ?? 0);
+
+                return self::parseMarginValue($val, $cost);
             }
         }
 
         $defaultRule = end($rules);
         $val = (float) ($defaultRule['margin_online'] ?? 3.5);
-        if ($val <= 100) {
-            return ceil(($cost * ($val / 100)) / 100) * 100;
-        }
 
-        return $val;
+        return self::parseMarginValue($val, $cost);
     }
 
     public static function calculateGoldMargin(float $cost): float
@@ -1095,18 +1107,16 @@ class DigiflazzService
         foreach ($rules as $rule) {
             $max = (float) ($rule['max_amount'] ?? 0);
             if ($max > 0 && $cost <= $max) {
-                return isset($rule['margin_gold']) && $rule['margin_gold'] !== '' ? (float) $rule['margin_gold'] : (float) ($rule['margin_online'] ?? 0);
+                $val = isset($rule['margin_gold']) && $rule['margin_gold'] !== '' ? (float) $rule['margin_gold'] : (float) ($rule['margin_online'] ?? 0);
+
+                return self::parseMarginValue($val, $cost);
             }
         }
 
         $defaultRule = end($rules);
         $val = isset($defaultRule['margin_gold']) && $defaultRule['margin_gold'] !== '' ? (float) $defaultRule['margin_gold'] : (float) ($defaultRule['margin_online'] ?? 2.5);
 
-        if ($val <= 100) {
-            return ceil(($cost * ($val / 100)) / 100) * 100;
-        }
-
-        return $val;
+        return self::parseMarginValue($val, $cost);
     }
 
     public static function calculatePlatinumMargin(float $cost): float
@@ -1117,18 +1127,16 @@ class DigiflazzService
         foreach ($rules as $rule) {
             $max = (float) ($rule['max_amount'] ?? 0);
             if ($max > 0 && $cost <= $max) {
-                return isset($rule['margin_platinum']) && $rule['margin_platinum'] !== '' ? (float) $rule['margin_platinum'] : self::calculateGoldMargin($cost);
+                $val = isset($rule['margin_platinum']) && $rule['margin_platinum'] !== '' ? (float) $rule['margin_platinum'] : (float) ($rule['margin_gold'] ?? $rule['margin_online'] ?? 0);
+
+                return self::parseMarginValue($val, $cost);
             }
         }
 
         $defaultRule = end($rules);
         $val = isset($defaultRule['margin_platinum']) && $defaultRule['margin_platinum'] !== '' ? (float) $defaultRule['margin_platinum'] : (float) ($defaultRule['margin_gold'] ?? $defaultRule['margin_online'] ?? 1.5);
 
-        if ($val <= 100) {
-            return ceil(($cost * ($val / 100)) / 100) * 100;
-        }
-
-        return $val;
+        return self::parseMarginValue($val, $cost);
     }
 
     public static function calculateCashMargin(float $cost): float
@@ -1139,17 +1147,16 @@ class DigiflazzService
         foreach ($rules as $rule) {
             $max = (float) ($rule['max_amount'] ?? 0);
             if ($max > 0 && $cost <= $max) {
-                return (float) ($rule['margin_cash'] ?? 0);
+                $val = (float) ($rule['margin_cash'] ?? 0);
+
+                return self::parseMarginValue($val, $cost);
             }
         }
 
         $defaultRule = end($rules);
         $val = (float) ($defaultRule['margin_cash'] ?? 2.5);
-        if ($val <= 100) {
-            return ceil(($cost * ($val / 100)) / 100) * 100;
-        }
 
-        return $val;
+        return self::parseMarginValue($val, $cost);
     }
 
     public static function roundCashPrice(float $amount): float
