@@ -34,10 +34,9 @@ class ProductExportService
         $options->setColumnWidth(20, 6);   // Harga Jual Publik
         $options->setColumnWidth(24, 7);   // Harga Jual VIP (Gold)
         $options->setColumnWidth(26, 8);   // Harga Jual VVIP (Platinum)
-        $options->setColumnWidth(28, 9);   // Potongan QRIS (0.7% + 750)
-        $options->setColumnWidth(18, 10);  // Untung Publik
-        $options->setColumnWidth(18, 11);  // Untung Gold
-        $options->setColumnWidth(18, 12);  // Untung Platinum
+        $options->setColumnWidth(18, 9);   // Untung Publik
+        $options->setColumnWidth(18, 10);  // Untung Gold
+        $options->setColumnWidth(18, 11);  // Untung Platinum
 
         // Define Reusable Styles
         $titleStyle = (new Style)
@@ -90,7 +89,6 @@ class ProductExportService
             'Harga Jual Publik',
             'Harga Jual VIP (Gold)',
             'Harga Jual VVIP (Platinum)',
-            'Potongan QRIS (0.7% + 750)',
             'Untung Publik',
             'Untung Gold',
             'Untung Platinum',
@@ -117,25 +115,25 @@ class ProductExportService
                 ? (float) $product->price_platinum
                 : (float) DigiflazzService::calculatePlatinumPrice($cost);
 
-            // Compute Service Fees
+            // Compute Service Fees (Biaya Layanan Flat / Percent)
             $pubFee = self::calculateServiceFee($sellPublik);
             $goldFee = self::calculateServiceFee($sellGold);
             $platFee = self::calculateServiceFee($sellPlatinum);
 
-            // Total Pembayaran (Harga Jual + Biaya Layanan)
+            // Total Bayar Akhir (Harga Katalog + Biaya Layanan)
             $totalPublik = $sellPublik + $pubFee;
             $totalGold = $sellGold + $goldFee;
             $totalPlatinum = $sellPlatinum + $platFee;
 
-            // Potongan QRIS (0.7% + 750)
-            $qrisCutPublik = ($totalPublik * 0.007) + 750;
-            $qrisCutGold = ($totalGold * 0.007) + 750;
-            $qrisCutPlatinum = ($totalPlatinum * 0.007) + 750;
+            // Potongan TriPay = (Total Bayar Akhir × 0.7%) + Rp750
+            $triPayCutPublik = ($totalPublik * 0.007) + 750;
+            $triPayCutGold = ($totalGold * 0.007) + 750;
+            $triPayCutPlatinum = ($totalPlatinum * 0.007) + 750;
 
-            // Untung (Harga Jual + Biaya Layanan - Potongan QRIS 0.7% + 750 - Harga Modal)
-            $untungPublik = $totalPublik - $qrisCutPublik - $cost;
-            $untungGold = $totalGold - $qrisCutGold - $cost;
-            $untungPlatinum = $totalPlatinum - $qrisCutPlatinum - $cost;
+            // Keuntungan Bersih = Total Bayar Akhir - Potongan TriPay - Harga Modal
+            $untungPublik = $totalPublik - $triPayCutPublik - $cost;
+            $untungGold = $totalGold - $triPayCutGold - $cost;
+            $untungPlatinum = $totalPlatinum - $triPayCutPlatinum - $cost;
 
             $rowCells = [
                 Cell::fromValue($no++, $cStyle),
@@ -146,7 +144,6 @@ class ProductExportService
                 Cell::fromValue(round($sellPublik), $nStyle),
                 Cell::fromValue(round($sellGold), $nStyle),
                 Cell::fromValue(round($sellPlatinum), $nStyle),
-                Cell::fromValue(round($qrisCutPublik), $nStyle),
                 Cell::fromValue(round($untungPublik), $nStyle),
                 Cell::fromValue(round($untungGold), $nStyle),
                 Cell::fromValue(round($untungPlatinum), $nStyle),
