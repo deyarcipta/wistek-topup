@@ -410,8 +410,13 @@ class DigiflazzService
                 'item' => $item,
             ];
 
-            // Match product by exact SKU or by Name & Category
+            $optimalSkuCandidate = $bestSeller['sku'] ?? $sku;
+
+            // Match product by exact SKU, optimal seller SKU, or by Name
             $product = Product::where('sku', $sku)->first();
+            if (! $product && $optimalSkuCandidate !== '') {
+                $product = Product::where('sku', $optimalSkuCandidate)->first();
+            }
             if (! $product) {
                 $product = Product::where('name', $productName)->first();
             }
@@ -429,8 +434,14 @@ class DigiflazzService
                 $dfStatusChanged = (bool) $product->digiflazz_status !== $targetStatus;
 
                 if ($skuChanged || $costChanged || $dfStatusChanged) {
+                    $finalTargetSku = $targetSku;
+                    if ($skuChanged && Product::where('sku', $targetSku)->where('id', '!=', $product->id)->exists()) {
+                        $finalTargetSku = $product->sku;
+                        $skuChanged = false;
+                    }
+
                     $updateData = [
-                        'sku' => $targetSku,
+                        'sku' => $finalTargetSku,
                         'price_cost' => $targetCost,
                         'digiflazz_status' => $targetStatus,
                     ];
@@ -482,6 +493,14 @@ class DigiflazzService
                     }
 
                     $optimalSku = $bestSeller['sku'];
+                    if (Product::where('sku', $optimalSku)->exists()) {
+                        $optimalSku = $sku;
+                    }
+                    if (Product::where('sku', $optimalSku)->exists()) {
+                        // Skip if even $sku is already present in DB to avoid duplicate SKU integrity violation
+                        continue;
+                    }
+
                     $optimalCost = $bestSeller['price_cost'];
                     $optimalStatus = $bestSeller['is_active'];
 
@@ -655,7 +674,7 @@ class DigiflazzService
                 continue;
             }
 
-            // Check product nominal/name similarity
+            // Check product nominal/name similarity with strict number and key product type matching
             $cleanProductName = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', ' ', $product->name)));
             $cleanItemName = strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', ' ', $itemProductName)));
 
@@ -665,13 +684,33 @@ class DigiflazzService
             $prodNumStr = implode('-', $prodNums[0] ?? []);
             $itemNumStr = implode('-', $itemNums[0] ?? []);
 
+            // RULE 1: Numbers/Nominal MUST match strictly (e.g., '2' for 2x vs '' for 1x, or '50' vs '500')
+            if ($prodNumStr !== $itemNumStr) {
+                continue;
+            }
+
+            // RULE 2: Core name / keywords match
+            $brandWords = array_filter(explode('-', Str::slug($brandSlug)), fn ($w) => strlen($w) > 1);
+            $cleanProdWords = array_values(array_filter(explode(' ', $cleanProductName), fn ($w) => $w !== '' && ! in_array($w, $brandWords, true)));
+            $cleanItemWords = array_values(array_filter(explode(' ', $cleanItemName), fn ($w) => $w !== '' && ! in_array($w, $brandWords, true)));
+
+            $prodCoreStr = implode(' ', $cleanProdWords);
+            $itemCoreStr = implode(' ', $cleanItemWords);
+
             $nameMatches = false;
-            if ($cleanProductName === $cleanItemName) {
+            if ($cleanProductName === $cleanItemName || $prodCoreStr === $itemCoreStr) {
                 $nameMatches = true;
-            } elseif ($prodNumStr !== '' && $prodNumStr === $itemNumStr) {
-                $nameMatches = true;
-            } elseif (str_contains($cleanItemName, $cleanProductName) || str_contains($cleanProductName, $cleanItemName)) {
-                $nameMatches = true;
+            } else {
+                $keyKeywords = ['weekly', 'pass', 'twilight', 'starlight', 'membership', 'double', 'promo', 'member', 'plus', 'box', 'card'];
+                $prodKeywords = array_values(array_intersect($cleanProdWords, $keyKeywords));
+                $itemKeywords = array_values(array_intersect($cleanItemWords, $keyKeywords));
+
+                sort($prodKeywords);
+                sort($itemKeywords);
+
+                if ($prodKeywords === $itemKeywords) {
+                    $nameMatches = true;
+                }
             }
 
             if ($nameMatches) {

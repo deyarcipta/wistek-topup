@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Services\DigiflazzService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -319,5 +320,115 @@ class DigiflazzSyncAndValidationTest extends TestCase
         $this->assertDatabaseMissing('transactions', [
             'product_name' => $product->name,
         ]);
+    }
+
+    /**
+     * Test sync gracefully handles items with duplicate target SKUs without throwing 1062 integrity violation.
+     */
+    public function test_sync_digiflazz_handles_duplicate_sku_safely()
+    {
+        $category = Category::create([
+            'name' => 'Mobile Legends',
+            'slug' => 'mobile-legends',
+            'type' => 'game',
+        ]);
+
+        // Existing product with SKU 'pre33948564'
+        $existingProduct = Product::create([
+            'category_id' => $category->id,
+            'name' => 'MOBILE LEGENDS 5 Diamond',
+            'sku' => 'pre33948564',
+            'price_cost' => 1400.00,
+            'price_sell' => 1500.00,
+            'status' => 1,
+            'digiflazz_status' => 1,
+        ]);
+
+        // Mock Digiflazz returning multiple seller items where bestSeller optimal SKU matches pre33948564
+        Http::fake([
+            'https://api.digiflazz.com/v1/price-list' => Http::response([
+                'data' => [
+                    [
+                        'buyer_sku_code' => 'pre33948564',
+                        'product_name' => 'MOBILE LEGENDS 5 Diamond',
+                        'brand' => 'MOBILE LEGENDS',
+                        'price' => 1441.00,
+                        'buyer_product_status' => true,
+                        'seller_product_status' => true,
+                    ],
+                    [
+                        'buyer_sku_code' => 'alt_ml5_sku',
+                        'product_name' => 'MOBILE LEGENDS 5 Diamond (Alternate)',
+                        'brand' => 'MOBILE LEGENDS',
+                        'price' => 1450.00,
+                        'buyer_product_status' => true,
+                        'seller_product_status' => true,
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->artisan('products:sync-digiflazz --force')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('products', [
+            'sku' => 'pre33948564',
+        ]);
+    }
+
+    /**
+     * Test findAlternativeSellerSkus strictly rejects 1x Weekly Pass when searching failover candidates for a 2x Weekly Pass.
+     */
+    public function test_failover_does_not_match_1x_weekly_pass_for_2x_weekly_pass()
+    {
+        $category = Category::create([
+            'name' => 'Mobile Legends',
+            'slug' => 'mobile-legends',
+            'type' => 'game',
+        ]);
+
+        $product2x = Product::create([
+            'category_id' => $category->id,
+            'name' => 'MOBILE LEGENDS Weekly Diamond Pass 2x',
+            'sku' => 'ml_wdp_2x',
+            'price_cost' => 56000.00,
+            'price_sell' => 60000.00,
+            'status' => 1,
+            'digiflazz_status' => 1,
+        ]);
+
+        // Mock Digiflazz pricelist returning 1x WDP item and a valid 2x WDP item
+        Http::fake([
+            'https://api.digiflazz.com/v1/price-list' => Http::response([
+                'data' => [
+                    [
+                        'buyer_sku_code' => 'ml_wdp_1x_sku',
+                        'product_name' => 'MOBILE LEGENDS Weekly Diamond Pass',
+                        'brand' => 'MOBILE LEGENDS',
+                        'price' => 28000.00,
+                        'buyer_product_status' => true,
+                        'seller_product_status' => true,
+                    ],
+                    [
+                        'buyer_sku_code' => 'ml_wdp_2x_seller2',
+                        'product_name' => 'MOBILE LEGENDS Weekly Diamond Pass 2x',
+                        'brand' => 'MOBILE LEGENDS',
+                        'price' => 55500.00,
+                        'buyer_product_status' => true,
+                        'seller_product_status' => true,
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $digiflazz = new DigiflazzService;
+        $candidates = $digiflazz->findAlternativeSellerSkus($product2x, ['ml_wdp_2x']);
+
+        $candidateSkus = array_column($candidates, 'sku');
+
+        // 1x SKU MUST NOT be in candidate list!
+        $this->assertNotContains('ml_wdp_1x_sku', $candidateSkus);
+        // Valid 2x seller SKU MUST be in candidate list!
+        $this->assertContains('ml_wdp_2x_seller2', $candidateSkus);
     }
 }
