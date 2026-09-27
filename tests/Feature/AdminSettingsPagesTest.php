@@ -28,7 +28,7 @@ class AdminSettingsPagesTest extends TestCase
         $this->actingAs($admin)
             ->get('/w1st3k/manage-api-settings')
             ->assertStatus(200)
-            ->assertSee('Duitku Payment Gateway')
+            ->assertSee('Tripay Payment Gateway')
             ->assertSee('Digiflazz H2H Topup')
             ->assertSee('Status Integrasi &amp; Koneksi API', false);
 
@@ -61,14 +61,14 @@ class AdminSettingsPagesTest extends TestCase
 
         Livewire::test(ManageApiSettings::class)
             ->fillForm([
-                'duitku_merchant_code' => 'TEST_MERCHANT_123',
+                'tripay_merchant_code' => 'TEST_MERCHANT_123',
                 'digiflazz_username' => 'test_supplier_user',
                 'whatsapp_enabled' => '1',
             ])
             ->call('save')
             ->assertHasNoFormErrors();
 
-        $this->assertEquals('TEST_MERCHANT_123', Setting::get('duitku_merchant_code'));
+        $this->assertEquals('TEST_MERCHANT_123', Setting::get('tripay_merchant_code'));
         $this->assertEquals('test_supplier_user', Setting::get('digiflazz_username'));
         $this->assertEquals('1', Setting::get('whatsapp_enabled'));
     }

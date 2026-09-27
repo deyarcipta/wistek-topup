@@ -10,11 +10,11 @@ class PaymentGatewayManager
 
     public function __construct()
     {
-        $this->activeGateway = Setting::get('active_payment_gateway', 'duitku');
+        $this->activeGateway = Setting::get('active_payment_gateway', 'tripay');
     }
 
     /**
-     * Get active payment gateway key ('duitku', 'midtrans', 'xendit', 'tripay')
+     * Get active payment gateway key ('tripay', 'midtrans')
      */
     public function getActiveGateway(): string
     {
@@ -28,10 +28,7 @@ class PaymentGatewayManager
     {
         return match ($this->activeGateway) {
             'midtrans' => 'Midtrans Payment Gateway',
-            'xendit' => 'Xendit Payment Gateway',
-            'tripay' => 'Tripay Payment Gateway',
-            'doku' => 'DOKU Payment Gateway',
-            default => 'Duitku Payment Gateway',
+            default => 'Tripay Payment Gateway',
         };
     }
 
@@ -42,10 +39,7 @@ class PaymentGatewayManager
     {
         return match ($this->activeGateway) {
             'midtrans' => app(MidtransService::class),
-            'xendit' => app(XenditService::class),
-            'tripay' => app(TripayService::class),
-            'doku' => app(DokuService::class),
-            default => app(DuitkuService::class),
+            default => app(TripayService::class),
         };
     }
 

@@ -49,6 +49,10 @@ class TransactionsTable
                     ->sortable(),
                 TextColumn::make('payment_method')
                     ->label('Pembayaran')
+                    ->formatStateUsing(fn ($state) => match (strtoupper((string) $state)) {
+                        'QRIS2', 'QRIS_CUSTOM' => 'QRIS',
+                        default => strtoupper((string) $state),
+                    })
                     ->searchable(),
                 TextColumn::make('payment_status')
                     ->label('Status Pembayaran')

@@ -9,7 +9,7 @@ use App\Models\Product;
 use App\Models\SubCategory;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Services\DuitkuService;
+use App\Services\TripayService;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -449,15 +449,13 @@ class MemberLoyaltyTest extends TestCase
         $this->assertEquals($subCategory->id, $product->fresh()->sub_category_id);
         $this->assertEquals('Weekly Pass', $product->fresh()->subCategory->name);
 
-        $this->mock(DuitkuService::class, function ($mock) {
+        $this->mock(TripayService::class, function ($mock) {
             $mock->shouldReceive('getPaymentChannels')->andReturn([]);
             $mock->shouldReceive('createTransaction')->andReturn([
                 'success' => true,
-                'data' => [
-                    'reference' => 'REF-TEST-12345',
-                    'pay_code' => '8879898989',
-                    'expired_time' => time() + 3600,
-                ],
+                'reference' => 'REF-TEST-12345',
+                'pay_code' => '8879898989',
+                'expired_time' => time() + 3600,
             ]);
         });
 

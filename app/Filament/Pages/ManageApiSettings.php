@@ -117,29 +117,16 @@ class ManageApiSettings extends Page implements HasForms
         $activeGatewayStatus = $paymentManager->getStatusDetails();
 
         return [
-            'active_payment_gateway' => Setting::get('active_payment_gateway', 'duitku'),
+            'active_payment_gateway' => Setting::get('active_payment_gateway', 'tripay'),
             'active_gateway_status' => ($activeGatewayStatus['success'] ?? false)
                 ? '🟢 '.$paymentManager->getActiveGatewayName().' (OK)'
                 : '🔴 '.$paymentManager->getActiveGatewayName().' Gagal: '.($activeGatewayStatus['message'] ?? 'Belum dikonfigurasi'),
-
-            // Duitku Settings
-            'duitku_merchant_code' => Setting::get('duitku_merchant_code'),
-            'duitku_api_key' => Setting::get('duitku_api_key'),
-            'duitku_mode' => Setting::get('duitku_mode', 'sandbox'),
-            'duitku_callback_url' => url('/callback/duitku'),
 
             // Midtrans Settings
             'midtrans_server_key' => Setting::get('midtrans_server_key'),
             'midtrans_client_key' => Setting::get('midtrans_client_key'),
             'midtrans_mode' => Setting::get('midtrans_mode', 'sandbox'),
             'midtrans_callback_url' => url('/callback/midtrans'),
-
-            // Xendit Settings
-            'xendit_secret_key' => Setting::get('xendit_secret_key'),
-            'xendit_public_key' => Setting::get('xendit_public_key'),
-            'xendit_verification_token' => Setting::get('xendit_verification_token'),
-            'xendit_mode' => Setting::get('xendit_mode', 'development'),
-            'xendit_callback_url' => url('/callback/xendit'),
 
             // Tripay Settings
             'tripay_merchant_code' => Setting::get('tripay_merchant_code'),
@@ -149,12 +136,6 @@ class ManageApiSettings extends Page implements HasForms
             'tripay_qris_fee_share' => Setting::get('tripay_qris_fee_share', '50'),
             'tripay_qris_free_min_amount' => Setting::get('tripay_qris_free_min_amount', '100000'),
             'tripay_callback_url' => url('/callback/tripay'),
-
-            // DOKU Settings
-            'doku_client_id' => Setting::get('doku_client_id'),
-            'doku_secret_key' => Setting::get('doku_secret_key'),
-            'doku_mode' => Setting::get('doku_mode', 'sandbox'),
-            'doku_callback_url' => url('/callback/doku'),
 
             // Digiflazz Settings
             'digiflazz_username' => Setting::get('digiflazz_username'),
@@ -199,98 +180,14 @@ class ManageApiSettings extends Page implements HasForms
                         Select::make('active_payment_gateway')
                             ->label('Payment Gateway Aktif')
                             ->options([
-                                'duitku' => 'Duitku Payment Gateway (Rekomendasi Utama)',
-                                'midtrans' => 'Midtrans Payment Gateway (Snap API & Core)',
-                                'xendit' => 'Xendit Payment Gateway (Invoice & QRIS API)',
                                 'tripay' => 'Tripay Payment Gateway (Multi Channel)',
-                                'doku' => 'DOKU Payment Gateway (Jokul Checkout API)',
+                                'midtrans' => 'Midtrans Payment Gateway (Snap API & Core)',
                             ])
                             ->live()
                             ->placeholder('Pilih Payment Gateway yang Ingin Digunakan')
                             ->columnSpanFull()
                             ->helperText('Form konfigurasi di bawah hanya akan menampilkan pengaturan sesuai dengan Payment Gateway yang Anda pilih di atas.'),
                     ]),
-
-                Section::make('Duitku Payment Gateway')
-                    ->description('Konfigurasi Duitku Payment Gateway')
-                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'duitku')
-                    ->schema([
-                        TextInput::make('duitku_merchant_code')
-                            ->label('Merchant Code')
-                            ->placeholder('Masukkan Duitku Merchant Code'),
-                        TextInput::make('duitku_api_key')
-                            ->label('Merchant Key / API Key')
-                            ->password()
-                            ->revealable()
-                            ->placeholder('Masukkan Duitku Merchant Key'),
-                        Select::make('duitku_mode')
-                            ->label('Mode')
-                            ->options([
-                                'sandbox' => 'Sandbox (Testing)',
-                                'production' => 'Production (Live)',
-                            ]),
-                        TextInput::make('duitku_callback_url')
-                            ->label('Callback / Webhook URL')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->helperText('Salin URL ini ke Duitku Merchant Portal -> Project Callback URL.'),
-                    ])->columns(2),
-
-                Section::make('Midtrans Payment Gateway')
-                    ->description('Konfigurasi Midtrans Payment Gateway')
-                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'midtrans')
-                    ->schema([
-                        TextInput::make('midtrans_server_key')
-                            ->label('Server Key')
-                            ->password()
-                            ->revealable()
-                            ->placeholder('Masukkan Midtrans Server Key (SB-Mid-server-...)'),
-                        TextInput::make('midtrans_client_key')
-                            ->label('Client Key')
-                            ->placeholder('Masukkan Midtrans Client Key (SB-Mid-client-...)'),
-                        Select::make('midtrans_mode')
-                            ->label('Mode')
-                            ->options([
-                                'sandbox' => 'Sandbox (Testing)',
-                                'production' => 'Production (Live)',
-                            ]),
-                        TextInput::make('midtrans_callback_url')
-                            ->label('Notification Callback URL')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->helperText('Salin URL ini ke Midtrans Dashboard -> Settings -> Configuration -> Payment Notification URL.'),
-                    ])->columns(2),
-
-                Section::make('Xendit Payment Gateway')
-                    ->description('Konfigurasi Xendit Payment Gateway')
-                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'xendit')
-                    ->schema([
-                        TextInput::make('xendit_secret_key')
-                            ->label('Secret API Key')
-                            ->password()
-                            ->revealable()
-                            ->placeholder('Masukkan Xendit Secret Key (xnd_development_...)'),
-                        TextInput::make('xendit_public_key')
-                            ->label('Public Key (Opsional)')
-                            ->placeholder('Masukkan Xendit Public Key'),
-                        TextInput::make('xendit_verification_token')
-                            ->label('Webhook Verification Token')
-                            ->password()
-                            ->revealable()
-                            ->placeholder('Masukkan Verification Token dari Dashboard Xendit'),
-                        Select::make('xendit_mode')
-                            ->label('Mode')
-                            ->options([
-                                'development' => 'Development (Testing)',
-                                'production' => 'Production (Live)',
-                            ]),
-                        TextInput::make('xendit_callback_url')
-                            ->label('Callback URL (Invoice Paid)')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->columnSpanFull()
-                            ->helperText('Salin URL ini ke Xendit Dashboard -> Developers -> Webhooks -> Invoice Paid.'),
-                    ])->columns(2),
 
                 Section::make('Tripay Payment Gateway')
                     ->description('Konfigurasi Tripay Payment Gateway')
@@ -323,30 +220,29 @@ class ManageApiSettings extends Page implements HasForms
                             ->helperText('Salin URL ini ke Merchant Tripay -> Pengaturan -> Callback URL.'),
                     ])->columns(2),
 
-                Section::make('DOKU Payment Gateway')
-                    ->description('Konfigurasi DOKU Payment Gateway (Jokul API)')
-                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'doku')
+                Section::make('Midtrans Payment Gateway')
+                    ->description('Konfigurasi Midtrans Payment Gateway')
+                    ->visible(fn (Get $get): bool => $get('active_payment_gateway') === 'midtrans')
                     ->schema([
-                        TextInput::make('doku_client_id')
-                            ->label('Client ID')
-                            ->placeholder('Masukkan DOKU Client ID (Contoh: MCH-1234)'),
-                        TextInput::make('doku_secret_key')
-                            ->label('Secret Key / Shared Key')
+                        TextInput::make('midtrans_server_key')
+                            ->label('Server Key')
                             ->password()
                             ->revealable()
-                            ->placeholder('Masukkan Secret Key / Shared Key DOKU'),
-                        Select::make('doku_mode')
+                            ->placeholder('Masukkan Midtrans Server Key (SB-Mid-server-...)'),
+                        TextInput::make('midtrans_client_key')
+                            ->label('Client Key')
+                            ->placeholder('Masukkan Midtrans Client Key (SB-Mid-client-...)'),
+                        Select::make('midtrans_mode')
                             ->label('Mode')
                             ->options([
                                 'sandbox' => 'Sandbox (Testing)',
                                 'production' => 'Production (Live)',
                             ]),
-                        TextInput::make('doku_callback_url')
-                            ->label('Callback / Notification URL')
+                        TextInput::make('midtrans_callback_url')
+                            ->label('Notification Callback URL')
                             ->disabled()
                             ->dehydrated(false)
-                            ->columnSpanFull()
-                            ->helperText('URL ini dikirimkan otomatis oleh sistem pada skrip API Laravel (pada parameter notification_url di setiap transaksi DOKU), sehingga tidak perlu diatur manual pada Dashboard DOKU.'),
+                            ->helperText('Salin URL ini ke Midtrans Dashboard -> Settings -> Configuration -> Payment Notification URL.'),
                     ])->columns(2),
 
                 Section::make('Digiflazz H2H Topup')

@@ -73,24 +73,28 @@
             </div>
             
             <!-- Dynamic Payment Details Box -->
+            <!-- Dynamic Payment Details Box -->
             @if($transaction->payment_status === 'unpaid')
                 <div class="payment-box" style="text-align: center; padding: 2rem; background: rgba(255, 255, 255, 0.01); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 1.5rem;">
                     
-                    @if(isset($transaction->payment_details['expired_time']))
-                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Selesaikan pembayaran sebelum:</p>
-                        <div class="timer" id="countdownTimer" data-expiry="{{ $transaction->payment_details['expired_time'] }}" style="font-size: 2rem; font-weight: 800; color: var(--accent-blue); margin-bottom: 1.5rem;">00:00:00</div>
-                    @endif
-
                     @php
+                        $details = is_array($transaction->payment_details) ? $transaction->payment_details : [];
+                        $dataDetails = is_array($details['data'] ?? null) ? $details['data'] : [];
+
+                        $expiryTime = $details['expired_time'] ?? $dataDetails['expired_time'] ?? null;
+                        $qrContent = $details['qr_url'] ?? $dataDetails['qr_url'] ?? null;
+                        $qrRawString = $details['qr_string'] ?? $details['qr_content'] ?? $dataDetails['qr_string'] ?? $dataDetails['qr_content'] ?? null;
+                        $payCode = $details['pay_code'] ?? $dataDetails['pay_code'] ?? $dataDetails['vaNumber'] ?? null;
+                        $paymentUrl = $details['payment_url'] ?? $dataDetails['payment_url'] ?? $details['checkout_url'] ?? $details['pay_url'] ?? $details['redirect_url'] ?? null;
                         $hasContent = false;
                     @endphp
 
-                    <!-- 1. Display Direct QR Code if qr_url or valid qr_string is present -->
-                    @php
-                        $qrContent = $transaction->payment_details['qr_url'] ?? null;
-                        $qrRawString = $transaction->payment_details['qr_string'] ?? $transaction->payment_details['qr_content'] ?? null;
-                    @endphp
+                    @if(!empty($expiryTime))
+                        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Selesaikan pembayaran sebelum:</p>
+                        <div class="timer" id="countdownTimer" data-expiry="{{ $expiryTime }}" style="font-size: 2rem; font-weight: 800; color: var(--accent-blue); margin-bottom: 1.5rem;">00:00:00</div>
+                    @endif
 
+                    <!-- 1. Display Direct QR Code if qr_url or valid qr_string is present -->
                     @if(!empty($qrContent))
                         @php $hasContent = true; @endphp
                         <p style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Scan QRIS di bawah ini:</p>
@@ -103,30 +107,30 @@
                         <p style="font-size: 0.85rem; color: var(--text-secondary);">Mendukung GoPay, OVO, Dana, LinkAja, ShopeePay &amp; M-Banking</p>
                         <div style="margin-top: 0.75rem;">
                             <button type="button" class="copy-btn" onclick="copyText('{{ $qrRawString }}')" style="background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer;">
-                                <i class="fa-solid fa-copy"></i> Salin String QRIS (Sandbox Simulator)
+                                <i class="fa-solid fa-copy"></i> Salin String QRIS
                             </button>
                         </div>
                     @endif
 
                     <!-- 2. Display Virtual Account / Payment Code if present -->
-                    @if(isset($transaction->payment_details['pay_code']) && !empty($transaction->payment_details['pay_code']))
+                    @if(!$hasContent && !empty($payCode))
                         @php $hasContent = true; @endphp
                         <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Nomor Virtual Account / Kode Bayar:</p>
                         <span style="font-size: 2rem; font-weight: 800; color: var(--text-primary); letter-spacing: 0.05em; display: block; margin-bottom: 1rem;">
-                            {{ $transaction->payment_details['pay_code'] }}
+                            {{ $payCode }}
                         </span>
-                        <button class="copy-btn" onclick="copyText('{{ $transaction->payment_details['pay_code'] }}')" style="background: var(--accent-blue); color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 1rem;">
+                        <button class="copy-btn" onclick="copyText('{{ $payCode }}')" style="background: var(--accent-blue); color: #fff; border: none; padding: 0.5rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600; margin-bottom: 1rem;">
                             <i class="fa-solid fa-copy"></i> Salin Kode
                         </button>
                     @endif
 
                     <!-- 3. Embedded Midtrans Snap Popup Modal if token is present -->
-                    @if(!$hasContent && isset($transaction->payment_details['token']) && !empty($transaction->payment_details['token']))
+                    @if(!$hasContent && isset($details['token']) && !empty($details['token']))
                         @php 
                             $hasContent = true; 
-                            $snapToken = $transaction->payment_details['token'];
-                            $clientKey = $transaction->payment_details['client_key'] ?? \App\Models\Setting::get('midtrans_client_key', '');
-                            $snapJsUrl = $transaction->payment_details['snap_js'] ?? 'https://app.sandbox.midtrans.com/snap/snap.js';
+                            $snapToken = $details['token'];
+                            $clientKey = $details['client_key'] ?? \App\Models\Setting::get('midtrans_client_key', '');
+                            $snapJsUrl = $details['snap_js'] ?? 'https://app.sandbox.midtrans.com/snap/snap.js';
                         @endphp
                         <script src="{{ $snapJsUrl }}" data-client-key="{{ $clientKey }}"></script>
                         <div style="margin-top: 1rem; text-align: center;">
@@ -134,6 +138,17 @@
                             <button type="button" id="pay-button" onclick="snap.pay('{{ $snapToken }}')" class="btn-checkout" style="display: inline-block; text-align: center; width: auto; padding: 0.85rem 2.5rem; background: linear-gradient(135deg, #e28743, #d97706); color: #fff; font-weight: 700; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 14px rgba(226, 135, 67, 0.4); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
                                 <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i> Bayar Sekarang
                             </button>
+                        </div>
+                    @endif
+
+                    <!-- 4. Display Payment URL Link Button if paymentUrl is present -->
+                    @if(!$hasContent && !empty($paymentUrl))
+                        @php $hasContent = true; @endphp
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <p style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Silakan klik tombol di bawah ini untuk melanjutkan ke halaman pembayaran:</p>
+                            <a href="{{ $paymentUrl }}" target="_blank" rel="noopener noreferrer" class="btn-checkout" style="display: inline-block; text-align: center; width: auto; padding: 0.85rem 2.5rem; background: linear-gradient(135deg, #e28743, #d97706); color: #fff; font-weight: 700; border: none; border-radius: 10px; font-size: 1.1rem; cursor: pointer; text-decoration: none; box-shadow: 0 4px 14px rgba(226, 135, 67, 0.4); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)';" onmouseout="this.style.transform='translateY(0)';">
+                                <i class="fa-solid fa-external-link" style="margin-right: 0.5rem;"></i> Bayar Sekarang
+                            </a>
                         </div>
                     @endif
 
